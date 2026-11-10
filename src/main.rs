@@ -67,6 +67,20 @@ impl BatteryDockApp {
             ctx_clone2.request_repaint();
         }));
 
+        // Dedicated fast fullscreen watcher thread (120ms check, wakes up egui instantly on state change)
+        let ctx_fs = cc.egui_ctx.clone();
+        std::thread::spawn(move || {
+            let mut last_fs = false;
+            loop {
+                std::thread::sleep(Duration::from_millis(120));
+                let fs = TaskbarGeometry::is_fullscreen_app_active();
+                if fs != last_fs {
+                    last_fs = fs;
+                    ctx_fs.request_repaint();
+                }
+            }
+        });
+
         Self {
             config,
             engine,
@@ -148,19 +162,26 @@ impl eframe::App for BatteryDockApp {
             }
         }
 
-        // 2. Fullscreen app detection: hide the dock if watching fullscreen video or playing games
+        // 2. Fullscreen app detection: when in fullscreen, pass clicks through and do not render dock
         let is_fullscreen = TaskbarGeometry::is_fullscreen_app_active();
         if is_fullscreen {
             if !self.is_dock_hidden {
                 self.is_dock_hidden = true;
-                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+                ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(true));
             }
-            // Check again after 500ms
-            ctx.request_repaint_after(Duration::from_millis(500));
+            // If settings window was opened, keep rendering it
+            let engine_ref2 = self.engine.clone();
+            SettingsWindow::show(
+                ctx,
+                &mut self.open_settings,
+                &mut self.config,
+                &self.devices,
+                move || engine_ref2.trigger_refresh(),
+            );
             return;
         } else if self.is_dock_hidden {
             self.is_dock_hidden = false;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(false));
         }
 
         // 3. Receive background battery updates
