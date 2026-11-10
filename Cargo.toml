@@ -1,6 +1,6 @@
 [package]
 name = "battery-dock"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors = ["jorjanion"]
 description = "Ultra-lightweight Windows taskbar dock for peripheral battery levels (headphones, mice, keyboards, gamepads, VR) with custom alerts"
