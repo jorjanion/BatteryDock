@@ -23,6 +23,21 @@ Unlike heavy manufacturer suites, BatteryDock runs with **zero bloat** (~15 MB R
 
 ---
 
+## 📥 Download & Installation
+
+Get the latest installer from the [Releases Page](https://github.com/jorjanion/BatteryDock/releases/latest):
+
+1. **[Download BatteryDock-Setup-v0.1.0.exe](https://github.com/jorjanion/BatteryDock/releases/download/v0.1.0/BatteryDock-Setup-v0.1.0.exe)**
+2. Run the installer:
+   - Select your language (English or Spanish).
+   - Check **"Start BatteryDock automatically when Windows starts"** if you want it to run seamlessly in the background on startup.
+   - Choose whether you want a Desktop shortcut.
+3. Click **Install** and **Finish** to launch BatteryDock.
+
+*(A portable zero-install `.zip` is also available on the releases page).*
+
+---
+
 ## ✨ Features
 
 - 🔋 **Taskbar Integrated:** Embedded directly on the Windows taskbar as a modern frosted acrylic capsule.
