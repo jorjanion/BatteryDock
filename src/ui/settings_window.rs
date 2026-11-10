@@ -65,7 +65,7 @@ impl SettingsWindow {
         // Header
         ui.horizontal(|ui| {
             ui.heading("🔋 BatteryDock");
-            ui.label(egui::RichText::new("v0.1.0").weak());
+            ui.label(egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION"))).weak());
         });
         ui.label(
             egui::RichText::new("Ultra-lightweight peripheral battery overlay for Windows")
