@@ -36,6 +36,9 @@ windows = { version = "0.58", features = [
 ] }
 tray-icon = "0.19"
 
+[build-dependencies]
+winres = "0.1"
+
 [profile.release]
 opt-level = 3
 lto = true

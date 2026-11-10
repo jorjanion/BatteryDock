@@ -6,3 +6,5 @@ Cargo.lock
 *.pdb
 *.obj
 *.exe
+/output/
+/package/

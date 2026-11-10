@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Windows Binary
+    name: Build Windows Release & Installer
     runs-on: windows-latest
 
     steps:
@@ -40,24 +40,42 @@ jobs:
       - name: Build Release Binary
         run: cargo build --release --locked
 
-      - name: Package Release
+      - name: Setup Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            choco install innosetup --no-progress
+            echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+          }
+
+      - name: Compile Windows Installer (.exe)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "output"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: Package Portable Archive (.zip)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "package"
           Copy-Item "target/release/battery-dock.exe" -Destination "package/BatteryDock.exe"
           Copy-Item "README.md" -Destination "package/README.md"
           Copy-Item "LICENSE" -Destination "package/LICENSE"
-          Compress-Archive -Path "package/*" -DestinationPath "BatteryDock-Windows-x64.zip"
+          New-Item -ItemType Directory -Force -Path "package/assets"
+          Copy-Item "assets/*" -Destination "package/assets/"
+          Compress-Archive -Path "package/*" -DestinationPath "output/BatteryDock-Windows-Portable.zip" -Force
 
-      - name: Upload Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: BatteryDock-Windows-x64
-          path: BatteryDock-Windows-x64.zip
+          name: BatteryDock-Windows-Builds
+          path: output/*
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: BatteryDock-Windows-x64.zip
+          files: |
+            output/BatteryDock-Setup-*.exe
+            output/BatteryDock-*.zip
           generate_release_notes: true
