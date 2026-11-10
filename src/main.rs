@@ -43,6 +43,17 @@ impl BatteryDockApp {
         let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
         let tray = SystemTray::new().ok();
 
+        // Register event handlers for tray and menu so they wake up egui immediately
+        let ctx_clone = cc.egui_ctx.clone();
+        tray_icon::menu::MenuEvent::set_event_handler(Some(move |_| {
+            ctx_clone.request_repaint();
+        }));
+
+        let ctx_clone2 = cc.egui_ctx.clone();
+        tray_icon::TrayIconEvent::set_event_handler(Some(move |_| {
+            ctx_clone2.request_repaint();
+        }));
+
         Self {
             config,
             engine,
@@ -60,7 +71,8 @@ impl BatteryDockApp {
         if self.devices.is_empty() {
             135.0
         } else {
-            (self.devices.len() as f32 * 72.0 + 36.0).max(110.0)
+            let dev_width = if self.config.show_percentage_text { 76.0 } else { 48.0 };
+            (self.devices.len() as f32 * dev_width + 30.0).max(120.0)
         }
     }
 
@@ -113,11 +125,12 @@ impl eframe::App for BatteryDockApp {
             self.reposition_dock_to_taskbar(ctx, width);
         }
 
-        // 3. Process tray events
-        if let Ok(menu_event) = tray_icon::menu::MenuEvent::receiver().try_recv() {
+        // 3. Process tray menu events
+        while let Ok(menu_event) = tray_icon::menu::MenuEvent::receiver().try_recv() {
             if let Some(tray) = &self._tray {
                 if menu_event.id == tray.settings_item_id {
                     self.open_settings = true;
+                    ctx.request_repaint();
                 } else if menu_event.id == tray.refresh_item_id {
                     self.engine.trigger_refresh();
                 } else if menu_event.id == tray.quit_item_id {
@@ -126,23 +139,43 @@ impl eframe::App for BatteryDockApp {
             }
         }
 
-        // 4. Render main dock overlay on taskbar
-        let engine_ref = &self.engine;
+        // 4. Process tray icon click events
+        while let Ok(tray_event) = tray_icon::TrayIconEvent::receiver().try_recv() {
+            match tray_event {
+                tray_icon::TrayIconEvent::Click {
+                    button: tray_icon::MouseButton::Left,
+                    button_state: tray_icon::MouseButtonState::Up,
+                    ..
+                }
+                | tray_icon::TrayIconEvent::DoubleClick {
+                    button: tray_icon::MouseButton::Left,
+                    ..
+                } => {
+                    self.open_settings = !self.open_settings;
+                    ctx.request_repaint();
+                }
+                _ => {}
+            }
+        }
+
+        // 5. Render main dock overlay on taskbar
+        let engine_ref = self.engine.clone();
         self.dock.render(
             ctx,
             &mut self.config,
             &self.devices,
             &mut self.open_settings,
-            || engine_ref.trigger_refresh(),
+            move || engine_ref.trigger_refresh(),
         );
 
-        // 5. Render settings window if opened
+        // 6. Render settings window if opened
+        let engine_ref2 = self.engine.clone();
         SettingsWindow::show(
             ctx,
             &mut self.open_settings,
             &mut self.config,
             &self.devices,
-            || engine_ref.trigger_refresh(),
+            move || engine_ref2.trigger_refresh(),
         );
     }
 }

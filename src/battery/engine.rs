@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
+#[derive(Clone)]
 pub struct BatteryEngine {
     update_receiver: Receiver<Vec<DeviceBattery>>,
     refresh_sender: Sender<()>,

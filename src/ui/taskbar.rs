@@ -74,10 +74,14 @@ impl TaskbarGeometry {
                 (target_x, center_y)
             }
             DockPositionMode::Custom => {
-                if custom_x != 0.0 || custom_y != 0.0 {
+                // Sanity check: ensure custom position is within valid screen bounds
+                if (custom_x > -100.0 && custom_x < 10000.0)
+                    && (custom_y > -100.0 && custom_y < 5000.0)
+                    && (custom_x != 0.0 || custom_y != 0.0)
+                {
                     (custom_x, custom_y)
                 } else {
-                    // Default to left of tray if no custom position set yet
+                    // Default to left of tray if no custom position set yet or out of bounds
                     self.calculate_dock_position(
                         DockPositionMode::TaskbarLeftOfTray,
                         dock_width,

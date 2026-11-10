@@ -3,6 +3,9 @@ use tray_icon::{Icon, TrayIcon, TrayIconBuilder};
 
 pub struct SystemTray {
     _tray_icon: TrayIcon,
+    _settings_item: MenuItem,
+    _refresh_item: MenuItem,
+    _quit_item: MenuItem,
     pub settings_item_id: MenuId,
     pub refresh_item_id: MenuId,
     pub quit_item_id: MenuId,
@@ -43,9 +46,9 @@ impl SystemTray {
         let icon = Icon::from_rgba(rgba, width, height)?;
 
         let menu = Menu::new();
-        let settings_item = MenuItem::new("Settings", true, None);
-        let refresh_item = MenuItem::new("Refresh Devices", true, None);
-        let quit_item = MenuItem::new("Exit", true, None);
+        let settings_item = MenuItem::new("⚙ Settings", true, None);
+        let refresh_item = MenuItem::new("🔄 Refresh Devices", true, None);
+        let quit_item = MenuItem::new("❌ Exit BatteryDock", true, None);
 
         let settings_id = settings_item.id().clone();
         let refresh_id = refresh_item.id().clone();
@@ -63,6 +66,9 @@ impl SystemTray {
 
         Ok(Self {
             _tray_icon: tray_icon,
+            _settings_item: settings_item,
+            _refresh_item: refresh_item,
+            _quit_item: quit_item,
             settings_item_id: settings_id,
             refresh_item_id: refresh_id,
             quit_item_id: quit_id,

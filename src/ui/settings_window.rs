@@ -16,155 +16,249 @@ impl SettingsWindow {
             return;
         }
 
+        let mut on_refresh_opt = Some(on_refresh);
+
+        ctx.show_viewport_immediate(
+            egui::ViewportId::from_hash_of("battery_dock_settings"),
+            egui::ViewportBuilder::default()
+                .with_title("BatteryDock Settings")
+                .with_inner_size([460.0, 560.0])
+                .with_min_inner_size([380.0, 420.0])
+                .with_decorations(true)
+                .with_resizable(true)
+                .with_transparent(false),
+            |ctx, _class| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        Self::render_contents(
+                            ui,
+                            open,
+                            config,
+                            devices,
+                            || {
+                                if let Some(cb) = on_refresh_opt.take() {
+                                    cb();
+                                }
+                            },
+                        );
+                    });
+                });
+
+                if ctx.input(|i| i.viewport().close_requested()) {
+                    *open = false;
+                }
+            },
+        );
+    }
+
+    pub fn render_contents(
+        ui: &mut egui::Ui,
+        open: &mut bool,
+        config: &mut AppConfig,
+        devices: &[DeviceBattery],
+        on_refresh: impl FnOnce(),
+    ) {
         let mut should_refresh = false;
 
-        egui::Window::new("⚙ BatteryDock Settings")
-            .open(open)
-            .resizable(false)
-            .collapsible(false)
-            .default_width(380.0)
-            .show(ctx, |ui| {
-                ui.add_space(4.0);
+        ui.add_space(8.0);
 
-                // Branding Header
-                ui.horizontal(|ui| {
-                    ui.heading("🔋 BatteryDock");
-                    ui.label(egui::RichText::new("v0.1.0").weak());
-                });
-                ui.label(
-                    egui::RichText::new("Zero-bloat taskbar peripheral battery overlay")
-                        .italics()
-                        .weak(),
-                );
+        // Header
+        ui.horizontal(|ui| {
+            ui.heading("🔋 BatteryDock");
+            ui.label(egui::RichText::new("v0.1.0").weak());
+        });
+        ui.label(
+            egui::RichText::new("Ultra-lightweight peripheral battery overlay for Windows")
+                .italics()
+                .weak(),
+        );
 
-                ui.separator();
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
 
-                // Alert Thresholds Section
-                ui.heading("Alert Thresholds");
-                ui.horizontal(|ui| {
-                    ui.label("Low Battery Alert:");
-                    let mut low = config.low_battery_threshold;
-                    if ui.add(egui::Slider::new(&mut low, 5..=40).suffix("%")).changed() {
-                        config.low_battery_threshold = low;
-                        config.save();
-                    }
-                });
+        // Alert Thresholds Section
+        ui.heading("⚡ Battery Alert Thresholds");
+        ui.add_space(4.0);
 
-                ui.horizontal(|ui| {
-                    ui.label("Critical Alert:");
-                    let mut crit = config.critical_battery_threshold;
-                    if ui.add(egui::Slider::new(&mut crit, 1..=15).suffix("%")).changed() {
-                        config.critical_battery_threshold = crit;
-                        config.save();
-                    }
-                });
+        ui.horizontal(|ui| {
+            ui.label("Low Battery Warning:");
+            let mut low = config.low_battery_threshold;
+            if ui
+                .add(egui::Slider::new(&mut low, 5..=40).suffix("%"))
+                .changed()
+            {
+                config.low_battery_threshold = low;
+                config.save();
+            }
+        });
 
-                ui.separator();
+        ui.horizontal(|ui| {
+            ui.label("Critical Battery Warning:");
+            let mut crit = config.critical_battery_threshold;
+            if ui
+                .add(egui::Slider::new(&mut crit, 1..=15).suffix("%"))
+                .changed()
+            {
+                config.critical_battery_threshold = crit;
+                config.save();
+            }
+        });
 
-                // Notification Toggles
-                ui.heading("Notifications");
-                let mut audio_on = config.audio_alert_enabled;
-                if ui.checkbox(&mut audio_on, "Play gentle chime on low battery").changed() {
-                    config.audio_alert_enabled = audio_on;
-                    config.save();
-                }
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
 
-                ui.horizontal(|ui| {
-                    if ui.button("🔔 Test Sound Chime").clicked() {
-                        audio::play_gentle_chime();
-                    }
-                });
+        // Notification Toggles Section
+        ui.heading("🔔 Notifications & Sound");
+        ui.add_space(4.0);
 
-                let mut visual_on = config.visual_alert_enabled;
-                if ui.checkbox(&mut visual_on, "Show desktop alert notification").changed() {
-                    config.visual_alert_enabled = visual_on;
-                    config.save();
-                }
+        let mut audio_on = config.audio_alert_enabled;
+        if ui
+            .checkbox(&mut audio_on, "Play gentle chime on low battery")
+            .changed()
+        {
+            config.audio_alert_enabled = audio_on;
+            config.save();
+        }
 
-                ui.separator();
+        ui.horizontal(|ui| {
+            ui.add_space(20.0);
+            if ui.button("▶ Test Chime Sound").clicked() {
+                audio::play_gentle_chime();
+            }
+        });
 
-                // Taskbar Dock Position
-                ui.heading("Taskbar Placement");
-                let current_mode = config.position_mode;
+        let mut visual_on = config.visual_alert_enabled;
+        if ui
+            .checkbox(&mut visual_on, "Show desktop notifications")
+            .changed()
+        {
+            config.visual_alert_enabled = visual_on;
+            config.save();
+        }
 
-                ui.radio_value(
-                    &mut config.position_mode,
-                    DockPositionMode::TaskbarLeftOfTray,
-                    "Taskbar: Left of System Tray (Clock)",
-                );
-                ui.radio_value(
-                    &mut config.position_mode,
-                    DockPositionMode::TaskbarRight,
-                    "Taskbar: Far Right",
-                );
-                ui.radio_value(
-                    &mut config.position_mode,
-                    DockPositionMode::TaskbarLeft,
-                    "Taskbar: Left Side",
-                );
-                ui.radio_value(
-                    &mut config.position_mode,
-                    DockPositionMode::Custom,
-                    "Custom (Click & Drag dock anywhere)",
-                );
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
 
-                if config.position_mode != current_mode {
-                    config.save();
-                }
+        // Placement Section
+        ui.heading("📌 Dock Placement");
+        ui.add_space(4.0);
 
-                if ui.button("Reset Dock to Default Position").clicked() {
-                    config.position_mode = DockPositionMode::TaskbarLeftOfTray;
-                    config.custom_pos_x = 0.0;
-                    config.custom_pos_y = 0.0;
-                    config.save();
-                }
+        let current_mode = config.position_mode;
+        ui.radio_value(
+            &mut config.position_mode,
+            DockPositionMode::TaskbarLeftOfTray,
+            "Taskbar: Next to System Tray (Clock)",
+        );
+        ui.radio_value(
+            &mut config.position_mode,
+            DockPositionMode::TaskbarRight,
+            "Taskbar: Far Right",
+        );
+        ui.radio_value(
+            &mut config.position_mode,
+            DockPositionMode::TaskbarLeft,
+            "Taskbar: Left Side",
+        );
+        ui.radio_value(
+            &mut config.position_mode,
+            DockPositionMode::Custom,
+            "Custom (Click & drag the dock anywhere)",
+        );
 
-                ui.separator();
+        if config.position_mode != current_mode {
+            config.save();
+        }
 
-                // Connected Devices List
-                ui.heading(format!("Connected Peripherals ({})", devices.len()));
-                if devices.is_empty() {
-                    ui.label(egui::RichText::new("No active wireless peripherals detected.").weak());
-                } else {
-                    egui::ScrollArea::vertical().max_height(140.0).show(ui, |ui| {
-                        for dev in devices {
-                            ui.horizontal(|ui| {
-                                let icon = match dev.device_type {
-                                    crate::battery::DeviceType::Headset => "🎧",
-                                    crate::battery::DeviceType::Mouse => "🖱️",
-                                    crate::battery::DeviceType::Keyboard => "⌨️",
-                                    crate::battery::DeviceType::Gamepad => "🎮",
-                                    crate::battery::DeviceType::VRHeadset => "🥽",
-                                    crate::battery::DeviceType::Wheel => "🏎️",
-                                    crate::battery::DeviceType::Camera => "📷",
-                                    crate::battery::DeviceType::Unknown => "🔋",
-                                };
-                                ui.label(icon);
-                                ui.label(egui::RichText::new(&dev.name).strong());
-                                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                                    let charging_mark = if dev.is_charging { " ⚡" } else { "" };
-                                    ui.label(format!("{}{}", dev.percentage, charging_mark));
-                                });
-                            });
-                        }
-                    });
-                }
+        if ui.button("📍 Reset Dock Position to Clock").clicked() {
+            config.position_mode = DockPositionMode::TaskbarLeftOfTray;
+            config.custom_pos_x = 0.0;
+            config.custom_pos_y = 0.0;
+            config.save();
+        }
 
-                ui.add_space(4.0);
-                if ui.button("🔄 Refresh Devices Now").clicked() {
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
+
+        // Connected Devices Section
+        ui.horizontal(|ui| {
+            ui.heading(format!("🎧 Connected Devices ({})", devices.len()));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("🔄 Refresh Now").clicked() {
                     should_refresh = true;
                 }
+            });
+        });
+        ui.add_space(4.0);
 
-                ui.separator();
+        if devices.is_empty() {
+            ui.label(
+                egui::RichText::new("No active wireless peripherals detected.")
+                    .italics()
+                    .weak(),
+            );
+        } else {
+            egui::Frame::group(ui.style()).show(ui, |ui| {
+                for dev in devices {
+                    ui.horizontal(|ui| {
+                        let icon = match dev.device_type {
+                            crate::battery::DeviceType::Headset => "🎧",
+                            crate::battery::DeviceType::Mouse => "🖱️",
+                            crate::battery::DeviceType::Keyboard => "⌨️",
+                            crate::battery::DeviceType::Gamepad => "🎮",
+                            crate::battery::DeviceType::VRHeadset => "🥽",
+                            crate::battery::DeviceType::Wheel => "🏎️",
+                            crate::battery::DeviceType::Camera => "📷",
+                            crate::battery::DeviceType::Unknown => "🔋",
+                        };
+                        ui.label(icon);
+                        ui.label(egui::RichText::new(&dev.name).strong());
 
-                // Startup toggle
-                let mut start_win = config.start_with_windows;
-                if ui.checkbox(&mut start_win, "Start BatteryDock with Windows").changed() {
-                    config.start_with_windows = start_win;
-                    let _ = set_run_at_startup(start_win);
-                    config.save();
+                        ui.with_layout(
+                            egui::Layout::right_to_left(egui::Align::Center),
+                            |ui| {
+                                let charging = if dev.is_charging { " ⚡" } else { "" };
+                                let color = if dev.percentage <= config.critical_battery_threshold {
+                                    egui::Color32::from_rgb(239, 68, 68)
+                                } else if dev.percentage <= config.low_battery_threshold {
+                                    egui::Color32::from_rgb(245, 158, 11)
+                                } else {
+                                    egui::Color32::from_rgb(34, 197, 94)
+                                };
+                                ui.label(
+                                    egui::RichText::new(format!("{}%{}", dev.percentage, charging))
+                                        .color(color)
+                                        .strong(),
+                                );
+                            },
+                        );
+                    });
                 }
             });
+        }
+
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
+
+        // Windows Startup Option
+        let mut start_win = config.start_with_windows;
+        if ui
+            .checkbox(&mut start_win, "Start BatteryDock when Windows boots")
+            .changed()
+        {
+            config.start_with_windows = start_win;
+            let _ = set_run_at_startup(start_win);
+            config.save();
+        }
+
+        ui.add_space(10.0);
+        if ui.button("Close Settings").clicked() {
+            *open = false;
+        }
 
         if should_refresh {
             on_refresh();
@@ -191,13 +285,7 @@ fn set_run_at_startup(enable: bool) -> Result<(), ()> {
 
     unsafe {
         let mut hkey = windows::Win32::System::Registry::HKEY::default();
-        if RegCreateKeyW(
-            HKEY_CURRENT_USER,
-            PCWSTR(subkey.as_ptr()),
-            &mut hkey,
-        )
-        .is_ok()
-        {
+        if RegCreateKeyW(HKEY_CURRENT_USER, PCWSTR(subkey.as_ptr()), &mut hkey).is_ok() {
             if enable {
                 if let Ok(exe_path) = std::env::current_exe() {
                     let path_str = exe_path.to_string_lossy().to_string();

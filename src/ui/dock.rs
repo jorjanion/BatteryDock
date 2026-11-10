@@ -6,18 +6,12 @@ use std::time::Instant;
 
 pub struct DockOverlay {
     start_time: Instant,
-    is_dragging: bool,
-    drag_start_cursor: Option<Pos2>,
-    drag_start_window: Option<Pos2>,
 }
 
 impl DockOverlay {
     pub fn new() -> Self {
         Self {
             start_time: Instant::now(),
-            is_dragging: false,
-            drag_start_cursor: None,
-            drag_start_window: None,
         }
     }
 
@@ -55,42 +49,21 @@ impl DockOverlay {
                 );
 
                 if dock_response.drag_started() {
-                    self.is_dragging = true;
-                    if let Some(pos) = ctx.input(|i| i.pointer.interact_pos()) {
-                        self.drag_start_cursor = Some(pos);
-                        let win_pos = ctx.input(|i| i.viewport().inner_rect.map(|r| r.min)).unwrap_or_default();
-                        self.drag_start_window = Some(win_pos);
-                    }
-                }
-
-                if self.is_dragging {
-                    if let (Some(cur_pos), Some(start_cursor), Some(start_win)) = (
-                        ctx.input(|i| i.pointer.interact_pos()),
-                        self.drag_start_cursor,
-                        self.drag_start_window,
-                    ) {
-                        let delta = cur_pos - start_cursor;
-                        let new_x = start_win.x + delta.x;
-                        let new_y = start_win.y + delta.y;
-
-                        ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(Pos2::new(
-                            new_x, new_y,
-                        )));
-
-                        config.position_mode = DockPositionMode::Custom;
-                        config.custom_pos_x = new_x;
-                        config.custom_pos_y = new_y;
-                    }
+                    ctx.send_viewport_cmd(egui::ViewportCommand::StartDrag);
                 }
 
                 if dock_response.drag_stopped() {
-                    self.is_dragging = false;
-                    config.save();
+                    if let Some(rect) = ctx.input(|i| i.viewport().outer_rect) {
+                        config.custom_pos_x = rect.min.x;
+                        config.custom_pos_y = rect.min.y;
+                        config.position_mode = DockPositionMode::Custom;
+                        config.save();
+                    }
                 }
 
-                // Double click or right click opens settings
-                if dock_response.double_clicked() {
-                    *open_settings = true;
+                // Clicking the dock toggles settings
+                if dock_response.clicked() {
+                    *open_settings = !*open_settings;
                 }
 
                 dock_response.context_menu(|ui| {
