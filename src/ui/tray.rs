@@ -5,9 +5,13 @@ pub struct SystemTray {
     _tray_icon: TrayIcon,
     _settings_item: MenuItem,
     _refresh_item: MenuItem,
+    _reset_item: MenuItem,
+    _restart_item: MenuItem,
     _quit_item: MenuItem,
     pub settings_item_id: MenuId,
     pub refresh_item_id: MenuId,
+    pub reset_item_id: MenuId,
+    pub restart_item_id: MenuId,
     pub quit_item_id: MenuId,
 }
 
@@ -48,14 +52,20 @@ impl SystemTray {
         let menu = Menu::new();
         let settings_item = MenuItem::new("⚙ Settings", true, None);
         let refresh_item = MenuItem::new("🔄 Refresh Devices", true, None);
+        let reset_item = MenuItem::new("📌 Reset Dock Position", true, None);
+        let restart_item = MenuItem::new("♻ Restart BatteryDock", true, None);
         let quit_item = MenuItem::new("❌ Exit BatteryDock", true, None);
 
         let settings_id = settings_item.id().clone();
         let refresh_id = refresh_item.id().clone();
+        let reset_id = reset_item.id().clone();
+        let restart_id = restart_item.id().clone();
         let quit_id = quit_item.id().clone();
 
         menu.append(&settings_item)?;
         menu.append(&refresh_item)?;
+        menu.append(&reset_item)?;
+        menu.append(&restart_item)?;
         menu.append(&quit_item)?;
 
         let tray_icon = TrayIconBuilder::new()
@@ -68,9 +78,13 @@ impl SystemTray {
             _tray_icon: tray_icon,
             _settings_item: settings_item,
             _refresh_item: refresh_item,
+            _reset_item: reset_item,
+            _restart_item: restart_item,
             _quit_item: quit_item,
             settings_item_id: settings_id,
             refresh_item_id: refresh_id,
+            reset_item_id: reset_id,
+            restart_item_id: restart_id,
             quit_item_id: quit_id,
         })
     }

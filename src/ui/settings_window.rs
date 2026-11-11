@@ -16,17 +16,33 @@ impl SettingsWindow {
             return;
         }
 
+        let (screen_w, screen_h) = unsafe {
+            use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+            let w = GetSystemMetrics(SM_CXSCREEN) as f32;
+            let h = GetSystemMetrics(SM_CYSCREEN) as f32;
+            (
+                if w > 100.0 { w } else { 1920.0 },
+                if h > 100.0 { h } else { 1080.0 },
+            )
+        };
+        let pos_x = ((screen_w - 480.0) / 2.0).max(50.0);
+        let pos_y = ((screen_h - 580.0) / 2.0).max(50.0);
+
         let mut on_refresh_opt = Some(on_refresh);
 
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("battery_dock_settings"),
             egui::ViewportBuilder::default()
-                .with_title("BatteryDock Settings")
-                .with_inner_size([460.0, 560.0])
+                .with_title("⚙ BatteryDock Settings")
+                .with_inner_size([480.0, 580.0])
                 .with_min_inner_size([380.0, 420.0])
+                .with_position([pos_x, pos_y])
                 .with_decorations(true)
                 .with_resizable(true)
-                .with_transparent(false),
+                .with_transparent(false)
+                .with_always_on_top()
+                .with_active(true)
+                .with_visible(true),
             |ctx, _class| {
                 egui::CentralPanel::default().show(ctx, |ui| {
                     egui::ScrollArea::vertical().show(ui, |ui| {

@@ -28,6 +28,7 @@ struct BatteryDockApp {
     devices: Vec<DeviceBattery>,
     open_settings: bool,
     open_settings_flag: Arc<AtomicBool>,
+    reset_pos_flag: Arc<AtomicBool>,
     _tray: Option<SystemTray>,
     last_device_count: usize,
     last_position_mode: DockPositionMode,
@@ -49,21 +50,25 @@ impl BatteryDockApp {
 
         let open_settings_flag = Arc::new(AtomicBool::new(false));
         let open_settings_clone = open_settings_flag.clone();
+        let reset_pos_flag = Arc::new(AtomicBool::new(false));
+        let reset_pos_clone = reset_pos_flag.clone();
         let engine_clone = engine.clone();
         let ctx_clone = cc.egui_ctx.clone();
 
-        let (quit_id, refresh_id, settings_id) = if let Some(t) = &tray {
+        let (quit_id, refresh_id, reset_id, restart_id, settings_id) = if let Some(t) = &tray {
             (
                 Some(t.quit_item_id.clone()),
                 Some(t.refresh_item_id.clone()),
+                Some(t.reset_item_id.clone()),
+                Some(t.restart_item_id.clone()),
                 Some(t.settings_item_id.clone()),
             )
         } else {
-            (None, None, None)
+            (None, None, None, None, None)
         };
 
         // Dedicated background thread for system tray:
-        // Handles Exit, Refresh, and Settings completely decoupled from the GUI update loop!
+        // Handles Exit, Restart, Reset, Refresh, and Settings completely decoupled from the GUI update loop!
         std::thread::spawn(move || {
             let menu_rx = tray_icon::menu::MenuEvent::receiver();
             let tray_rx = tray_icon::TrayIconEvent::receiver();
@@ -76,6 +81,21 @@ impl BatteryDockApp {
                         if &event.id == qid {
                             // Instant process exit
                             std::process::exit(0);
+                        }
+                    }
+                    if let Some(reid) = &restart_id {
+                        if &event.id == reid {
+                            // Instant restart: spawn fresh instance and exit
+                            if let Ok(exe) = std::env::current_exe() {
+                                let _ = std::process::Command::new(exe).spawn();
+                            }
+                            std::process::exit(0);
+                        }
+                    }
+                    if let Some(rpid) = &reset_id {
+                        if &event.id == rpid {
+                            reset_pos_clone.store(true, Ordering::SeqCst);
+                            ctx_clone.request_repaint();
                         }
                     }
                     if let Some(rid) = &refresh_id {
@@ -130,6 +150,7 @@ impl BatteryDockApp {
             devices: Vec::new(),
             open_settings: false,
             open_settings_flag,
+            reset_pos_flag,
             _tray: tray,
             last_device_count: 0,
             last_position_mode: DockPositionMode::TaskbarLeftOfTray,
@@ -168,14 +189,30 @@ impl eframe::App for BatteryDockApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Sync open_settings from atomic flag (e.g. if tray clicked)
-        if self.open_settings_flag.load(Ordering::SeqCst) {
-            self.open_settings = true;
+        // 1. Process reset position request from tray
+        if self.reset_pos_flag.swap(false, Ordering::SeqCst) {
+            self.config.position_mode = DockPositionMode::TaskbarLeftOfTray;
+            self.config.save();
+            self.is_dock_hidden = false;
+            let width = self.calculate_dock_width();
+            self.reposition_dock_to_taskbar(ctx, width);
+            self.engine.trigger_refresh();
+            ctx.request_repaint();
         }
 
-        // 1. Fullscreen app detection: hide dock when true fullscreen video or game is active
+        // 2. Sync open_settings from atomic flag (e.g. if tray clicked)
+        if self.open_settings_flag.swap(false, Ordering::SeqCst) {
+            self.open_settings = true;
+            // Ensure dock is not hidden when settings are opened
+            self.is_dock_hidden = false;
+            let width = self.calculate_dock_width();
+            self.reposition_dock_to_taskbar(ctx, width);
+            ctx.request_repaint();
+        }
+
+        // 3. Fullscreen app detection: hide dock when true fullscreen video or game is active
         let is_fullscreen = TaskbarGeometry::is_fullscreen_app_active();
-        if is_fullscreen {
+        if is_fullscreen && !self.open_settings {
             if !self.is_dock_hidden {
                 self.is_dock_hidden = true;
                 // Move off-screen instead of SW_HIDE so winit event loop and timers never sleep
@@ -185,21 +222,6 @@ impl eframe::App for BatteryDockApp {
             }
             // Keep polling every 150ms so we detect immediately when fullscreen exits
             ctx.request_repaint_after(Duration::from_millis(150));
-
-            // Still render settings window if opened from tray
-            if self.open_settings {
-                let engine_ref = self.engine.clone();
-                SettingsWindow::show(
-                    ctx,
-                    &mut self.open_settings,
-                    &mut self.config,
-                    &self.devices,
-                    move || engine_ref.trigger_refresh(),
-                );
-                if !self.open_settings {
-                    self.open_settings_flag.store(false, Ordering::SeqCst);
-                }
-            }
             return;
         } else if self.is_dock_hidden {
             // Fullscreen has ended: snap immediately back to taskbar!

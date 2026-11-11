@@ -27,7 +27,7 @@ Unlike heavy manufacturer suites, BatteryDock runs with **zero bloat** (~15 MB R
 
 Get the latest installer from the [Releases Page](https://github.com/jorjanion/BatteryDock/releases/latest):
 
-1. **[Download BatteryDock-Setup-v0.1.4.exe (Latest)](https://github.com/jorjanion/BatteryDock/releases/download/v0.1.4/BatteryDock-Setup-v0.1.4.exe)**
+1. **[Download BatteryDock-Setup-v0.1.5.exe (Latest)](https://github.com/jorjanion/BatteryDock/releases/download/v0.1.5/BatteryDock-Setup-v0.1.5.exe)**
 2. Run the installer:
    - Select your language (English or Spanish).
    - Check **"Start BatteryDock automatically when Windows starts"** if you want it to run seamlessly in the background on startup.

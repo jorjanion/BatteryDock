@@ -83,6 +83,12 @@ impl DockOverlay {
                         config.save();
                         ui.close_menu();
                     }
+                    if ui.button("♻ Restart BatteryDock").clicked() {
+                        if let Ok(exe) = std::env::current_exe() {
+                            let _ = std::process::Command::new(exe).spawn();
+                        }
+                        std::process::exit(0);
+                    }
                     if ui.button("❌ Exit BatteryDock").clicked() {
                         std::process::exit(0);
                     }

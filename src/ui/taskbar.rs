@@ -81,51 +81,60 @@ impl TaskbarGeometry {
         }
     }
 
-    /// Checks if a true fullscreen application/video or game is currently active
+    /// Checks if a true fullscreen application/video (e.g. YouTube fullscreen, VLC, Games) is currently active.
+    /// Excludes desktop, taskbar, Explorer windows, and our own process.
     pub fn is_fullscreen_app_active() -> bool {
         use windows::Win32::Foundation::RECT;
         use windows::Win32::Graphics::Gdi::{
             GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
         };
-        use windows::Win32::UI::Shell::{
-            SHQueryUserNotificationState, QUNS_BUSY, QUNS_PRESENTATION_MODE,
-            QUNS_RUNNING_D3D_FULL_SCREEN,
-        };
         use windows::Win32::UI::WindowsAndMessaging::{
-            GetClassNameW, GetForegroundWindow, GetWindowRect,
+            GetClassNameW, GetDesktopWindow, GetForegroundWindow, GetShellWindow, GetWindowRect,
+            GetWindowThreadProcessId,
         };
 
         unsafe {
-            // 1. Check official Windows Shell Query state
-            if let Ok(qstate) = SHQueryUserNotificationState() {
-                if qstate == QUNS_BUSY
-                    || qstate == QUNS_RUNNING_D3D_FULL_SCREEN
-                    || qstate == QUNS_PRESENTATION_MODE
-                {
-                    return true;
-                }
-            }
-
-            // 2. Check foreground window bounds
+            // 1. Get foreground window
             let fg = GetForegroundWindow();
             if fg.0.is_null() {
                 return false;
             }
 
-            // Ignore shell desktop / taskbar windows
+            // 2. Desktop and Shell windows are NEVER fullscreen applications
+            if fg == GetDesktopWindow() || fg == GetShellWindow() {
+                return false;
+            }
+
+            // 3. Our own BatteryDock window is NEVER a fullscreen application
+            let mut fg_pid = 0u32;
+            GetWindowThreadProcessId(fg, Some(&mut fg_pid));
+            if fg_pid == std::process::id() {
+                return false;
+            }
+
+            // 4. Check class name for Windows desktop, taskbar, Explorer, and shell components
             let mut class_buf = [0u16; 64];
             let len = GetClassNameW(fg, &mut class_buf);
             if len > 0 {
                 let class = String::from_utf16_lossy(&class_buf[..len as usize]);
-                if class == "Shell_TrayWnd"
-                    || class == "Progman"
-                    || class == "WorkerW"
-                    || class == "Shell_SecondaryTrayWnd"
+                let c = class.to_lowercase();
+                if c == "shell_traywnd"
+                    || c == "shell_secondarytraywnd"
+                    || c == "progman"
+                    || c == "workerw"
+                    || c == "#32769"
+                    || c.contains("folderview")
+                    || c.contains("shelldll")
+                    || c.contains("xamlexplorerhostislandwindow")
+                    || c.contains("toplevelwindowforoverflowxamlisland")
+                    || c.contains("corewindow")
+                    || c.contains("cabinetwclass") // Windows File Explorer
                 {
                     return false;
                 }
             }
 
+            // 5. Check if foreground window covers all 4 edges of the physical monitor
             let mut win_rect = RECT::default();
             if GetWindowRect(fg, &mut win_rect).is_ok() {
                 let monitor = MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST);
