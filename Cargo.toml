@@ -1,6 +1,6 @@
 [package]
 name = "battery-dock"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 authors = ["jorjanion"]
 description = "Ultra-lightweight Windows taskbar dock for peripheral battery levels (headphones, mice, keyboards, gamepads, VR) with custom alerts"
@@ -37,8 +37,10 @@ windows = { version = "0.58", features = [
     "Devices_Enumeration",
     "Foundation",
     "Foundation_Collections",
-    "Storage_Streams"
+    "Storage_Streams",
+    "implement"
 ] }
+windows-core = "0.58"
 tray-icon = "0.19"
 
 [build-dependencies]

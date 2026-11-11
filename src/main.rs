@@ -256,6 +256,7 @@ fn sync_dock_window_once(
         ensure_window_above_monitor_taskbar(hwnd, target_rect);
         if !currently_visible {
             set_window_visible_noactivate(hwnd, true);
+            ensure_window_above_monitor_taskbar(hwnd, target_rect);
             sync.is_dock_hidden.store(false, Ordering::Release);
             sync.just_unhid.store(true, Ordering::Release);
             if let Some(c) = ctx {

@@ -90,7 +90,7 @@ impl AppConfig {
             if let Some(parent) = path.parent() {
                 let _ = fs::create_dir_all(parent);
             }
-            let tmp_path = path.with_extension("toml.tmp");
+            let tmp_path = path.with_extension(format!("toml.{}.tmp", std::process::id()));
             if fs::write(&tmp_path, &content).is_ok() {
                 if fs::rename(&tmp_path, path).is_ok() {
                     return;

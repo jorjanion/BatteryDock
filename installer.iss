@@ -1,6 +1,6 @@
 ; Inno Setup Script for BatteryDock
 #define MyAppName "BatteryDock"
-#define MyAppVersion "0.1.10"
+#define MyAppVersion "0.1.11"
 #define MyAppPublisher "jorjanion"
 #define MyAppURL "https://github.com/jorjanion/BatteryDock"
 #define MyAppExeName "BatteryDock.exe"

@@ -307,6 +307,9 @@ pub fn parse_ghub_battery_state(json: &str, expected_path: &str) -> Option<(u8, 
     if !code.eq_ignore_ascii_case("SUCCESS") {
         return None;
     }
+    if parse_json_bool_field(json, "isBatteryRemoved") == Some(true) {
+        return None;
+    }
     let pct = parse_json_number_u8(json, "percentage")?;
     let charging = parse_json_bool_field(json, "charging").unwrap_or(false);
     Some((pct, charging))
@@ -712,6 +715,12 @@ mod tests {
 
         assert_eq!(
             parse_ghub_battery_state(discharging_json, "/battery/dev00000002/state"),
+            None
+        );
+
+        let removed_json = r#"{"path":"/battery/dev00000000/state","payload":{"charging":false,"isBatteryRemoved":true,"percentage":0},"result":{"code":"SUCCESS"}}"#;
+        assert_eq!(
+            parse_ghub_battery_state(removed_json, "/battery/dev00000000/state"),
             None
         );
     }

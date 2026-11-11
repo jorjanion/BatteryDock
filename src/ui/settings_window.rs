@@ -295,6 +295,7 @@ pub struct SettingsApp {
     engine: crate::battery::engine::BatteryEngine,
     devices: Vec<DeviceBattery>,
     is_open: bool,
+    last_config_reload: std::time::Instant,
 }
 
 impl SettingsApp {
@@ -312,12 +313,37 @@ impl SettingsApp {
             engine,
             devices,
             is_open: true,
+            last_config_reload: std::time::Instant::now(),
         }
     }
+
+    fn reload_external_config_if_due(&mut self) {
+        let path = AppConfig::config_path();
+        sync_external_config_if_due(&mut self.config, &mut self.last_config_reload, &path);
+    }
+}
+
+fn sync_external_config_if_due(
+    config: &mut AppConfig,
+    last_reload: &mut std::time::Instant,
+    path: &std::path::Path,
+) -> bool {
+    if last_reload.elapsed() >= std::time::Duration::from_millis(250) {
+        *last_reload = std::time::Instant::now();
+        if let Some(loaded) = AppConfig::try_load_from_path(path) {
+            if loaded != *config {
+                *config = loaded;
+                return true;
+            }
+        }
+    }
+    false
 }
 
 impl eframe::App for SettingsApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.reload_external_config_if_due();
+
         while let Ok(updated) = self.engine.receiver().try_recv() {
             self.devices = updated;
         }
@@ -346,7 +372,7 @@ impl eframe::App for SettingsApp {
                 });
             });
 
-        ctx.request_repaint_after(std::time::Duration::from_millis(500));
+        ctx.request_repaint_after(std::time::Duration::from_millis(250));
 
         if !self.is_open || ctx.input(|i| i.viewport().close_requested()) {
             std::process::exit(0);
@@ -391,4 +417,62 @@ pub fn run_standalone_settings() -> eframe::Result<()> {
         native_options,
         Box::new(|cc| Ok(Box::new(SettingsApp::new(cc)))),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_settings_reloads_external_reset_position_without_overwriting() {
+        let dir = std::env::temp_dir().join(format!(
+            "batterydock_settings_reload_test_{}",
+            std::process::id()
+        ));
+        let _ = std::fs::create_dir_all(&dir);
+        let path = dir.join("config.toml");
+
+        // Initial Settings state: Custom dragged position
+        let mut settings_cfg = AppConfig {
+            position_mode: DockPositionMode::Custom,
+            custom_pos_x: 640.0,
+            custom_pos_y: 420.0,
+            ..AppConfig::default()
+        };
+        settings_cfg.save_to_path(&path);
+
+        // External dock/tray action clicks "Reset to Taskbar Clock" and writes to disk
+        let external_cfg = AppConfig {
+            position_mode: DockPositionMode::TaskbarLeftOfTray,
+            custom_pos_x: 0.0,
+            custom_pos_y: 0.0,
+            ..settings_cfg.clone()
+        };
+        external_cfg.save_to_path(&path);
+
+        // Before 250ms elapsed, sync does not run
+        let mut recent = std::time::Instant::now();
+        assert!(!sync_external_config_if_due(
+            &mut settings_cfg,
+            &mut recent,
+            &path
+        ));
+        assert_eq!(settings_cfg.position_mode, DockPositionMode::Custom);
+
+        // Once due (>=250ms), Settings reloads the external reset cleanly
+        let mut due = std::time::Instant::now() - std::time::Duration::from_millis(300);
+        assert!(sync_external_config_if_due(
+            &mut settings_cfg,
+            &mut due,
+            &path
+        ));
+        assert_eq!(
+            settings_cfg.position_mode,
+            DockPositionMode::TaskbarLeftOfTray
+        );
+        assert_eq!(settings_cfg.custom_pos_x, 0.0);
+        assert_eq!(settings_cfg.custom_pos_y, 0.0);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

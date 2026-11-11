@@ -289,6 +289,7 @@ unsafe fn is_shell_desktop_or_overlay_class(class_lower: &str) -> bool {
             | "shell_inputswitchtoplevelwindow"
             | "wnd_startfeed"
             | "traynotifywnd"
+            | "tasklistthumbnailwnd"
     )
 }
 

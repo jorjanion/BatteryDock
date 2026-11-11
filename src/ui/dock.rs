@@ -77,6 +77,28 @@ impl DockOverlay {
         open_settings: &mut bool,
         on_refresh: impl FnOnce(),
     ) {
+        self.render_with_context_menu(
+            ctx,
+            config,
+            devices,
+            our_hwnd,
+            open_settings,
+            on_refresh,
+            show_dock_context_menu,
+        );
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn render_with_context_menu(
+        &mut self,
+        ctx: &egui::Context,
+        config: &mut AppConfig,
+        devices: &[DeviceBattery],
+        our_hwnd: isize,
+        open_settings: &mut bool,
+        on_refresh: impl FnOnce(),
+        context_menu_fn: impl FnOnce(isize) -> Option<DockContextMenuAction>,
+    ) {
         let elapsed = self.start_time.elapsed().as_secs_f32();
         let pulse_alpha = ((elapsed * 4.0).sin() * 0.5 + 0.5).clamp(0.0, 1.0);
 
@@ -107,24 +129,8 @@ impl DockOverlay {
                     egui::Sense::click_and_drag(),
                 );
 
-                if dock_response.secondary_clicked() {
-                    if let Some(action) = show_dock_context_menu(our_hwnd) {
-                        match action {
-                            DockContextMenuAction::Settings => *open_settings = true,
-                            DockContextMenuAction::Refresh => refresh_requested = true,
-                            DockContextMenuAction::ResetPosition => {
-                                config.position_mode = DockPositionMode::TaskbarLeftOfTray;
-                                config.custom_pos_x = 0.0;
-                                config.custom_pos_y = 0.0;
-                                config.save();
-                            }
-                            DockContextMenuAction::Restart => crate::restart_app(),
-                            DockContextMenuAction::Exit => std::process::exit(0),
-                        }
-                    }
-                }
-
                 let mut settings_clicked = false;
+                let mut settings_secondary_clicked = false;
                 let mut settings_pressed = false;
 
                 // Content inside the pill with zero implicit egui item spacing so layout == required_width()
@@ -268,11 +274,31 @@ impl DockOverlay {
                     if settings_btn.clicked() {
                         settings_clicked = true;
                     }
+                    if settings_btn.secondary_clicked() {
+                        settings_secondary_clicked = true;
+                    }
                     settings_pressed =
                         settings_btn.is_pointer_button_down_on() || settings_btn.hovered();
 
                     ui.add_space(6.0);
                 });
+
+                if dock_response.secondary_clicked() || settings_secondary_clicked {
+                    if let Some(action) = context_menu_fn(our_hwnd) {
+                        match action {
+                            DockContextMenuAction::Settings => *open_settings = true,
+                            DockContextMenuAction::Refresh => refresh_requested = true,
+                            DockContextMenuAction::ResetPosition => {
+                                config.position_mode = DockPositionMode::TaskbarLeftOfTray;
+                                config.custom_pos_x = 0.0;
+                                config.custom_pos_y = 0.0;
+                                config.save();
+                            }
+                            DockContextMenuAction::Restart => crate::restart_app(),
+                            DockContextMenuAction::Exit => std::process::exit(0),
+                        }
+                    }
+                }
 
                 // Custom Win32 drag with >5px threshold (uses Win32 GetAsyncKeyState so release outside 32px pill never sticks)
                 if our_hwnd != 0 {
@@ -290,8 +316,7 @@ impl DockOverlay {
                     }
 
                     if let Some((cx0, cy0, wx0, wy0)) = self.drag_anchor {
-                        let physical_down = is_primary_mouse_button_down()
-                            || ui.input(|i| i.pointer.primary_down());
+                        let physical_down = is_primary_mouse_button_down();
                         if physical_down {
                             if let Some((cx, cy)) = get_cursor_physical_pos() {
                                 let dx = cx - cx0;
@@ -459,6 +484,103 @@ mod tests {
         assert!(
             chg_shapes >= norm_shapes + 6,
             "Charging state must paint lightning bolt shapes (norm={norm_shapes}, chg={chg_shapes})"
+        );
+    }
+
+    #[test]
+    fn test_settings_gear_right_click_opens_context_menu() {
+        let mut cfg = AppConfig::default();
+        let devs = vec![sample_dev(75, false)];
+        let w = DockOverlay::required_width(&devs, &cfg);
+        let gear_pos = Pos2::new(w - 13.0, 16.0);
+
+        let ctx = egui::Context::default();
+        let mut dock = DockOverlay::new();
+        let mut open_settings = false;
+        let mut menu_opened_count = 0usize;
+
+        // Frame 1: initialize widget layout
+        let raw_init = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            ..Default::default()
+        };
+        let _ = ctx.run(raw_init, |ctx| {
+            dock.render_with_context_menu(
+                ctx,
+                &mut cfg,
+                &devs,
+                0,
+                &mut open_settings,
+                || {},
+                |_| {
+                    menu_opened_count += 1;
+                    None
+                },
+            );
+        });
+
+        // Frame 2: secondary mouse press on gear icon
+        let raw_down = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            events: vec![
+                egui::Event::PointerMoved(gear_pos),
+                egui::Event::PointerButton {
+                    pos: gear_pos,
+                    button: egui::PointerButton::Secondary,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ],
+            ..Default::default()
+        };
+        let _ = ctx.run(raw_down, |ctx| {
+            dock.render_with_context_menu(
+                ctx,
+                &mut cfg,
+                &devs,
+                0,
+                &mut open_settings,
+                || {},
+                |_| {
+                    menu_opened_count += 1;
+                    None
+                },
+            );
+        });
+
+        // Frame 3: secondary mouse release on gear icon -> must trigger context menu
+        let raw_up = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            events: vec![egui::Event::PointerButton {
+                pos: gear_pos,
+                button: egui::PointerButton::Secondary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+            ..Default::default()
+        };
+        let _ = ctx.run(raw_up, |ctx| {
+            dock.render_with_context_menu(
+                ctx,
+                &mut cfg,
+                &devs,
+                0,
+                &mut open_settings,
+                || {},
+                |_| {
+                    menu_opened_count += 1;
+                    None
+                },
+            );
+        });
+
+        assert_eq!(
+            menu_opened_count, 1,
+            "Right-clicking directly on the settings gear icon must invoke the context menu"
+        );
+        assert!(
+            !open_settings,
+            "Right-clicking the gear icon must not trigger left-click Settings open unless selected in menu"
         );
     }
 }
