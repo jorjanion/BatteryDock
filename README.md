@@ -16,6 +16,32 @@
 
 [Download Latest Installer](https://github.com/jorjanion/BatteryDock/releases/latest) · [Report a Bug](https://github.com/jorjanion/BatteryDock/issues) · [Request Device Support](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
 
+<br />
+
+<sub>
+<b>English</b> ·
+<a href="docs/i18n/README.es.md">Español</a> ·
+<a href="docs/i18n/README.fr.md">Français</a> ·
+<a href="docs/i18n/README.de.md">Deutsch</a> ·
+<a href="docs/i18n/README.pt-BR.md">Português</a> ·
+<a href="docs/i18n/README.it.md">Italiano</a> ·
+<a href="docs/i18n/README.nl.md">Nederlands</a> ·
+<a href="docs/i18n/README.pl.md">Polski</a> ·
+<a href="docs/i18n/README.sv.md">Svenska</a> ·
+<a href="docs/i18n/README.cs.md">Čeština</a> ·
+<a href="docs/i18n/README.ru.md">Русский</a> ·
+<a href="docs/i18n/README.uk.md">Українська</a> ·
+<a href="docs/i18n/README.tr.md">Türkçe</a> ·
+<a href="docs/i18n/README.ar.md">العربية</a> ·
+<a href="docs/i18n/README.hi.md">हिन्दी</a> ·
+<a href="docs/i18n/README.id.md">Bahasa Indonesia</a> ·
+<a href="docs/i18n/README.vi.md">Tiếng Việt</a> ·
+<a href="docs/i18n/README.ja.md">日本語</a> ·
+<a href="docs/i18n/README.ko.md">한국어</a> ·
+<a href="docs/i18n/README.zh-CN.md">简体中文</a> ·
+<a href="docs/i18n/README.zh-TW.md">繁體中文</a>
+</sub>
+
 </div>
 
 ---
@@ -62,7 +88,7 @@ Grab the latest release from the **[Releases Page](https://github.com/jorjanion/
 ### 🛡️ Windows SmartScreen Note
 Because BatteryDock is a free, community open-source app without a paid EV code-signing certificate yet, Windows SmartScreen may show *"Windows protected your PC"* on first launch (click **More info → Run anyway**).
 - Every release executable and installer is compiled publicly on clean GitHub-hosted Windows runners in [`.github/workflows/release.yml`](.github/workflows/release.yml).
-- Want total peace of mind? You can audit every line of Rust code and [compile it yourself](#-building-from-source) in under a minute.
+- Want total peace of mind? You can audit every line of Rust code and [compile it yourself](#build-from-source) in under a minute.
 
 ---
 
@@ -115,6 +141,8 @@ compact_mode = false
 ```
 
 ---
+
+<a id="build-from-source"></a>
 
 ## 🛠️ Building from Source
 
