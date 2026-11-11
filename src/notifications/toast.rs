@@ -143,7 +143,7 @@ pub fn show_toast_with_hold(
         let deadline = Instant::now() + hold_duration;
         let mut msg = MSG::default();
         while Instant::now() < deadline {
-            while PeekMessageW(&mut msg, hwnd, 0, 0, PM_REMOVE).as_bool() {
+            while PeekMessageW(&mut msg, None, 0, 0, PM_REMOVE).as_bool() {
                 let _ = TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }

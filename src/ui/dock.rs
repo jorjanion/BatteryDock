@@ -583,4 +583,109 @@ mod tests {
             "Right-clicking the gear icon must not trigger left-click Settings open unless selected in menu"
         );
     }
+
+    #[test]
+    fn test_device_pill_right_click_opens_context_menu_and_left_click_opens_settings() {
+        let mut cfg = AppConfig::default();
+        let devs = vec![sample_dev(75, true)];
+        let w = DockOverlay::required_width(&devs, &cfg);
+        let pct_label_pos = Pos2::new(w - 35.0, 16.0);
+
+        let ctx = egui::Context::default();
+        let mut dock = DockOverlay::new();
+        let mut open_settings = false;
+        let mut menu_opened_count = 0usize;
+
+        let run_frame = |dock: &mut DockOverlay,
+                         cfg: &mut AppConfig,
+                         open_settings: &mut bool,
+                         menu_opened_count: &mut usize,
+                         events: Vec<egui::Event>| {
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+                events,
+                ..Default::default()
+            };
+            let _ = ctx.run(raw, |ctx| {
+                dock.render_with_context_menu(
+                    ctx,
+                    cfg,
+                    &devs,
+                    0,
+                    open_settings,
+                    || {},
+                    |_| {
+                        *menu_opened_count += 1;
+                        None
+                    },
+                );
+            });
+        };
+
+        run_frame(
+            &mut dock,
+            &mut cfg,
+            &mut open_settings,
+            &mut menu_opened_count,
+            vec![],
+        );
+
+        // Right-click on the percentage text / device area
+        run_frame(
+            &mut dock,
+            &mut cfg,
+            &mut open_settings,
+            &mut menu_opened_count,
+            vec![
+                egui::Event::PointerMoved(pct_label_pos),
+                egui::Event::PointerButton {
+                    pos: pct_label_pos,
+                    button: egui::PointerButton::Secondary,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ],
+        );
+        run_frame(
+            &mut dock,
+            &mut cfg,
+            &mut open_settings,
+            &mut menu_opened_count,
+            vec![egui::Event::PointerButton {
+                pos: pct_label_pos,
+                button: egui::PointerButton::Secondary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+        );
+        assert_eq!(menu_opened_count, 1);
+        assert!(!open_settings);
+
+        // Left-click on the percentage text / device area opens Settings
+        run_frame(
+            &mut dock,
+            &mut cfg,
+            &mut open_settings,
+            &mut menu_opened_count,
+            vec![egui::Event::PointerButton {
+                pos: pct_label_pos,
+                button: egui::PointerButton::Primary,
+                pressed: true,
+                modifiers: egui::Modifiers::NONE,
+            }],
+        );
+        run_frame(
+            &mut dock,
+            &mut cfg,
+            &mut open_settings,
+            &mut menu_opened_count,
+            vec![egui::Event::PointerButton {
+                pos: pct_label_pos,
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+        );
+        assert!(open_settings);
+    }
 }

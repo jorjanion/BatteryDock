@@ -8,7 +8,6 @@ mod ui;
 use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
 use config::{AppConfig, DockPositionMode};
-use notifications::NotificationManager;
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -50,7 +49,6 @@ struct DockSyncState {
 struct BatteryDockApp {
     config: AppConfig,
     engine: BatteryEngine,
-    notification_mgr: NotificationManager,
     dock: DockOverlay,
     devices: Vec<DeviceBattery>,
     open_settings: bool,
@@ -306,7 +304,10 @@ impl BatteryDockApp {
         // Immediately enforce overlay styles, initial taskbar rect, Z-order, and fullscreen check before frame 1
         sync_dock_window_once(&sync, None, None);
 
-        let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
+        let engine = BatteryEngine::start_with_notifications(
+            Duration::from_secs(config.poll_interval_secs.max(1)),
+            true,
+        );
         let tray = SystemTray::new().ok();
 
         let reset_pos_flag = Arc::new(AtomicBool::new(false));
@@ -407,7 +408,6 @@ impl BatteryDockApp {
         Self {
             config,
             engine,
-            notification_mgr: NotificationManager::new(),
             dock: DockOverlay::new(),
             devices: initial_devices,
             open_settings: false,
@@ -460,15 +460,19 @@ impl eframe::App for BatteryDockApp {
             }
         }
 
-        // 3. Drain all pending battery updates and evaluate notifications only on the latest snapshot
+        // 3. Drain any pending battery updates (notifications run on BatteryEngine even when SW_HIDE)
         let mut latest_devices = None;
         while let Ok(updated_devices) = self.engine.receiver().try_recv() {
             latest_devices = Some(updated_devices);
         }
         if let Some(updated_devices) = latest_devices {
-            self.notification_mgr
-                .check_and_notify(&updated_devices, &self.config);
             self.devices = updated_devices;
+        }
+        if forced_reload {
+            let snapshot = self.engine.latest_snapshot();
+            if !snapshot.is_empty() || !self.devices.is_empty() {
+                self.devices = snapshot;
+            }
         }
 
         // 4. Resize viewport if device list, charging state, or percentage text toggle changed pill width
@@ -495,10 +499,11 @@ impl eframe::App for BatteryDockApp {
             move || engine_ref.trigger_refresh(),
         );
 
+        // Sync layout BEFORE clearing is_dragging so sync_watcher never snaps back for 1 tick
+        self.sync_layout_params(self.last_dock_width);
         self.sync
             .is_dragging
             .store(self.dock.is_dragging(), Ordering::Release);
-        self.sync_layout_params(self.last_dock_width);
 
         // 6. Open standalone settings window if triggered via gear icon, dock click, or context menu
         if self.open_settings {
@@ -557,7 +562,8 @@ fn main() -> eframe::Result<()> {
             .with_resizable(false)
             .with_inner_size([initial_width, initial_height])
             .with_position([start_x_logical, start_y_logical])
-            .with_taskbar(false),
+            .with_taskbar(false)
+            .with_active(false),
         ..Default::default()
     };
 

@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static TMP_SEQ: AtomicU64 = AtomicU64::new(0);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DockPositionMode {
@@ -90,7 +93,8 @@ impl AppConfig {
             if let Some(parent) = path.parent() {
                 let _ = fs::create_dir_all(parent);
             }
-            let tmp_path = path.with_extension(format!("toml.{}.tmp", std::process::id()));
+            let seq = TMP_SEQ.fetch_add(1, Ordering::Relaxed);
+            let tmp_path = path.with_extension(format!("toml.{}.{}.tmp", std::process::id(), seq));
             if fs::write(&tmp_path, &content).is_ok() {
                 if fs::rename(&tmp_path, path).is_ok() {
                     return;

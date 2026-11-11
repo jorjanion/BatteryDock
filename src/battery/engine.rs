@@ -3,6 +3,8 @@ use super::dualsense::DualSenseCollector;
 use super::logitech_hidpp::LogitechHidppCollector;
 use super::xinput::XInputCollector;
 use super::{BatteryCollector, DeviceBattery};
+use crate::config::AppConfig;
+use crate::notifications::NotificationManager;
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -19,12 +21,17 @@ pub struct BatteryEngine {
 
 impl BatteryEngine {
     pub fn start(poll_interval: Duration) -> Self {
-        let (update_sender, update_receiver) = crossbeam_channel::unbounded();
+        Self::start_with_notifications(poll_interval, false)
+    }
+
+    pub fn start_with_notifications(poll_interval: Duration, enable_notifications: bool) -> Self {
+        let (update_sender, update_receiver) = crossbeam_channel::bounded(1);
         let (refresh_sender, refresh_receiver) = crossbeam_channel::bounded(1);
         let latest_devices = Arc::new(Mutex::new(Vec::new()));
         let latest_clone = latest_devices.clone();
         let is_running = Arc::new(AtomicBool::new(true));
         let running_clone = is_running.clone();
+        let receiver_drain = update_receiver.clone();
 
         thread::spawn(move || {
             let collectors: Vec<Box<dyn BatteryCollector>> = vec![
@@ -33,18 +40,45 @@ impl BatteryEngine {
                 Box::new(DualSenseCollector::new()),
                 Box::new(BluetoothBatteryCollector::new()),
             ];
+            let mut notification_mgr = NotificationManager::new();
+            let mut last_cfg = AppConfig::try_load().unwrap_or_default();
+            let mut current_interval = poll_interval;
+
+            let poll_and_dispatch =
+                |notify_mgr: &mut NotificationManager,
+                 cfg_cache: &mut AppConfig,
+                 interval_out: &mut Duration| {
+                    let devices = Self::collect_all(&collectors);
+                    if let Ok(mut guard) = latest_clone.lock() {
+                        *guard = devices.clone();
+                    }
+
+                    if enable_notifications {
+                        if let Some(fresh_cfg) = AppConfig::try_load() {
+                            *interval_out =
+                                Duration::from_secs(fresh_cfg.poll_interval_secs.max(1));
+                            *cfg_cache = fresh_cfg;
+                        }
+                        notify_mgr.check_and_notify(&devices, cfg_cache);
+                    }
+
+                    // Keep channel bounded to 1 latest snapshot even when UI window is SW_HIDE
+                    while receiver_drain.try_recv().is_ok() {}
+                    let _ = update_sender.try_send(devices);
+                };
 
             // Initial poll immediately
-            Self::execute_poll(&collectors, &update_sender, &latest_clone);
+            poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
 
             while running_clone.load(Ordering::Relaxed) {
+                let wait_dur = current_interval;
                 // Wait for either the timer or a manual refresh signal
                 crossbeam_channel::select! {
                     recv(refresh_receiver) -> _ => {
-                        Self::execute_poll(&collectors, &update_sender, &latest_clone);
+                        poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
                     }
-                    default(poll_interval) => {
-                        Self::execute_poll(&collectors, &update_sender, &latest_clone);
+                    default(wait_dur) => {
+                        poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
                     }
                 }
             }
@@ -58,11 +92,7 @@ impl BatteryEngine {
         }
     }
 
-    fn execute_poll(
-        collectors: &[Box<dyn BatteryCollector>],
-        sender: &Sender<Vec<DeviceBattery>>,
-        latest_devices: &Mutex<Vec<DeviceBattery>>,
-    ) {
+    fn collect_all(collectors: &[Box<dyn BatteryCollector>]) -> Vec<DeviceBattery> {
         let mut all_devices: Vec<DeviceBattery> = Vec::new();
         let mut seen_ids = std::collections::HashSet::new();
 
@@ -75,7 +105,16 @@ impl BatteryEngine {
                 }
             }
         }
+        all_devices
+    }
 
+    #[cfg(test)]
+    fn execute_poll(
+        collectors: &[Box<dyn BatteryCollector>],
+        sender: &Sender<Vec<DeviceBattery>>,
+        latest_devices: &Mutex<Vec<DeviceBattery>>,
+    ) {
+        let all_devices = Self::collect_all(collectors);
         if let Ok(mut guard) = latest_devices.lock() {
             *guard = all_devices.clone();
         }

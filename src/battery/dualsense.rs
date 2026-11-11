@@ -53,6 +53,7 @@ pub fn parse_sony_battery_report(buf: &[u8], is_dualsense: bool) -> Option<(u8, 
 impl BatteryCollector for DualSenseCollector {
     fn poll_devices(&self) -> Vec<DeviceBattery> {
         let mut devices = Vec::new();
+        let mut seen_ids = std::collections::HashSet::new();
 
         let api = match HidApi::new() {
             Ok(api) => api,
@@ -70,6 +71,17 @@ impl BatteryCollector for DualSenseCollector {
                     continue;
                 }
 
+                let serial = dev_info
+                    .serial_number()
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_string)
+                    .unwrap_or_else(|| dev_info.path().to_string_lossy().to_string());
+                let id = format!("sony_{:04x}_{}", pid, serial);
+                if seen_ids.contains(&id) {
+                    continue;
+                }
+
                 if let Ok(device) = dev_info.open_device(&api) {
                     let mut buf = [0u8; 78];
                     // Non-blocking or quick read
@@ -83,9 +95,9 @@ impl BatteryCollector for DualSenseCollector {
                                 "PlayStation DualShock 4 Controller".to_string()
                             };
 
-                            let serial = dev_info.serial_number().unwrap_or("0");
+                            seen_ids.insert(id.clone());
                             devices.push(DeviceBattery {
-                                id: format!("sony_{:04x}_{}", pid, serial),
+                                id,
                                 name,
                                 device_type: DeviceType::Gamepad,
                                 percentage,
@@ -93,7 +105,6 @@ impl BatteryCollector for DualSenseCollector {
                                 is_connected: true,
                                 source: BatterySource::DualSenseHid,
                             });
-                            break;
                         }
                     }
                 }

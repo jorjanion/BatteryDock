@@ -23,11 +23,18 @@ fn generate_soft_chime_wav() -> Vec<u8> {
 
     let mut pcm_data = Vec::with_capacity(total_samples * 2);
 
+    let fade_samples = (sample_rate as usize / 40).min(total_samples); // ~25ms smooth tail fade-out
     for i in 0..total_samples {
         let t = i as f32 / sample_rate as f32;
 
-        // Exponential decay envelope
-        let envelope = (-4.5 * t).exp();
+        // Exponential decay envelope + smooth tail fade-out to zero
+        let tail_gain = if i >= total_samples - fade_samples {
+            let rem = (total_samples - 1 - i) as f32 / fade_samples as f32;
+            0.5 * (1.0 - (PI * rem).cos())
+        } else {
+            1.0
+        };
+        let envelope = (-4.5 * t).exp() * tail_gain;
 
         // Dual harmonic soft bell: fundamental (C5 / G5 mix) + soft harmonics
         let freq1 = 523.25; // C5
