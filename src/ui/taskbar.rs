@@ -113,11 +113,23 @@ impl TaskbarGeometry {
             // 3. Our own BatteryDock window is NEVER a fullscreen application
             let mut fg_pid = 0u32;
             GetWindowThreadProcessId(fg, Some(&mut fg_pid));
-            if fg_pid == std::process::id() {
+            if fg_pid == 0 || fg_pid == std::process::id() {
                 return false;
             }
 
-            // 4. Check class name for Windows desktop, taskbar, Explorer, and shell components
+            // 4. Windows Explorer / Shell process is NEVER a fullscreen application!
+            // This covers desktop wallpaper, desktop icons (SysListView32), taskbar,
+            // start menu, action center, notification overflow, and File Explorer.
+            let shell_hwnd = GetShellWindow();
+            if !shell_hwnd.0.is_null() {
+                let mut shell_pid = 0u32;
+                GetWindowThreadProcessId(shell_hwnd, Some(&mut shell_pid));
+                if shell_pid != 0 && fg_pid == shell_pid {
+                    return false;
+                }
+            }
+
+            // 5. Also check known shell/desktop class names
             let mut class_buf = [0u16; 64];
             let len = GetClassNameW(fg, &mut class_buf);
             if len > 0 {
@@ -130,6 +142,7 @@ impl TaskbarGeometry {
                     || c == "#32769"
                     || c.contains("folderview")
                     || c.contains("shelldll")
+                    || c.contains("syslistview")
                     || c.contains("xamlexplorerhostislandwindow")
                     || c.contains("toplevelwindowforoverflowxamlisland")
                     || c.contains("corewindow")
@@ -140,7 +153,7 @@ impl TaskbarGeometry {
                 }
             }
 
-            // 5. Check if foreground window covers all 4 edges of the primary physical monitor
+            // 6. Check if foreground window covers all 4 edges of the primary physical monitor
             let mut win_rect = RECT::default();
             if GetWindowRect(fg, &mut win_rect).is_ok() {
                 let monitor = MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST);

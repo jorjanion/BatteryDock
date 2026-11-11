@@ -5,79 +5,6 @@ use crate::notifications::audio;
 pub struct SettingsWindow;
 
 impl SettingsWindow {
-    pub fn show(
-        ctx: &egui::Context,
-        open: &mut bool,
-        config: &mut AppConfig,
-        devices: &[DeviceBattery],
-        on_refresh: impl FnOnce(),
-    ) {
-        if !*open {
-            return;
-        }
-
-        let (screen_w, screen_h) = unsafe {
-            use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
-            let w = GetSystemMetrics(SM_CXSCREEN) as f32;
-            let h = GetSystemMetrics(SM_CYSCREEN) as f32;
-            (
-                if w > 100.0 { w } else { 1920.0 },
-                if h > 100.0 { h } else { 1080.0 },
-            )
-        };
-        let pos_x = ((screen_w - 480.0) / 2.0).max(50.0);
-        let pos_y = ((screen_h - 580.0) / 2.0).max(50.0);
-
-        let mut on_refresh_opt = Some(on_refresh);
-
-        ctx.show_viewport_immediate(
-            egui::ViewportId::from_hash_of("battery_dock_settings"),
-            egui::ViewportBuilder::default()
-                .with_title("⚙ BatteryDock Settings")
-                .with_inner_size([480.0, 580.0])
-                .with_min_inner_size([380.0, 420.0])
-                .with_position([pos_x, pos_y])
-                .with_decorations(true)
-                .with_resizable(true)
-                .with_transparent(false)
-                .with_always_on_top()
-                .with_active(true)
-                .with_visible(true),
-            |ctx, _class| {
-                let mut v = egui::Visuals::dark();
-                v.panel_fill = egui::Color32::from_rgb(26, 28, 34);
-                v.window_fill = egui::Color32::from_rgb(26, 28, 34);
-                ctx.set_visuals(v);
-
-                egui::CentralPanel::default()
-                    .frame(
-                        egui::Frame::NONE
-                            .fill(egui::Color32::from_rgb(26, 28, 34))
-                            .inner_margin(egui::Margin::same(12)),
-                    )
-                    .show(ctx, |ui| {
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            Self::render_contents(
-                                ui,
-                                open,
-                                config,
-                                devices,
-                                || {
-                                    if let Some(cb) = on_refresh_opt.take() {
-                                        cb();
-                                    }
-                                },
-                            );
-                        });
-                    });
-
-                if ctx.input(|i| i.viewport().close_requested()) {
-                    *open = false;
-                }
-            },
-        );
-    }
-
     pub fn render_contents(
         ui: &mut egui::Ui,
         open: &mut bool,
@@ -338,4 +265,73 @@ fn set_run_at_startup(enable: bool) -> Result<(), ()> {
         }
     }
     Ok(())
+}
+
+pub struct SettingsApp {
+    config: AppConfig,
+    devices: Vec<DeviceBattery>,
+    is_open: bool,
+}
+
+impl SettingsApp {
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+        let config = AppConfig::load();
+        let engine = crate::battery::engine::BatteryEngine::start(std::time::Duration::from_secs(config.poll_interval_secs));
+        let devices = engine.receiver().recv_timeout(std::time::Duration::from_millis(500)).unwrap_or_default();
+        Self {
+            config,
+            devices,
+            is_open: true,
+        }
+    }
+}
+
+impl eframe::App for SettingsApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let mut visuals = egui::Visuals::dark();
+        visuals.panel_fill = egui::Color32::from_rgb(22, 24, 29);
+        visuals.window_fill = egui::Color32::from_rgb(22, 24, 29);
+        ctx.set_visuals(visuals);
+
+        egui::CentralPanel::default()
+            .frame(
+                egui::Frame::NONE
+                    .fill(egui::Color32::from_rgb(22, 24, 29))
+                    .inner_margin(egui::Margin::same(16)),
+            )
+            .show(ctx, |ui| {
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    SettingsWindow::render_contents(
+                        ui,
+                        &mut self.is_open,
+                        &mut self.config,
+                        &self.devices,
+                        || {},
+                    );
+                });
+            });
+
+        if !self.is_open || ctx.input(|i| i.viewport().close_requested()) {
+            std::process::exit(0);
+        }
+    }
+}
+
+pub fn run_standalone_settings() -> eframe::Result<()> {
+    let native_options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_title("⚙ BatteryDock Settings")
+            .with_inner_size([480.0, 600.0])
+            .with_min_inner_size([380.0, 420.0])
+            .with_decorations(true)
+            .with_resizable(true)
+            .with_transparent(false),
+        ..Default::default()
+    };
+
+    eframe::run_native(
+        "BatteryDock Settings",
+        native_options,
+        Box::new(|cc| Ok(Box::new(SettingsApp::new(cc)))),
+    )
 }

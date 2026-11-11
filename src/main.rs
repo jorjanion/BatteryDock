@@ -13,7 +13,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use ui::dock::DockOverlay;
-use ui::settings_window::SettingsWindow;
 use ui::taskbar::TaskbarGeometry;
 use ui::tray::SystemTray;
 use windows::core::w;
@@ -27,12 +26,59 @@ struct BatteryDockApp {
     dock: DockOverlay,
     devices: Vec<DeviceBattery>,
     open_settings: bool,
-    open_settings_flag: Arc<AtomicBool>,
     reset_pos_flag: Arc<AtomicBool>,
     _tray: Option<SystemTray>,
     last_device_count: usize,
     last_position_mode: DockPositionMode,
     is_dock_hidden: bool,
+    config_reload_timer: u32,
+}
+
+static MUTEX_HANDLE: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
+    std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
+
+pub fn restart_app() {
+    unsafe {
+        // Release and close mutex before launching new instance
+        let h = MUTEX_HANDLE.swap(std::ptr::null_mut(), Ordering::SeqCst);
+        if !h.is_null() {
+            let _ = windows::Win32::Foundation::CloseHandle(windows::Win32::Foundation::HANDLE(h));
+        }
+
+        if let Ok(exe) = std::env::current_exe() {
+            let exe_str = exe.to_string_lossy().to_string();
+            let exe_hstring = windows::core::HSTRING::from(exe_str);
+            let open_hstring = windows::core::HSTRING::from("open");
+            windows::Win32::UI::Shell::ShellExecuteW(
+                windows::Win32::Foundation::HWND(std::ptr::null_mut()),
+                windows::core::PCWSTR(open_hstring.as_ptr()),
+                windows::core::PCWSTR(exe_hstring.as_ptr()),
+                windows::core::PCWSTR(std::ptr::null()),
+                windows::core::PCWSTR(std::ptr::null()),
+                windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
+            );
+        }
+        std::process::exit(0);
+    }
+}
+
+pub fn open_settings_window() {
+    unsafe {
+        if let Ok(exe) = std::env::current_exe() {
+            let exe_str = exe.to_string_lossy().to_string();
+            let exe_hstring = windows::core::HSTRING::from(exe_str);
+            let open_hstring = windows::core::HSTRING::from("open");
+            let param_hstring = windows::core::HSTRING::from("--settings");
+            windows::Win32::UI::Shell::ShellExecuteW(
+                windows::Win32::Foundation::HWND(std::ptr::null_mut()),
+                windows::core::PCWSTR(open_hstring.as_ptr()),
+                windows::core::PCWSTR(exe_hstring.as_ptr()),
+                windows::core::PCWSTR(param_hstring.as_ptr()),
+                windows::core::PCWSTR(std::ptr::null()),
+                windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
+            );
+        }
+    }
 }
 
 impl BatteryDockApp {
@@ -48,8 +94,6 @@ impl BatteryDockApp {
         let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
         let tray = SystemTray::new().ok();
 
-        let open_settings_flag = Arc::new(AtomicBool::new(false));
-        let open_settings_clone = open_settings_flag.clone();
         let reset_pos_flag = Arc::new(AtomicBool::new(false));
         let reset_pos_clone = reset_pos_flag.clone();
         let engine_clone = engine.clone();
@@ -85,15 +129,7 @@ impl BatteryDockApp {
                     }
                     if let Some(reid) = &restart_id {
                         if &event.id == reid {
-                            // Instant restart: launch delayed child that waits for mutex release, then exit
-                            if let Ok(exe) = std::env::current_exe() {
-                                let exe_str = exe.to_string_lossy().to_string();
-                                let _ = std::process::Command::new("cmd")
-                                    .args(["/c", "timeout /t 1 /nobreak >nul & start \"\""])
-                                    .arg(exe_str)
-                                    .spawn();
-                            }
-                            std::process::exit(0);
+                            restart_app();
                         }
                     }
                     if let Some(rpid) = &reset_id {
@@ -109,8 +145,7 @@ impl BatteryDockApp {
                     }
                     if let Some(sid) = &settings_id {
                         if &event.id == sid {
-                            open_settings_clone.store(true, Ordering::SeqCst);
-                            ctx_clone.request_repaint();
+                            open_settings_window();
                         }
                     }
                 }
@@ -127,9 +162,7 @@ impl BatteryDockApp {
                             button: tray_icon::MouseButton::Left,
                             ..
                         } => {
-                            let cur = open_settings_clone.load(Ordering::SeqCst);
-                            open_settings_clone.store(!cur, Ordering::SeqCst);
-                            ctx_clone.request_repaint();
+                            open_settings_window();
                         }
                         _ => {}
                     }
@@ -153,12 +186,12 @@ impl BatteryDockApp {
             dock: DockOverlay::new(),
             devices: Vec::new(),
             open_settings: false,
-            open_settings_flag,
             reset_pos_flag,
             _tray: tray,
             last_device_count: 0,
             last_position_mode: DockPositionMode::TaskbarLeftOfTray,
             is_dock_hidden: false,
+            config_reload_timer: 0,
         }
     }
 
@@ -204,22 +237,11 @@ impl eframe::App for BatteryDockApp {
             ctx.request_repaint();
         }
 
-        // 2. Sync open_settings from atomic flag (e.g. if tray clicked)
-        if self.open_settings_flag.swap(false, Ordering::SeqCst) {
-            self.open_settings = true;
-            // Ensure dock is not hidden when settings are opened
-            self.is_dock_hidden = false;
-            let width = self.calculate_dock_width();
-            self.reposition_dock_to_taskbar(ctx, width);
-            ctx.request_repaint();
-        }
-
-        // 3. Fullscreen app detection: hide dock when true fullscreen video or game is active
+        // 2. Fullscreen app detection: hide dock when true fullscreen video or game is active
         let is_fullscreen = TaskbarGeometry::is_fullscreen_app_active();
-        if is_fullscreen && !self.open_settings {
+        if is_fullscreen {
             if !self.is_dock_hidden {
                 self.is_dock_hidden = true;
-                // Make clickthrough and transparent without moving window off-screen
                 ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(true));
             }
             ctx.request_repaint_after(Duration::from_millis(150));
@@ -233,7 +255,7 @@ impl eframe::App for BatteryDockApp {
             ctx.request_repaint();
         }
 
-        // 2. Receive background battery updates
+        // 3. Receive background battery updates
         if let Ok(updated_devices) = self.engine.receiver().try_recv() {
             self.notification_mgr
                 .check_and_notify(&updated_devices, &self.config);
@@ -253,14 +275,31 @@ impl eframe::App for BatteryDockApp {
             }
         }
 
-        // 3. Handle position mode changes from settings
+        // 4. Periodically check if config changed on disk (e.g. from standalone settings window)
+        self.config_reload_timer += 1;
+        if self.config_reload_timer >= 15 {
+            self.config_reload_timer = 0;
+            let loaded = AppConfig::load();
+            if loaded.position_mode != self.config.position_mode
+                || loaded.show_percentage_text != self.config.show_percentage_text
+                || loaded.compact_mode != self.config.compact_mode
+            {
+                self.config = loaded;
+                self.last_position_mode = self.config.position_mode;
+                let width = self.calculate_dock_width();
+                self.reposition_dock_to_taskbar(ctx, width);
+                ctx.request_repaint();
+            }
+        }
+
+        // 5. Handle position mode changes from settings
         if self.config.position_mode != self.last_position_mode {
             self.last_position_mode = self.config.position_mode;
             let width = self.calculate_dock_width();
             self.reposition_dock_to_taskbar(ctx, width);
         }
 
-        // 4. Render main dock overlay on taskbar
+        // 6. Render main dock overlay on taskbar
         let engine_ref = self.engine.clone();
         self.dock.render(
             ctx,
@@ -269,31 +308,24 @@ impl eframe::App for BatteryDockApp {
             &mut self.open_settings,
             move || engine_ref.trigger_refresh(),
         );
-
-        // 5. Render settings window if opened
-        if self.open_settings {
-            let engine_ref2 = self.engine.clone();
-            SettingsWindow::show(
-                ctx,
-                &mut self.open_settings,
-                &mut self.config,
-                &self.devices,
-                move || engine_ref2.trigger_refresh(),
-            );
-            if !self.open_settings {
-                self.open_settings_flag.store(false, Ordering::SeqCst);
-            }
-        }
     }
 }
 
 fn main() -> eframe::Result<()> {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|a| a == "--settings" || a == "-s") {
+        return ui::settings_window::run_standalone_settings();
+    }
+
     // Ensure single instance running
     unsafe {
-        let _ = CreateMutexW(None, true, w!("Global\\BatteryDockSingleInstanceMutex"));
+        let mutex = CreateMutexW(None, true, w!("Global\\BatteryDockSingleInstanceMutex"));
         if GetLastError() == ERROR_ALREADY_EXISTS {
             eprintln!("BatteryDock is already running.");
             return Ok(());
+        }
+        if let Ok(h) = mutex {
+            MUTEX_HANDLE.store(h.0, Ordering::SeqCst);
         }
     }
 

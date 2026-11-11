@@ -61,16 +61,16 @@ impl DockOverlay {
                     }
                 }
 
-                // Clicking the dock toggles settings
+                // Clicking the dock opens settings
                 if dock_response.clicked() {
-                    *open_settings = !*open_settings;
+                    crate::open_settings_window();
                 }
 
                 dock_response.context_menu(|ui| {
                     ui.label(egui::RichText::new("🔋 BatteryDock").strong());
                     ui.separator();
                     if ui.button("⚙ Settings").clicked() {
-                        *open_settings = true;
+                        crate::open_settings_window();
                         ui.close_menu();
                     }
                     if ui.button("🔄 Refresh Devices").clicked() {
@@ -84,14 +84,7 @@ impl DockOverlay {
                         ui.close_menu();
                     }
                     if ui.button("♻ Restart BatteryDock").clicked() {
-                        if let Ok(exe) = std::env::current_exe() {
-                            let exe_str = exe.to_string_lossy().to_string();
-                            let _ = std::process::Command::new("cmd")
-                                .args(["/c", "timeout /t 1 /nobreak >nul & start \"\""])
-                                .arg(exe_str)
-                                .spawn();
-                        }
-                        std::process::exit(0);
+                        crate::restart_app();
                     }
                     if ui.button("❌ Exit BatteryDock").clicked() {
                         std::process::exit(0);
