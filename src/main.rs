@@ -9,6 +9,8 @@ use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
 use config::{AppConfig, DockPositionMode};
 use notifications::NotificationManager;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 use ui::dock::DockOverlay;
 use ui::settings_window::SettingsWindow;
@@ -18,11 +20,6 @@ use windows::core::w;
 use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS};
 use windows::Win32::System::Threading::CreateMutexW;
 
-enum TrayAction {
-    Menu(tray_icon::menu::MenuEvent),
-    Tray(tray_icon::TrayIconEvent),
-}
-
 struct BatteryDockApp {
     config: AppConfig,
     engine: BatteryEngine,
@@ -30,8 +27,8 @@ struct BatteryDockApp {
     dock: DockOverlay,
     devices: Vec<DeviceBattery>,
     open_settings: bool,
+    open_settings_flag: Arc<AtomicBool>,
     _tray: Option<SystemTray>,
-    tray_action_rx: crossbeam_channel::Receiver<TrayAction>,
     last_device_count: usize,
     last_position_mode: DockPositionMode,
     is_dock_hidden: bool,
@@ -50,34 +47,78 @@ impl BatteryDockApp {
         let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
         let tray = SystemTray::new().ok();
 
-        let (tray_action_tx, tray_action_rx) = crossbeam_channel::unbounded::<TrayAction>();
-
-        // Register event handlers for tray and menu so events are queued and wake up egui immediately
-        let tx = tray_action_tx.clone();
+        let open_settings_flag = Arc::new(AtomicBool::new(false));
+        let open_settings_clone = open_settings_flag.clone();
+        let engine_clone = engine.clone();
         let ctx_clone = cc.egui_ctx.clone();
-        tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
-            let _ = tx.send(TrayAction::Menu(event));
-            ctx_clone.request_repaint();
-        }));
 
-        let tx2 = tray_action_tx.clone();
-        let ctx_clone2 = cc.egui_ctx.clone();
-        tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
-            let _ = tx2.send(TrayAction::Tray(event));
-            ctx_clone2.request_repaint();
-        }));
+        let (quit_id, refresh_id, settings_id) = if let Some(t) = &tray {
+            (
+                Some(t.quit_item_id.clone()),
+                Some(t.refresh_item_id.clone()),
+                Some(t.settings_item_id.clone()),
+            )
+        } else {
+            (None, None, None)
+        };
 
-        // Dedicated fast fullscreen watcher thread (120ms check, wakes up egui instantly on state change)
-        let ctx_fs = cc.egui_ctx.clone();
+        // Dedicated background thread for system tray:
+        // Handles Exit, Refresh, and Settings completely decoupled from the GUI update loop!
         std::thread::spawn(move || {
-            let mut last_fs = false;
+            let menu_rx = tray_icon::menu::MenuEvent::receiver();
+            let tray_rx = tray_icon::TrayIconEvent::receiver();
+            let mut tick = 0u32;
+
             loop {
-                std::thread::sleep(Duration::from_millis(120));
-                let fs = TaskbarGeometry::is_fullscreen_app_active();
-                if fs != last_fs {
-                    last_fs = fs;
-                    ctx_fs.request_repaint();
+                // 1. Process menu clicks
+                while let Ok(event) = menu_rx.try_recv() {
+                    if let Some(qid) = &quit_id {
+                        if &event.id == qid {
+                            // Instant process exit
+                            std::process::exit(0);
+                        }
+                    }
+                    if let Some(rid) = &refresh_id {
+                        if &event.id == rid {
+                            engine_clone.trigger_refresh();
+                        }
+                    }
+                    if let Some(sid) = &settings_id {
+                        if &event.id == sid {
+                            open_settings_clone.store(true, Ordering::SeqCst);
+                            ctx_clone.request_repaint();
+                        }
+                    }
                 }
+
+                // 2. Process tray icon clicks
+                while let Ok(event) = tray_rx.try_recv() {
+                    match event {
+                        tray_icon::TrayIconEvent::Click {
+                            button: tray_icon::MouseButton::Left,
+                            button_state: tray_icon::MouseButtonState::Up,
+                            ..
+                        }
+                        | tray_icon::TrayIconEvent::DoubleClick {
+                            button: tray_icon::MouseButton::Left,
+                            ..
+                        } => {
+                            let cur = open_settings_clone.load(Ordering::SeqCst);
+                            open_settings_clone.store(!cur, Ordering::SeqCst);
+                            ctx_clone.request_repaint();
+                        }
+                        _ => {}
+                    }
+                }
+
+                // Heartbeat repaint request every ~150ms (5 * 30ms) to ensure event loop never hangs
+                tick += 1;
+                if tick >= 5 {
+                    tick = 0;
+                    ctx_clone.request_repaint();
+                }
+
+                std::thread::sleep(Duration::from_millis(30));
             }
         });
 
@@ -88,8 +129,8 @@ impl BatteryDockApp {
             dock: DockOverlay::new(),
             devices: Vec::new(),
             open_settings: false,
+            open_settings_flag,
             _tray: tray,
-            tray_action_rx,
             last_device_count: 0,
             last_position_mode: DockPositionMode::TaskbarLeftOfTray,
             is_dock_hidden: false,
@@ -127,64 +168,48 @@ impl eframe::App for BatteryDockApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // 1. Process all tray menu & click actions first
-        while let Ok(action) = self.tray_action_rx.try_recv() {
-            match action {
-                TrayAction::Menu(menu_event) => {
-                    if let Some(tray) = &self._tray {
-                        if menu_event.id == tray.settings_item_id {
-                            self.open_settings = true;
-                            ctx.request_repaint();
-                        } else if menu_event.id == tray.refresh_item_id {
-                            self.engine.trigger_refresh();
-                        } else if menu_event.id == tray.quit_item_id {
-                            std::process::exit(0);
-                        }
-                    }
-                }
-                TrayAction::Tray(tray_event) => {
-                    match tray_event {
-                        tray_icon::TrayIconEvent::Click {
-                            button: tray_icon::MouseButton::Left,
-                            button_state: tray_icon::MouseButtonState::Up,
-                            ..
-                        }
-                        | tray_icon::TrayIconEvent::DoubleClick {
-                            button: tray_icon::MouseButton::Left,
-                            ..
-                        } => {
-                            self.open_settings = !self.open_settings;
-                            ctx.request_repaint();
-                        }
-                        _ => {}
-                    }
-                }
-            }
+        // Sync open_settings from atomic flag (e.g. if tray clicked)
+        if self.open_settings_flag.load(Ordering::SeqCst) {
+            self.open_settings = true;
         }
 
-        // 2. Fullscreen app detection: when in fullscreen, pass clicks through and do not render dock
+        // 1. Fullscreen app detection: hide dock when true fullscreen video or game is active
         let is_fullscreen = TaskbarGeometry::is_fullscreen_app_active();
         if is_fullscreen {
             if !self.is_dock_hidden {
                 self.is_dock_hidden = true;
-                ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(true));
+                // Move off-screen instead of SW_HIDE so winit event loop and timers never sleep
+                ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::Pos2::new(
+                    -10000.0, -10000.0,
+                )));
             }
-            // If settings window was opened, keep rendering it
-            let engine_ref2 = self.engine.clone();
-            SettingsWindow::show(
-                ctx,
-                &mut self.open_settings,
-                &mut self.config,
-                &self.devices,
-                move || engine_ref2.trigger_refresh(),
-            );
+            // Keep polling every 150ms so we detect immediately when fullscreen exits
+            ctx.request_repaint_after(Duration::from_millis(150));
+
+            // Still render settings window if opened from tray
+            if self.open_settings {
+                let engine_ref = self.engine.clone();
+                SettingsWindow::show(
+                    ctx,
+                    &mut self.open_settings,
+                    &mut self.config,
+                    &self.devices,
+                    move || engine_ref.trigger_refresh(),
+                );
+                if !self.open_settings {
+                    self.open_settings_flag.store(false, Ordering::SeqCst);
+                }
+            }
             return;
         } else if self.is_dock_hidden {
+            // Fullscreen has ended: snap immediately back to taskbar!
             self.is_dock_hidden = false;
-            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(false));
+            let width = self.calculate_dock_width();
+            self.reposition_dock_to_taskbar(ctx, width);
+            ctx.request_repaint();
         }
 
-        // 3. Receive background battery updates
+        // 2. Receive background battery updates
         if let Ok(updated_devices) = self.engine.receiver().try_recv() {
             self.notification_mgr
                 .check_and_notify(&updated_devices, &self.config);
@@ -204,14 +229,14 @@ impl eframe::App for BatteryDockApp {
             }
         }
 
-        // 4. Handle position mode changes from settings
+        // 3. Handle position mode changes from settings
         if self.config.position_mode != self.last_position_mode {
             self.last_position_mode = self.config.position_mode;
             let width = self.calculate_dock_width();
             self.reposition_dock_to_taskbar(ctx, width);
         }
 
-        // 5. Render main dock overlay on taskbar
+        // 4. Render main dock overlay on taskbar
         let engine_ref = self.engine.clone();
         self.dock.render(
             ctx,
@@ -221,15 +246,20 @@ impl eframe::App for BatteryDockApp {
             move || engine_ref.trigger_refresh(),
         );
 
-        // 6. Render settings window if opened
-        let engine_ref2 = self.engine.clone();
-        SettingsWindow::show(
-            ctx,
-            &mut self.open_settings,
-            &mut self.config,
-            &self.devices,
-            move || engine_ref2.trigger_refresh(),
-        );
+        // 5. Render settings window if opened
+        if self.open_settings {
+            let engine_ref2 = self.engine.clone();
+            SettingsWindow::show(
+                ctx,
+                &mut self.open_settings,
+                &mut self.config,
+                &self.devices,
+                move || engine_ref2.trigger_refresh(),
+            );
+            if !self.open_settings {
+                self.open_settings_flag.store(false, Ordering::SeqCst);
+            }
+        }
     }
 }
 

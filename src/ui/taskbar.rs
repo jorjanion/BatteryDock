@@ -1,13 +1,9 @@
 use crate::config::DockPositionMode;
 use windows::core::w;
 use windows::Win32::Foundation::{HWND, RECT};
-use windows::Win32::Graphics::Gdi::{
-    GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
-};
 use windows::Win32::UI::Shell::{SHAppBarMessage, ABM_GETTASKBARPOS, APPBARDATA};
 use windows::Win32::UI::WindowsAndMessaging::{
-    FindWindowExW, FindWindowW, GetClassNameW, GetForegroundWindow, GetSystemMetrics, GetWindowRect,
-    SM_CXSCREEN, SM_CYSCREEN,
+    FindWindowExW, FindWindowW, GetSystemMetrics, GetWindowRect, SM_CXSCREEN, SM_CYSCREEN,
 };
 
 pub struct TaskbarGeometry {
@@ -85,10 +81,32 @@ impl TaskbarGeometry {
         }
     }
 
-    /// Checks if the foreground application is currently in fullscreen mode
-    /// (e.g. YouTube in fullscreen, Netflix, full-screen video players, or games).
+    /// Checks if a true fullscreen application/video or game is currently active
     pub fn is_fullscreen_app_active() -> bool {
+        use windows::Win32::Foundation::RECT;
+        use windows::Win32::Graphics::Gdi::{
+            GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+        };
+        use windows::Win32::UI::Shell::{
+            SHQueryUserNotificationState, QUNS_BUSY, QUNS_PRESENTATION_MODE,
+            QUNS_RUNNING_D3D_FULL_SCREEN,
+        };
+        use windows::Win32::UI::WindowsAndMessaging::{
+            GetClassNameW, GetForegroundWindow, GetWindowRect,
+        };
+
         unsafe {
+            // 1. Check official Windows Shell Query state
+            if let Ok(qstate) = SHQueryUserNotificationState() {
+                if qstate == QUNS_BUSY
+                    || qstate == QUNS_RUNNING_D3D_FULL_SCREEN
+                    || qstate == QUNS_PRESENTATION_MODE
+                {
+                    return true;
+                }
+            }
+
+            // 2. Check foreground window bounds
             let fg = GetForegroundWindow();
             if fg.0.is_null() {
                 return false;
@@ -117,7 +135,8 @@ impl TaskbarGeometry {
                 };
                 if GetMonitorInfoW(monitor, &mut mi).as_bool() {
                     let m = mi.rcMonitor;
-                    // If window covers the full monitor area, a fullscreen application is running
+                    // A true fullscreen app, video (e.g. YouTube), or game covers all 4 edges of the physical screen.
+                    // A normal maximized window does NOT cover the taskbar (its rect stops at rcWork).
                     if win_rect.left <= m.left
                         && win_rect.top <= m.top
                         && win_rect.right >= m.right
