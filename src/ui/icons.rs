@@ -178,23 +178,73 @@ impl DevicePainter {
             painter.rect_filled(fill_rect, 1.5, fill_color);
         }
 
-        // Lightning bolt icon if charging
+        // Crisp vector lightning bolt icon inside meter if charging
         if is_charging {
             let center = shell_rect.center();
             let bolt_color = Color32::WHITE;
-            let points = vec![
-                Pos2::new(center.x + 0.5, center.y - 4.5),
-                Pos2::new(center.x - 2.5, center.y + 0.5),
-                Pos2::new(center.x, center.y + 0.5),
-                Pos2::new(center.x - 0.5, center.y + 4.5),
-                Pos2::new(center.x + 2.5, center.y - 0.5),
-                Pos2::new(center.x, center.y - 0.5),
-            ];
-            painter.add(egui::Shape::convex_polygon(
-                points,
-                bolt_color,
-                Stroke::NONE,
-            ));
+            let outline = Color32::from_black_alpha(150);
+            Self::draw_bolt_triangles(painter, center, 2.6, 4.4, outline);
+            Self::draw_bolt_triangles(painter, center, 2.0, 3.8, bolt_color);
         }
+    }
+
+    fn draw_bolt_triangles(
+        painter: &egui::Painter,
+        center: Pos2,
+        half_w: f32,
+        half_h: f32,
+        color: Color32,
+    ) {
+        let top_tri = vec![
+            Pos2::new(center.x + half_w * 0.30, center.y - half_h),
+            Pos2::new(center.x - half_w, center.y + half_h * 0.14),
+            Pos2::new(center.x + half_w * 0.14, center.y + half_h * 0.14),
+        ];
+        let bot_tri = vec![
+            Pos2::new(center.x + half_w, center.y - half_h * 0.14),
+            Pos2::new(center.x - half_w * 0.14, center.y - half_h * 0.14),
+            Pos2::new(center.x - half_w * 0.30, center.y + half_h),
+        ];
+        painter.add(egui::Shape::convex_polygon(top_tri, color, Stroke::NONE));
+        painter.add(egui::Shape::convex_polygon(bot_tri, color, Stroke::NONE));
+    }
+
+    /// Draws an unmistakable external charging lightning badge next to a charging peripheral
+    pub fn paint_charging_icon(painter: &egui::Painter, rect: Rect, pulse_alpha: f32) {
+        let center = rect.center();
+        let half_w = (rect.width() * 0.42).max(2.5);
+        let half_h = (rect.height() * 0.46).max(4.0);
+        let gold = Color32::from_rgb(250, (196.0 + 20.0 * pulse_alpha) as u8, 21);
+        Self::draw_bolt_triangles(
+            painter,
+            center,
+            half_w + 0.7,
+            half_h + 0.7,
+            Color32::from_black_alpha(180),
+        );
+        Self::draw_bolt_triangles(painter, center, half_w, half_h, gold);
+    }
+
+    /// Draws a clean vector settings gear button icon
+    pub fn paint_settings_gear(painter: &egui::Painter, rect: Rect, color: Color32) {
+        let center = rect.center();
+        let outer_r = (rect.width().min(rect.height()) * 0.42).max(3.5);
+        let inner_r = outer_r * 0.62;
+        let hole_r = outer_r * 0.28;
+
+        for i in 0..6 {
+            let angle = (i as f32) * std::f32::consts::FRAC_PI_3;
+            let dx = angle.cos();
+            let dy = angle.sin();
+            painter.line_segment(
+                [
+                    Pos2::new(center.x + dx * inner_r * 0.75, center.y + dy * inner_r * 0.75),
+                    Pos2::new(center.x + dx * outer_r, center.y + dy * outer_r),
+                ],
+                Stroke::new(1.5_f32, color),
+            );
+        }
+        painter.circle_stroke(center, inner_r, Stroke::new(1.4_f32, color));
+        painter.circle_filled(center, hole_r, Color32::from_rgba_premultiplied(18, 20, 24, 215));
     }
 }

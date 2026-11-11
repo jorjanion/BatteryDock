@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DockPositionMode {
     /// Placed on taskbar just to the left of the system tray / clock
     TaskbarLeftOfTray,
@@ -14,7 +14,8 @@ pub enum DockPositionMode {
     Custom,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AppConfig {
     pub low_battery_threshold: u8,
     pub critical_battery_threshold: u8,
@@ -60,25 +61,49 @@ impl AppConfig {
         }
     }
 
+    pub fn try_load_from_path(path: &Path) -> Option<Self> {
+        let content = fs::read_to_string(path).ok()?;
+        toml::from_str(&content).ok()
+    }
+
+    pub fn try_load() -> Option<Self> {
+        let path = Self::config_path();
+        Self::try_load_from_path(&path)
+    }
+
     pub fn load() -> Self {
         let path = Self::config_path();
         if path.exists() {
-            if let Ok(content) = fs::read_to_string(&path) {
-                if let Ok(config) = toml::from_str(&content) {
-                    return config;
-                }
+            if let Some(config) = Self::try_load_from_path(&path) {
+                return config;
             }
+            // Do not overwrite an existing (possibly transiently unreadable/locked) config file
+            return Self::default();
         }
         let config = Self::default();
-        config.save();
+        config.save_to_path(&path);
         config
+    }
+
+    pub fn save_to_path(&self, path: &Path) {
+        if let Ok(content) = toml::to_string_pretty(self) {
+            if let Some(parent) = path.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            let tmp_path = path.with_extension("toml.tmp");
+            if fs::write(&tmp_path, &content).is_ok() {
+                if fs::rename(&tmp_path, path).is_ok() {
+                    return;
+                }
+                let _ = fs::remove_file(&tmp_path);
+            }
+            let _ = fs::write(path, content);
+        }
     }
 
     pub fn save(&self) {
         let path = Self::config_path();
-        if let Ok(content) = toml::to_string_pretty(self) {
-            let _ = fs::write(path, content);
-        }
+        self.save_to_path(&path);
     }
 }
 
@@ -96,7 +121,41 @@ mod tests {
 
         let toml_str = toml::to_string_pretty(&config).expect("Serialization failed");
         let decoded: AppConfig = toml::from_str(&toml_str).expect("Deserialization failed");
-        assert_eq!(decoded.low_battery_threshold, 20);
+        assert_eq!(decoded, config);
+    }
+
+    #[test]
+    fn test_config_partial_toml_uses_defaults() {
+        let partial = "low_battery_threshold = 25\nshow_percentage_text = false\n";
+        let decoded: AppConfig = toml::from_str(partial).expect("Partial deserialization failed");
+        assert_eq!(decoded.low_battery_threshold, 25);
+        assert!(!decoded.show_percentage_text);
         assert_eq!(decoded.position_mode, DockPositionMode::TaskbarLeftOfTray);
+        assert_eq!(decoded.critical_battery_threshold, 10);
+    }
+
+    #[test]
+    fn test_try_load_from_path_handles_corrupt_without_overwriting() {
+        let dir = std::env::temp_dir().join(format!("batterydock_cfg_test_{}", std::process::id()));
+        let _ = fs::create_dir_all(&dir);
+        let path = dir.join("config.toml");
+
+        let cfg = AppConfig {
+            low_battery_threshold: 33,
+            custom_pos_x: -500.0,
+            custom_pos_y: 120.0,
+            position_mode: DockPositionMode::Custom,
+            ..AppConfig::default()
+        };
+        cfg.save_to_path(&path);
+
+        let loaded = AppConfig::try_load_from_path(&path).expect("Expected saved config");
+        assert_eq!(loaded, cfg);
+
+        fs::write(&path, "invalid = [unclosed").unwrap();
+        assert!(AppConfig::try_load_from_path(&path).is_none());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "invalid = [unclosed");
+
+        let _ = fs::remove_dir_all(&dir);
     }
 }

@@ -9,15 +9,42 @@ use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
 use config::{AppConfig, DockPositionMode};
 use notifications::NotificationManager;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use ui::dock::DockOverlay;
-use ui::taskbar::TaskbarGeometry;
+use ui::taskbar::{
+    apply_overlay_ex_style, ensure_window_above_monitor_taskbar, get_window_physical_rect,
+    is_window_visible_win32, set_window_physical_rect, set_window_visible_noactivate,
+    TaskbarGeometry,
+};
 use ui::tray::SystemTray;
 use windows::core::w;
-use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS};
+use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS, RECT};
 use windows::Win32::System::Threading::CreateMutexW;
+use windows::Win32::UI::HiDpi::{
+    SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+};
+use windows::Win32::UI::WindowsAndMessaging::{
+    FindWindowW, IsWindow, SetForegroundWindow, ShowWindow, SW_RESTORE,
+};
+
+#[derive(Clone, PartialEq)]
+struct DockLayoutParams {
+    mode: DockPositionMode,
+    custom_x: f32,
+    custom_y: f32,
+    logical_w: f32,
+    logical_h: f32,
+}
+
+struct DockSyncState {
+    our_hwnd: AtomicIsize,
+    is_dragging: AtomicBool,
+    is_dock_hidden: AtomicBool,
+    layout: Mutex<DockLayoutParams>,
+}
 
 struct BatteryDockApp {
     config: AppConfig,
@@ -28,10 +55,11 @@ struct BatteryDockApp {
     open_settings: bool,
     reset_pos_flag: Arc<AtomicBool>,
     _tray: Option<SystemTray>,
-    last_device_count: usize,
+    our_hwnd: isize,
+    sync: Arc<DockSyncState>,
+    last_dock_width: f32,
     last_position_mode: DockPositionMode,
-    is_dock_hidden: bool,
-    config_reload_timer: u32,
+    last_config_reload: Instant,
 }
 
 static MUTEX_HANDLE: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
@@ -39,7 +67,6 @@ static MUTEX_HANDLE: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
 
 pub fn restart_app() {
     unsafe {
-        // Release and close mutex before launching new instance
         let h = MUTEX_HANDLE.swap(std::ptr::null_mut(), Ordering::SeqCst);
         if !h.is_null() {
             let _ = windows::Win32::Foundation::CloseHandle(windows::Win32::Foundation::HANDLE(h));
@@ -64,6 +91,14 @@ pub fn restart_app() {
 
 pub fn open_settings_window() {
     unsafe {
+        if let Ok(existing) = FindWindowW(None, w!("BatteryDock Settings")) {
+            if !existing.0.is_null() && IsWindow(existing).as_bool() {
+                let _ = ShowWindow(existing, SW_RESTORE);
+                let _ = SetForegroundWindow(existing);
+                return;
+            }
+        }
+
         if let Ok(exe) = std::env::current_exe() {
             let exe_str = exe.to_string_lossy().to_string();
             let exe_hstring = windows::core::HSTRING::from(exe_str);
@@ -81,23 +116,155 @@ pub fn open_settings_window() {
     }
 }
 
+fn compute_target_physical_rect(
+    params: &DockLayoutParams,
+    tb: &TaskbarGeometry,
+) -> (RECT, i32, i32) {
+    let custom_probe_w = params.logical_w * tb.dpi_scale;
+    let custom_probe_h = params.logical_h * tb.dpi_scale;
+    let scale = if params.mode == DockPositionMode::Custom
+        && TaskbarGeometry::is_custom_rect_on_any_monitor(
+            params.custom_x,
+            params.custom_y,
+            custom_probe_w,
+            custom_probe_h,
+        ) {
+        let probe = RECT {
+            left: params.custom_x.round() as i32,
+            top: params.custom_y.round() as i32,
+            right: (params.custom_x + custom_probe_w).round() as i32,
+            bottom: (params.custom_y + custom_probe_h).round() as i32,
+        };
+        TaskbarGeometry::dpi_scale_for_rect(probe)
+    } else {
+        tb.dpi_scale
+    };
+
+    let (tx, ty) = tb.calculate_dock_position_scaled(
+        params.mode,
+        params.logical_w,
+        params.logical_h,
+        params.custom_x,
+        params.custom_y,
+        scale,
+        TaskbarGeometry::is_custom_rect_on_any_monitor,
+    );
+
+    let phys_w = (params.logical_w * scale).round() as i32;
+    let tb_h = tb.taskbar_rect.bottom - tb.taskbar_rect.top;
+    let raw_phys_h = (params.logical_h * scale).round() as i32;
+    let phys_h = if params.mode == DockPositionMode::Custom {
+        raw_phys_h
+    } else {
+        raw_phys_h.min((tb_h - 4).max(16))
+    };
+
+    let x = tx.round() as i32;
+    let y = ty.round() as i32;
+    let rect = RECT {
+        left: x,
+        top: y,
+        right: x + phys_w,
+        bottom: y + phys_h,
+    };
+    (rect, phys_w, phys_h)
+}
+
+fn sync_dock_window_once(sync: &DockSyncState, ctx: Option<&egui::Context>) {
+    let hwnd = sync.our_hwnd.load(Ordering::Acquire);
+    if hwnd == 0 {
+        return;
+    }
+    if sync.is_dragging.load(Ordering::Acquire) {
+        return;
+    }
+
+    let params = sync.layout.lock().unwrap().clone();
+    apply_overlay_ex_style(hwnd);
+
+    let Some(tb) = TaskbarGeometry::detect() else {
+        return;
+    };
+
+    let (target_rect, phys_w, phys_h) = compute_target_physical_rect(&params, &tb);
+    let eval_rect = if params.mode == DockPositionMode::Custom {
+        get_window_physical_rect(hwnd).unwrap_or(target_rect)
+    } else {
+        target_rect
+    };
+
+    let should_be_visible =
+        TaskbarGeometry::should_dock_be_visible(params.mode, eval_rect, std::process::id());
+
+    if !should_be_visible {
+        if set_window_visible_noactivate(hwnd, false) {
+            sync.is_dock_hidden.store(true, Ordering::Release);
+        }
+    } else {
+        set_window_physical_rect(
+            hwnd,
+            target_rect.left,
+            target_rect.top,
+            phys_w,
+            phys_h,
+        );
+        ensure_window_above_monitor_taskbar(hwnd, target_rect);
+        if !is_window_visible_win32(hwnd) {
+            set_window_visible_noactivate(hwnd, true);
+            sync.is_dock_hidden.store(false, Ordering::Release);
+            if let Some(c) = ctx {
+                c.request_repaint();
+            }
+        }
+    }
+}
+
 impl BatteryDockApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // Configure visual styles for egui
         let mut visuals = egui::Visuals::dark();
         visuals.panel_fill = egui::Color32::TRANSPARENT;
         visuals.window_fill = egui::Color32::from_rgb(22, 24, 29);
         visuals.window_stroke = egui::Stroke::new(1.0_f32, egui::Color32::from_white_alpha(35));
         cc.egui_ctx.set_visuals(visuals);
 
+        let our_hwnd: isize = cc
+            .window_handle()
+            .ok()
+            .and_then(|h| match h.as_raw() {
+                RawWindowHandle::Win32(win32) => Some(win32.hwnd.get()),
+                _ => None,
+            })
+            .unwrap_or(0);
+
         let config = AppConfig::load();
+        let initial_devices: Vec<DeviceBattery> = Vec::new();
+        let initial_w = DockOverlay::required_width(&initial_devices, &config);
+        let initial_mode = config.position_mode;
+
+        let sync = Arc::new(DockSyncState {
+            our_hwnd: AtomicIsize::new(our_hwnd),
+            is_dragging: AtomicBool::new(false),
+            is_dock_hidden: AtomicBool::new(false),
+            layout: Mutex::new(DockLayoutParams {
+                mode: config.position_mode,
+                custom_x: config.custom_pos_x,
+                custom_y: config.custom_pos_y,
+                logical_w: initial_w,
+                logical_h: 32.0,
+            }),
+        });
+
+        // Immediately enforce overlay styles, initial taskbar rect, Z-order, and fullscreen check before frame 1
+        sync_dock_window_once(&sync, None);
+
         let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
         let tray = SystemTray::new().ok();
 
         let reset_pos_flag = Arc::new(AtomicBool::new(false));
         let reset_pos_clone = reset_pos_flag.clone();
         let engine_clone = engine.clone();
-        let ctx_clone = cc.egui_ctx.clone();
+        let ctx_tray = cc.egui_ctx.clone();
+        let sync_tray = sync.clone();
 
         let (quit_id, refresh_id, reset_id, restart_id, settings_id) = if let Some(t) = &tray {
             (
@@ -111,19 +278,15 @@ impl BatteryDockApp {
             (None, None, None, None, None)
         };
 
-        // Dedicated background thread for system tray:
-        // Handles Exit, Restart, Reset, Refresh, and Settings completely decoupled from the GUI update loop!
+        // Dedicated System Tray listener thread (works even while dock is SW_HIDE in fullscreen apps)
         std::thread::spawn(move || {
             let menu_rx = tray_icon::menu::MenuEvent::receiver();
             let tray_rx = tray_icon::TrayIconEvent::receiver();
-            let mut tick = 0u32;
 
             loop {
-                // 1. Process menu clicks
                 while let Ok(event) = menu_rx.try_recv() {
                     if let Some(qid) = &quit_id {
                         if &event.id == qid {
-                            // Instant process exit
                             std::process::exit(0);
                         }
                     }
@@ -134,8 +297,20 @@ impl BatteryDockApp {
                     }
                     if let Some(rpid) = &reset_id {
                         if &event.id == rpid {
+                            let mut cfg = AppConfig::load();
+                            cfg.position_mode = DockPositionMode::TaskbarLeftOfTray;
+                            cfg.custom_pos_x = 0.0;
+                            cfg.custom_pos_y = 0.0;
+                            cfg.save();
+                            {
+                                let mut layout = sync_tray.layout.lock().unwrap();
+                                layout.mode = DockPositionMode::TaskbarLeftOfTray;
+                                layout.custom_x = 0.0;
+                                layout.custom_y = 0.0;
+                            }
                             reset_pos_clone.store(true, Ordering::SeqCst);
-                            ctx_clone.request_repaint();
+                            engine_clone.trigger_refresh();
+                            ctx_tray.request_repaint();
                         }
                     }
                     if let Some(rid) = &refresh_id {
@@ -150,7 +325,6 @@ impl BatteryDockApp {
                     }
                 }
 
-                // 2. Process tray icon clicks
                 while let Ok(event) = tray_rx.try_recv() {
                     match event {
                         tray_icon::TrayIconEvent::Click {
@@ -168,15 +342,16 @@ impl BatteryDockApp {
                     }
                 }
 
-                // Heartbeat repaint request every ~150ms (5 * 30ms) to ensure event loop never hangs
-                tick += 1;
-                if tick >= 5 {
-                    tick = 0;
-                    ctx_clone.request_repaint();
-                }
-
                 std::thread::sleep(Duration::from_millis(30));
             }
+        });
+
+        // Dedicated 50ms Win32 visibility, Z-order (above Shell_TrayWnd), and taskbar sync thread
+        let sync_watcher = sync.clone();
+        let ctx_watcher = cc.egui_ctx.clone();
+        std::thread::spawn(move || loop {
+            sync_dock_window_once(&sync_watcher, Some(&ctx_watcher));
+            std::thread::sleep(Duration::from_millis(50));
         });
 
         Self {
@@ -184,39 +359,25 @@ impl BatteryDockApp {
             engine,
             notification_mgr: NotificationManager::new(),
             dock: DockOverlay::new(),
-            devices: Vec::new(),
+            devices: initial_devices,
             open_settings: false,
             reset_pos_flag,
             _tray: tray,
-            last_device_count: 0,
-            last_position_mode: DockPositionMode::TaskbarLeftOfTray,
-            is_dock_hidden: false,
-            config_reload_timer: 0,
+            our_hwnd,
+            sync,
+            last_dock_width: initial_w,
+            last_position_mode: initial_mode,
+            last_config_reload: Instant::now(),
         }
     }
 
-    fn calculate_dock_width(&self) -> f32 {
-        if self.devices.is_empty() {
-            135.0
-        } else {
-            let dev_width = if self.config.show_percentage_text { 76.0 } else { 48.0 };
-            (self.devices.len() as f32 * dev_width + 30.0).max(120.0)
-        }
-    }
-
-    fn reposition_dock_to_taskbar(&self, ctx: &egui::Context, width: f32) {
-        if let Some(tb) = TaskbarGeometry::detect() {
-            let (target_x, target_y) = tb.calculate_dock_position(
-                self.config.position_mode,
-                width,
-                32.0,
-                self.config.custom_pos_x,
-                self.config.custom_pos_y,
-            );
-            ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::Pos2::new(
-                target_x, target_y,
-            )));
-        }
+    fn sync_layout_params(&self, width: f32) {
+        let mut layout = self.sync.layout.lock().unwrap();
+        layout.mode = self.config.position_mode;
+        layout.custom_x = self.config.custom_pos_x;
+        layout.custom_y = self.config.custom_pos_y;
+        layout.logical_w = width;
+        layout.logical_h = 32.0;
     }
 }
 
@@ -226,98 +387,86 @@ impl eframe::App for BatteryDockApp {
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // 1. Process reset position request from tray
+        // 1. Handle reset position signal from tray
         if self.reset_pos_flag.swap(false, Ordering::SeqCst) {
             self.config.position_mode = DockPositionMode::TaskbarLeftOfTray;
-            self.config.save();
-            self.is_dock_hidden = false;
-            let width = self.calculate_dock_width();
-            self.reposition_dock_to_taskbar(ctx, width);
+            self.config.custom_pos_x = 0.0;
+            self.config.custom_pos_y = 0.0;
+            self.last_position_mode = self.config.position_mode;
             self.engine.trigger_refresh();
-            ctx.request_repaint();
         }
 
-        // 2. Fullscreen app detection: hide dock when true fullscreen video or game is active
-        let is_fullscreen = TaskbarGeometry::is_fullscreen_app_active();
-        if is_fullscreen {
-            if !self.is_dock_hidden {
-                self.is_dock_hidden = true;
-                ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(true));
-            }
-            ctx.request_repaint_after(Duration::from_millis(150));
-            return;
-        } else if self.is_dock_hidden {
-            // Fullscreen has ended: restore interaction and redraw
-            self.is_dock_hidden = false;
-            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(false));
-            let width = self.calculate_dock_width();
-            self.reposition_dock_to_taskbar(ctx, width);
-            ctx.request_repaint();
-        }
-
-        // 3. Receive background battery updates
-        if let Ok(updated_devices) = self.engine.receiver().try_recv() {
+        // 2. Drain all pending battery updates so we immediately display the latest snapshot
+        let mut latest_devices = None;
+        while let Ok(updated_devices) = self.engine.receiver().try_recv() {
             self.notification_mgr
                 .check_and_notify(&updated_devices, &self.config);
+            latest_devices = Some(updated_devices);
+        }
+        if let Some(updated_devices) = latest_devices {
             self.devices = updated_devices;
+        }
 
-            // Resize and reposition if device count changed
-            if self.devices.len() != self.last_device_count {
-                self.last_device_count = self.devices.len();
-                let width = self.calculate_dock_width();
-                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::Vec2::new(
-                    width, 32.0,
-                )));
-
-                if self.config.position_mode != DockPositionMode::Custom {
-                    self.reposition_dock_to_taskbar(ctx, width);
+        // 3. Reload ALL config fields from disk every 500ms when not actively dragging
+        if !self.dock.is_dragging() && self.last_config_reload.elapsed() >= Duration::from_millis(500)
+        {
+            self.last_config_reload = Instant::now();
+            if let Some(loaded) = AppConfig::try_load() {
+                if loaded != self.config {
+                    self.config = loaded;
+                    self.last_position_mode = self.config.position_mode;
                 }
             }
         }
 
-        // 4. Periodically check if config changed on disk (e.g. from standalone settings window)
-        self.config_reload_timer += 1;
-        if self.config_reload_timer >= 15 {
-            self.config_reload_timer = 0;
-            let loaded = AppConfig::load();
-            if loaded.position_mode != self.config.position_mode
-                || loaded.show_percentage_text != self.config.show_percentage_text
-                || loaded.compact_mode != self.config.compact_mode
-            {
-                self.config = loaded;
-                self.last_position_mode = self.config.position_mode;
-                let width = self.calculate_dock_width();
-                self.reposition_dock_to_taskbar(ctx, width);
-                ctx.request_repaint();
-            }
+        // 4. Resize viewport if device list, charging state, or percentage text toggle changed pill width
+        let required_w = DockOverlay::required_width(&self.devices, &self.config);
+        if (required_w - self.last_dock_width).abs() > 0.5 {
+            self.last_dock_width = required_w;
+            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::Vec2::new(
+                required_w, 32.0,
+            )));
         }
 
-        // 5. Handle position mode changes from settings
         if self.config.position_mode != self.last_position_mode {
             self.last_position_mode = self.config.position_mode;
-            let width = self.calculate_dock_width();
-            self.reposition_dock_to_taskbar(ctx, width);
         }
 
-        // 6. Render main dock overlay on taskbar
+        // 5. Render main dock overlay
         let engine_ref = self.engine.clone();
         self.dock.render(
             ctx,
             &mut self.config,
             &self.devices,
+            self.our_hwnd,
             &mut self.open_settings,
             move || engine_ref.trigger_refresh(),
         );
+
+        self.sync
+            .is_dragging
+            .store(self.dock.is_dragging(), Ordering::Release);
+        self.sync_layout_params(self.last_dock_width);
+
+        // 6. Open standalone settings window if triggered via gear icon, dock click, or context menu
+        if self.open_settings {
+            self.open_settings = false;
+            open_settings_window();
+        }
     }
 }
 
 fn main() -> eframe::Result<()> {
+    // Enable Per-Monitor V2 DPI awareness before querying monitor/taskbar geometry
+    unsafe {
+        let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
+
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--settings" || a == "-s") {
         return ui::settings_window::run_standalone_settings();
     }
 
-    // Ensure single instance running
     unsafe {
         let mutex = CreateMutexW(None, true, w!("Global\\BatteryDockSingleInstanceMutex"));
         if GetLastError() == ERROR_ALREADY_EXISTS {
@@ -330,17 +479,19 @@ fn main() -> eframe::Result<()> {
     }
 
     let initial_config = AppConfig::load();
-    let initial_width = 135.0;
+    let initial_width = DockOverlay::required_width(&[], &initial_config);
     let initial_height = 32.0;
 
-    let (start_x, start_y) = if let Some(tb) = TaskbarGeometry::detect() {
-        tb.calculate_dock_position(
+    let (start_x_logical, start_y_logical) = if let Some(tb) = TaskbarGeometry::detect() {
+        let (px, py) = tb.calculate_dock_position(
             initial_config.position_mode,
             initial_width,
             initial_height,
             initial_config.custom_pos_x,
             initial_config.custom_pos_y,
-        )
+        );
+        let scale = tb.dpi_scale.max(0.75);
+        (px / scale, py / scale)
     } else {
         (100.0, 100.0)
     };
@@ -353,7 +504,7 @@ fn main() -> eframe::Result<()> {
             .with_always_on_top()
             .with_resizable(false)
             .with_inner_size([initial_width, initial_height])
-            .with_position([start_x, start_y])
+            .with_position([start_x_logical, start_y_logical])
             .with_taskbar(false),
         ..Default::default()
     };

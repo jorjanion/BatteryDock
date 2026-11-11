@@ -40,17 +40,19 @@ impl BatteryCollector for BluetoothBatteryCollector {
             }
 
             if let Ok(props) = dev_info.Properties() {
-                // Check if device is connected
-                let is_connected = match props.Lookup(&HSTRING::from("System.Devices.Aep.IsConnected")) {
-                    Ok(val) => {
-                        if let Ok(prop_val) = val.cast::<IPropertyValue>() {
-                            prop_val.GetBoolean().unwrap_or(false)
-                        } else {
-                            false
-                        }
-                    }
-                    Err(_) => false,
-                };
+                // Check if device is connected (None = property absent on driver; Some(false) = explicitly disconnected)
+                let connected_opt: Option<bool> =
+                    match props.Lookup(&HSTRING::from("System.Devices.Aep.IsConnected")) {
+                        Ok(val) => val
+                            .cast::<IPropertyValue>()
+                            .ok()
+                            .and_then(|pv| pv.GetBoolean().ok()),
+                        Err(_) => None,
+                    };
+                if connected_opt == Some(false) {
+                    continue;
+                }
+                let is_connected = connected_opt.unwrap_or(true);
 
                 // Check battery level (0-100)
                 if let Ok(battery_val) =
@@ -58,17 +60,17 @@ impl BatteryCollector for BluetoothBatteryCollector {
                 {
                     if let Ok(prop_val) = battery_val.cast::<IPropertyValue>() {
                         let level: Option<u8> = if let Ok(u) = prop_val.GetUInt8() {
-                            Some(u)
+                            Some(u.min(100))
                         } else if let Ok(u) = prop_val.GetUInt32() {
                             Some(u.min(100) as u8)
                         } else if let Ok(i) = prop_val.GetInt32() {
-                            Some((i.max(0).min(100)) as u8)
+                            Some((i.clamp(0, 100)) as u8)
                         } else {
                             None
                         };
 
                         if let Some(percentage) = level {
-                            if percentage > 0 || is_connected {
+                            if is_connected && (percentage > 0 || connected_opt == Some(true)) {
                                 let device_type = DeviceType::guess_from_name(&name);
                                 devices.push(DeviceBattery {
                                     id: format!("bt_{}", id),

@@ -174,19 +174,36 @@ impl SettingsWindow {
                         ui.with_layout(
                             egui::Layout::right_to_left(egui::Align::Center),
                             |ui| {
-                                let charging = if dev.is_charging { " ⚡" } else { "" };
-                                let color = if dev.percentage <= config.critical_battery_threshold {
+                                let color = if dev.is_charging {
+                                    egui::Color32::from_rgb(56, 189, 248)
+                                } else if dev.percentage <= config.critical_battery_threshold {
                                     egui::Color32::from_rgb(239, 68, 68)
                                 } else if dev.percentage <= config.low_battery_threshold {
                                     egui::Color32::from_rgb(245, 158, 11)
                                 } else {
                                     egui::Color32::from_rgb(34, 197, 94)
                                 };
+                                let label = if dev.is_charging {
+                                    format!("{}% (Charging)", dev.percentage)
+                                } else {
+                                    format!("{}%", dev.percentage)
+                                };
                                 ui.label(
-                                    egui::RichText::new(format!("{}%{}", dev.percentage, charging))
+                                    egui::RichText::new(label)
                                         .color(color)
                                         .strong(),
                                 );
+                                if dev.is_charging {
+                                    let (bolt_rect, _) = ui.allocate_exact_size(
+                                        egui::Vec2::new(11.0, 14.0),
+                                        egui::Sense::hover(),
+                                    );
+                                    crate::ui::icons::DevicePainter::paint_charging_icon(
+                                        ui.painter(),
+                                        bolt_rect,
+                                        1.0,
+                                    );
+                                }
                             },
                         );
                     });
@@ -197,6 +214,15 @@ impl SettingsWindow {
         ui.add_space(6.0);
         ui.separator();
         ui.add_space(6.0);
+
+        let mut show_pct = config.show_percentage_text;
+        if ui
+            .checkbox(&mut show_pct, "Show battery percentage text on dock")
+            .changed()
+        {
+            config.show_percentage_text = show_pct;
+            config.save();
+        }
 
         // Windows Startup Option
         let mut start_win = config.start_with_windows;
@@ -269,6 +295,7 @@ fn set_run_at_startup(enable: bool) -> Result<(), ()> {
 
 pub struct SettingsApp {
     config: AppConfig,
+    engine: crate::battery::engine::BatteryEngine,
     devices: Vec<DeviceBattery>,
     is_open: bool,
 }
@@ -276,10 +303,16 @@ pub struct SettingsApp {
 impl SettingsApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let config = AppConfig::load();
-        let engine = crate::battery::engine::BatteryEngine::start(std::time::Duration::from_secs(config.poll_interval_secs));
-        let devices = engine.receiver().recv_timeout(std::time::Duration::from_millis(500)).unwrap_or_default();
+        let engine = crate::battery::engine::BatteryEngine::start(
+            std::time::Duration::from_secs(config.poll_interval_secs),
+        );
+        let devices = engine
+            .receiver()
+            .recv_timeout(std::time::Duration::from_millis(350))
+            .unwrap_or_default();
         Self {
             config,
+            engine,
             devices,
             is_open: true,
         }
@@ -288,11 +321,16 @@ impl SettingsApp {
 
 impl eframe::App for SettingsApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        while let Ok(updated) = self.engine.receiver().try_recv() {
+            self.devices = updated;
+        }
+
         let mut visuals = egui::Visuals::dark();
         visuals.panel_fill = egui::Color32::from_rgb(22, 24, 29);
         visuals.window_fill = egui::Color32::from_rgb(22, 24, 29);
         ctx.set_visuals(visuals);
 
+        let engine_ref = self.engine.clone();
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::NONE
@@ -306,10 +344,12 @@ impl eframe::App for SettingsApp {
                         &mut self.is_open,
                         &mut self.config,
                         &self.devices,
-                        || {},
+                        move || engine_ref.trigger_refresh(),
                     );
                 });
             });
+
+        ctx.request_repaint_after(std::time::Duration::from_millis(500));
 
         if !self.is_open || ctx.input(|i| i.viewport().close_requested()) {
             std::process::exit(0);
@@ -318,9 +358,29 @@ impl eframe::App for SettingsApp {
 }
 
 pub fn run_standalone_settings() -> eframe::Result<()> {
+    use windows::core::w;
+    use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS};
+    use windows::Win32::System::Threading::CreateMutexW;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE,
+    };
+
+    unsafe {
+        let _mutex = CreateMutexW(None, true, w!("Global\\BatteryDockSettingsMutex"));
+        if GetLastError() == ERROR_ALREADY_EXISTS {
+            if let Ok(hwnd) = FindWindowW(None, w!("BatteryDock Settings")) {
+                if !hwnd.0.is_null() {
+                    let _ = ShowWindow(hwnd, SW_RESTORE);
+                    let _ = SetForegroundWindow(hwnd);
+                }
+            }
+            return Ok(());
+        }
+    }
+
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("⚙ BatteryDock Settings")
+            .with_title("BatteryDock Settings")
             .with_inner_size([480.0, 600.0])
             .with_min_inner_size([380.0, 420.0])
             .with_decorations(true)

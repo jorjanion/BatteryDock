@@ -1,6 +1,6 @@
 [package]
 name = "battery-dock"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["jorjanion"]
 description = "Ultra-lightweight Windows taskbar dock for peripheral battery levels (headphones, mice, keyboards, gamepads, VR) with custom alerts"
@@ -15,6 +15,7 @@ serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"
 directories = "6.0"
 crossbeam-channel = "0.5"
+raw-window-handle = "0.6"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58", features = [
@@ -28,6 +29,8 @@ windows = { version = "0.58", features = [
     "Win32_System_Registry",
     "Win32_Security",
     "Win32_Media_Audio",
+    "Win32_Graphics_Dwm",
+    "Win32_UI_HiDpi",
     "Devices_Bluetooth",
     "Devices_Bluetooth_GenericAttributeProfile",
     "Devices_Enumeration",
