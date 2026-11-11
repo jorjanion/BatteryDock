@@ -27,10 +27,10 @@ impl SystemTray {
             for x in 0..width {
                 let idx = ((y * width + x) * 4) as usize;
                 // Outer battery border: 4..28 x, 8..24 y
-                let in_shell = x >= 4 && x <= 26 && y >= 9 && y <= 23;
+                let in_shell = (4..=26).contains(&x) && (9..=23).contains(&y);
                 let on_shell_border = (x == 4 || x == 26 || y == 9 || y == 23) && in_shell;
-                let in_tip = x >= 27 && x <= 28 && y >= 13 && y <= 19;
-                let in_fill = x >= 6 && x <= 22 && y >= 11 && y <= 21;
+                let in_tip = (27..=28).contains(&x) && (13..=19).contains(&y);
+                let in_fill = (6..=22).contains(&x) && (11..=21).contains(&y);
 
                 if on_shell_border || in_tip {
                     rgba[idx] = 230;

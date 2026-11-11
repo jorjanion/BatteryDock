@@ -143,10 +143,8 @@ fn compute_target_physical_rect(
 
     let (tx, ty) = tb.calculate_dock_position_scaled(
         params.mode,
-        params.logical_w,
-        params.logical_h,
-        params.custom_x,
-        params.custom_y,
+        (params.logical_w, params.logical_h),
+        (params.custom_x, params.custom_y),
         scale,
         TaskbarGeometry::is_custom_rect_on_any_monitor,
     );
@@ -241,8 +239,11 @@ fn sync_dock_window_once(
                 *last = Instant::now();
             }
             (target_rect, phys_w, phys_h) = compute_target_physical_rect(&params, &tb);
-            should_be_visible =
-                TaskbarGeometry::should_dock_be_visible(params.mode, target_rect, std::process::id());
+            should_be_visible = TaskbarGeometry::should_dock_be_visible(
+                params.mode,
+                target_rect,
+                std::process::id(),
+            );
         }
     }
 
@@ -251,13 +252,7 @@ fn sync_dock_window_once(
             sync.is_dock_hidden.store(true, Ordering::Release);
         }
     } else {
-        set_window_physical_rect(
-            hwnd,
-            target_rect.left,
-            target_rect.top,
-            phys_w,
-            phys_h,
-        );
+        set_window_physical_rect(hwnd, target_rect.left, target_rect.top, phys_w, phys_h);
         ensure_window_above_monitor_taskbar(hwnd, target_rect);
         if !currently_visible {
             set_window_visible_noactivate(hwnd, true);
@@ -339,17 +334,17 @@ impl BatteryDockApp {
             loop {
                 while let Ok(event) = menu_rx.try_recv() {
                     if let Some(qid) = &quit_id {
-                        if &event.id == qid {
+                        if event.id == *qid {
                             std::process::exit(0);
                         }
                     }
                     if let Some(reid) = &restart_id {
-                        if &event.id == reid {
+                        if event.id == *reid {
                             restart_app();
                         }
                     }
                     if let Some(rpid) = &reset_id {
-                        if &event.id == rpid {
+                        if event.id == *rpid {
                             let mut cfg = AppConfig::load();
                             cfg.position_mode = DockPositionMode::TaskbarLeftOfTray;
                             cfg.custom_pos_x = 0.0;
@@ -367,12 +362,12 @@ impl BatteryDockApp {
                         }
                     }
                     if let Some(rid) = &refresh_id {
-                        if &event.id == rid {
+                        if event.id == *rid {
                             engine_clone.trigger_refresh();
                         }
                     }
                     if let Some(sid) = &settings_id {
-                        if &event.id == sid {
+                        if event.id == *sid {
                             open_settings_window();
                         }
                     }

@@ -171,44 +171,37 @@ impl SettingsWindow {
                             crate::battery::DeviceType::Camera => "📷",
                             crate::battery::DeviceType::Unknown => "🔋",
                         };
-                        ui.label(icon);
+                        ui.label(icon).on_hover_text(dev.device_type.display_name());
                         ui.label(egui::RichText::new(&dev.name).strong());
 
-                        ui.with_layout(
-                            egui::Layout::right_to_left(egui::Align::Center),
-                            |ui| {
-                                let color = if dev.is_charging {
-                                    egui::Color32::from_rgb(56, 189, 248)
-                                } else if dev.percentage <= config.critical_battery_threshold {
-                                    egui::Color32::from_rgb(239, 68, 68)
-                                } else if dev.percentage <= config.low_battery_threshold {
-                                    egui::Color32::from_rgb(245, 158, 11)
-                                } else {
-                                    egui::Color32::from_rgb(34, 197, 94)
-                                };
-                                let label = if dev.is_charging {
-                                    format!("{}% (Charging)", dev.percentage)
-                                } else {
-                                    format!("{}%", dev.percentage)
-                                };
-                                ui.label(
-                                    egui::RichText::new(label)
-                                        .color(color)
-                                        .strong(),
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            let color = if dev.is_charging {
+                                egui::Color32::from_rgb(56, 189, 248)
+                            } else if dev.percentage <= config.critical_battery_threshold {
+                                egui::Color32::from_rgb(239, 68, 68)
+                            } else if dev.percentage <= config.low_battery_threshold {
+                                egui::Color32::from_rgb(245, 158, 11)
+                            } else {
+                                egui::Color32::from_rgb(34, 197, 94)
+                            };
+                            let label = if dev.is_charging {
+                                format!("{}% (Charging)", dev.percentage)
+                            } else {
+                                format!("{}%", dev.percentage)
+                            };
+                            ui.label(egui::RichText::new(label).color(color).strong());
+                            if dev.is_charging {
+                                let (bolt_rect, _) = ui.allocate_exact_size(
+                                    egui::Vec2::new(11.0, 14.0),
+                                    egui::Sense::hover(),
                                 );
-                                if dev.is_charging {
-                                    let (bolt_rect, _) = ui.allocate_exact_size(
-                                        egui::Vec2::new(11.0, 14.0),
-                                        egui::Sense::hover(),
-                                    );
-                                    crate::ui::icons::DevicePainter::paint_charging_icon(
-                                        ui.painter(),
-                                        bolt_rect,
-                                        1.0,
-                                    );
-                                }
-                            },
-                        );
+                                crate::ui::icons::DevicePainter::paint_charging_icon(
+                                    ui.painter(),
+                                    bolt_rect,
+                                    1.0,
+                                );
+                            }
+                        });
                     });
                 }
             });
@@ -257,10 +250,11 @@ fn set_run_at_startup(enable: bool) -> Result<(), ()> {
         RegCloseKey, RegCreateKeyW, RegDeleteValueW, RegSetValueExW, HKEY_CURRENT_USER, REG_SZ,
     };
 
-    let subkey: Vec<u16> = std::ffi::OsStr::new("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
-        .encode_wide()
-        .chain(Some(0))
-        .collect();
+    let subkey: Vec<u16> =
+        std::ffi::OsStr::new("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
+            .encode_wide()
+            .chain(Some(0))
+            .collect();
     let app_name: Vec<u16> = std::ffi::OsStr::new("BatteryDock")
         .encode_wide()
         .chain(Some(0))
@@ -306,9 +300,9 @@ pub struct SettingsApp {
 impl SettingsApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let config = AppConfig::load();
-        let engine = crate::battery::engine::BatteryEngine::start(
-            std::time::Duration::from_secs(config.poll_interval_secs),
-        );
+        let engine = crate::battery::engine::BatteryEngine::start(std::time::Duration::from_secs(
+            config.poll_interval_secs,
+        ));
         let devices = engine
             .receiver()
             .recv_timeout(std::time::Duration::from_millis(350))

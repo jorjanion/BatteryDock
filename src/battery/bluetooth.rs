@@ -1,5 +1,5 @@
 use super::{BatteryCollector, BatterySource, DeviceBattery, DeviceType};
-use windows::core::{HSTRING, Interface};
+use windows::core::{Interface, HSTRING};
 use windows::Devices::Enumeration::DeviceInformation;
 use windows::Foundation::IPropertyValue;
 
@@ -55,8 +55,7 @@ impl BatteryCollector for BluetoothBatteryCollector {
                 let is_connected = connected_opt.unwrap_or(true);
 
                 // Check battery level (0-100)
-                if let Ok(battery_val) =
-                    props.Lookup(&HSTRING::from("System.Devices.BatteryLife"))
+                if let Ok(battery_val) = props.Lookup(&HSTRING::from("System.Devices.BatteryLife"))
                 {
                     if let Ok(prop_val) = battery_val.cast::<IPropertyValue>() {
                         let level: Option<u8> = if let Ok(u) = prop_val.GetUInt8() {

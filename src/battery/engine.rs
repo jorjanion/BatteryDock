@@ -113,11 +113,16 @@ mod tests {
         let (sender, receiver) = crossbeam_channel::unbounded();
         let latest = Mutex::new(Vec::new());
         BatteryEngine::execute_poll(&collectors, &sender, &latest);
-        let devices = receiver.recv_timeout(Duration::from_secs(5)).expect("Failed to poll");
+        let devices = receiver
+            .recv_timeout(Duration::from_secs(5))
+            .expect("Failed to poll");
         assert_eq!(*latest.lock().unwrap(), devices);
         println!("=== Detected devices count: {} ===", devices.len());
         for d in &devices {
-            println!("Detected Device: {} ({}%) [charging: {}]", d.name, d.percentage, d.is_charging);
+            println!(
+                "Detected Device: {} ({}%) [charging: {}]",
+                d.name, d.percentage, d.is_charging
+            );
         }
     }
 }

@@ -97,7 +97,8 @@ impl DeviceType {
             || lower.contains("fanatec")
         {
             DeviceType::Wheel
-        } else if lower.contains("camera") || lower.contains("cámara") || lower.contains("webcam") {
+        } else if lower.contains("camera") || lower.contains("cámara") || lower.contains("webcam")
+        {
             DeviceType::Camera
         } else {
             DeviceType::Unknown
@@ -162,12 +163,17 @@ mod tests {
             DeviceType::Headset
         );
         assert_eq!(
-            DeviceType::guess_from_name("Sony Interactive Entertainment Wireless Controller (DualSense)"),
+            DeviceType::guess_from_name(
+                "Sony Interactive Entertainment Wireless Controller (DualSense)"
+            ),
             DeviceType::Gamepad
         );
         assert_eq!(
             DeviceType::guess_from_name("Meta Quest 3"),
             DeviceType::VRHeadset
         );
+        assert_eq!(DeviceType::Headset.display_name(), "Headset");
+        assert_eq!(DeviceType::VRHeadset.display_name(), "VR Headset");
+        assert_eq!(DeviceType::Unknown.display_name(), "Peripheral");
     }
 }

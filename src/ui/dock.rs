@@ -268,7 +268,8 @@ impl DockOverlay {
                     if settings_btn.clicked() {
                         settings_clicked = true;
                     }
-                    settings_pressed = settings_btn.is_pointer_button_down_on() || settings_btn.hovered();
+                    settings_pressed =
+                        settings_btn.is_pointer_button_down_on() || settings_btn.hovered();
 
                     ui.add_space(6.0);
                 });
@@ -279,9 +280,10 @@ impl DockOverlay {
                     let pointer_in_pill = ui.rect_contains_pointer(avail_rect);
 
                     if primary_pressed && !settings_pressed && pointer_in_pill {
-                        if let (Some((cx, cy)), Some(win_r)) =
-                            (get_cursor_physical_pos(), get_window_physical_rect(our_hwnd))
-                        {
+                        if let (Some((cx, cy)), Some(win_r)) = (
+                            get_cursor_physical_pos(),
+                            get_window_physical_rect(our_hwnd),
+                        ) {
                             self.drag_anchor = Some((cx, cy, win_r.left, win_r.top));
                             self.is_actively_dragging = false;
                         }
@@ -328,11 +330,15 @@ impl DockOverlay {
         }
 
         // Smooth animation timer while dragging, critical, or charging pulse is active
-        let needs_pulse = devices.iter().any(|d| {
-            d.is_charging || d.percentage <= config.critical_battery_threshold
-        });
+        let needs_pulse = devices
+            .iter()
+            .any(|d| d.is_charging || d.percentage <= config.critical_battery_threshold);
         if self.drag_anchor.is_some() || self.is_actively_dragging || needs_pulse {
-            ctx.request_repaint_after(Duration::from_millis(if self.drag_anchor.is_some() { 16 } else { 50 }));
+            ctx.request_repaint_after(Duration::from_millis(if self.drag_anchor.is_some() {
+                16
+            } else {
+                50
+            }));
         } else {
             ctx.request_repaint_after(Duration::from_millis(1000));
         }
@@ -370,7 +376,11 @@ mod tests {
         let w_chg = DockOverlay::required_width(&one_charging, &cfg);
         let w_full = DockOverlay::required_width(&one_full, &cfg);
 
-        assert_eq!(w_chg - w_norm, 12.0, "Charging bolt badge must expand pill by 12px");
+        assert_eq!(
+            w_chg - w_norm,
+            12.0,
+            "Charging bolt badge must expand pill by 12px"
+        );
         assert_eq!(w_full - w_chg, 6.0, "100% must reserve 6px more than 27%");
 
         cfg.show_percentage_text = false;

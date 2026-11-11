@@ -108,10 +108,7 @@ fn ws_read_matching_json(
 
     loop {
         // First drain any already-buffered frames
-        loop {
-            let Some((opcode, payload, consumed)) = ws_try_decode_frame(rx_buf) else {
-                break;
-            };
+        while let Some((opcode, payload, consumed)) = ws_try_decode_frame(rx_buf) {
             rx_buf.drain(..consumed);
 
             match opcode {
@@ -122,7 +119,7 @@ fn ws_read_matching_json(
                     pong.extend_from_slice(&payload[..payload.len().min(125)]);
                     let _ = stream.write_all(&pong);
                 }
-                0x1 | 0x2 | 0x0 => {
+                0x0..=0x2 => {
                     let text = String::from_utf8_lossy(&payload).to_string();
                     if text.contains(expected_path) {
                         return Some(text);
@@ -139,9 +136,7 @@ fn ws_read_matching_json(
         match stream.read(&mut chunk) {
             Ok(0) => return None,
             Ok(n) => rx_buf.extend_from_slice(&chunk[..n]),
-            Err(e)
-                if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::TimedOut =>
-            {
+            Err(e) if e.kind() == ErrorKind::WouldBlock || e.kind() == ErrorKind::TimedOut => {
                 if Instant::now() >= deadline {
                     return None;
                 }
@@ -267,18 +262,22 @@ pub fn parse_ghub_devices_list(json: &str) -> Vec<GhubDeviceInfo> {
                             let obj = &slice[start..=i];
                             if let Some(id) = parse_json_string_field(obj, "id") {
                                 if id.starts_with("dev") && seen_ids.insert(id.clone()) {
-                                    let raw_name = parse_json_string_field(obj, "extendedDisplayName")
-                                        .or_else(|| parse_json_string_field(obj, "displayName"))
-                                        .unwrap_or_else(|| format!("Logitech Device {}", id));
-                                    let name = if raw_name.to_ascii_lowercase().contains("logitech") {
+                                    let raw_name =
+                                        parse_json_string_field(obj, "extendedDisplayName")
+                                            .or_else(|| parse_json_string_field(obj, "displayName"))
+                                            .unwrap_or_else(|| format!("Logitech Device {}", id));
+                                    let name = if raw_name.to_ascii_lowercase().contains("logitech")
+                                    {
                                         raw_name
                                     } else {
                                         format!("Logitech {}", raw_name)
                                     };
-                                    let has_battery = parse_json_bool_field(obj, "hasBatteryStatus")
-                                        .unwrap_or_else(|| {
-                                            find_json_field_value_start(obj, "capabilities").is_none()
-                                        });
+                                    let has_battery =
+                                        parse_json_bool_field(obj, "hasBatteryStatus")
+                                            .unwrap_or_else(|| {
+                                                find_json_field_value_start(obj, "capabilities")
+                                                    .is_none()
+                                            });
                                     devices.push(GhubDeviceInfo {
                                         id,
                                         name,
@@ -333,10 +332,10 @@ pub fn parse_hidpp_battery_response_for_feature(
     let pct = resp[4].min(100);
     let charging = if is_unified_battery {
         // 0x1004: 1=charging, 2=charging_slow, 3=charge_complete (plugged in); 4=charging_error
-        matches!(resp[6], 1 | 2 | 3)
+        matches!(resp[6], 1..=3)
     } else {
         // 0x1000: 1=recharging, 2=final_stage, 3=charge_complete, 4=recharging_below_optimal
-        matches!(resp[6], 1 | 2 | 3 | 4)
+        matches!(resp[6], 1..=4)
     };
     Some((pct, charging))
 }
@@ -438,8 +437,12 @@ impl LogitechHidppCollector {
     /// Queries Logitech G HUB's local WebSocket IPC server on port 9010 if active.
     fn poll_ghub_ws() -> Option<Vec<DeviceBattery>> {
         let mut stream = TcpStream::connect("127.0.0.1:9010").ok()?;
-        stream.set_read_timeout(Some(Duration::from_millis(250))).ok()?;
-        stream.set_write_timeout(Some(Duration::from_millis(250))).ok()?;
+        stream
+            .set_read_timeout(Some(Duration::from_millis(250)))
+            .ok()?;
+        stream
+            .set_write_timeout(Some(Duration::from_millis(250)))
+            .ok()?;
 
         let handshake = "GET / HTTP/1.1\r\n\
 Host: 127.0.0.1:9010\r\n\
@@ -482,9 +485,12 @@ Origin: file://\r\n\r\n";
         let list_req = r#"{"verb":"GET","path":"/devices/list"}"#;
         stream.write_all(&ws_encode_text_frame(list_req)).ok()?;
 
-        let dev_infos = if let Some(list_json) =
-            ws_read_matching_json(&mut stream, &mut rx_buf, "/devices/list", Duration::from_millis(500))
-        {
+        let dev_infos = if let Some(list_json) = ws_read_matching_json(
+            &mut stream,
+            &mut rx_buf,
+            "/devices/list",
+            Duration::from_millis(500),
+        ) {
             parse_ghub_devices_list(&list_json)
         } else {
             Vec::new()
@@ -499,10 +505,7 @@ Origin: file://\r\n\r\n";
                 })
                 .collect()
         } else {
-            dev_infos
-                .into_iter()
-                .filter(|d| d.has_battery)
-                .collect()
+            dev_infos.into_iter().filter(|d| d.has_battery).collect()
         };
 
         // 2. Query /battery/{id}/state for each battery-capable device
@@ -690,7 +693,10 @@ mod tests {
         assert!(!parsed[1].has_battery);
         assert_eq!(parsed[2].name, "Logitech G PRO X SUPERLIGHT");
         assert!(parsed[2].has_battery);
-        assert!(!parsed[3].has_battery, "Wired device with capabilities but no hasBatteryStatus must default false");
+        assert!(
+            !parsed[3].has_battery,
+            "Wired device with capabilities but no hasBatteryStatus must default false"
+        );
 
         let charging_json = r#"{"path":"/battery/dev00000000/state","payload":{"charging":true,"percentage":64.0},"result":{"code":"SUCCESS"}}"#;
         assert_eq!(
@@ -714,19 +720,31 @@ mod tests {
     fn test_parse_hidpp_battery_response_validation() {
         // Valid 0x1004 / 0x1000 reply on feat 0x05, dev 0xFF, sw_id 1: 78%, charging (1)
         let valid = [0x11u8, 0xFF, 0x05, 0x11, 78, 0, 1];
-        assert_eq!(parse_hidpp_battery_response(&valid, 0xFF, 0x05, 1), Some((78, true)));
+        assert_eq!(
+            parse_hidpp_battery_response(&valid, 0xFF, 0x05, 1),
+            Some((78, true))
+        );
 
         // Discharging status (0)
         let discharging = [0x11u8, 0xFF, 0x05, 0x11, 42, 0, 0];
-        assert_eq!(parse_hidpp_battery_response(&discharging, 0xFF, 0x05, 1), Some((42, false)));
+        assert_eq!(
+            parse_hidpp_battery_response(&discharging, 0xFF, 0x05, 1),
+            Some((42, false))
+        );
 
         // HID++ error frame (feat = 0xFF) must be rejected
         let err_frame = [0x11u8, 0xFF, 0xFF, 0x11, 0x08, 0, 0];
-        assert_eq!(parse_hidpp_battery_response(&err_frame, 0xFF, 0x05, 1), None);
+        assert_eq!(
+            parse_hidpp_battery_response(&err_frame, 0xFF, 0x05, 1),
+            None
+        );
 
         // Unrelated notification feature must be rejected
         let wrong_feat = [0x11u8, 0xFF, 0x02, 0x11, 55, 0, 1];
-        assert_eq!(parse_hidpp_battery_response(&wrong_feat, 0xFF, 0x05, 1), None);
+        assert_eq!(
+            parse_hidpp_battery_response(&wrong_feat, 0xFF, 0x05, 1),
+            None
+        );
 
         // 0x1004 charge complete (3) is charging/plugged, while 4 is charging_error (not charging)
         let unified_complete = [0x11u8, 0xFF, 0x05, 0x11, 100, 0, 3];

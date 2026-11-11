@@ -1,8 +1,8 @@
 use super::{BatteryCollector, BatterySource, DeviceBattery, DeviceType};
 use windows::Win32::UI::Input::XboxController::{
-    XInputGetBatteryInformation, BATTERY_DEVTYPE_GAMEPAD, BATTERY_LEVEL_EMPTY,
-    BATTERY_LEVEL_FULL, BATTERY_LEVEL_LOW, BATTERY_LEVEL_MEDIUM, BATTERY_TYPE_ALKALINE,
-    BATTERY_TYPE_DISCONNECTED, BATTERY_TYPE_NIMH, BATTERY_TYPE_WIRED, XINPUT_BATTERY_INFORMATION,
+    XInputGetBatteryInformation, BATTERY_DEVTYPE_GAMEPAD, BATTERY_LEVEL_EMPTY, BATTERY_LEVEL_FULL,
+    BATTERY_LEVEL_LOW, BATTERY_LEVEL_MEDIUM, BATTERY_TYPE_ALKALINE, BATTERY_TYPE_DISCONNECTED,
+    BATTERY_TYPE_NIMH, BATTERY_TYPE_WIRED, XINPUT_BATTERY_INFORMATION,
 };
 
 pub struct XInputCollector;
@@ -34,7 +34,8 @@ impl BatteryCollector for XInputCollector {
                     (100, true)
                 } else if info.BatteryType == BATTERY_TYPE_ALKALINE
                     || info.BatteryType == BATTERY_TYPE_NIMH
-                    || info.BatteryType.0 == 0x04 // Standard wireless pack
+                    || info.BatteryType.0 == 0x04
+                // Standard wireless pack
                 {
                     match info.BatteryLevel {
                         x if x == BATTERY_LEVEL_EMPTY => (10, false),

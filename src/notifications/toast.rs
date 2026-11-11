@@ -10,14 +10,16 @@ pub fn show_toast(title: &str, message: &str) {
     let message = message.to_string();
 
     std::thread::spawn(move || {
-        let mut nid = NOTIFYICONDATAW::default();
-        nid.cbSize = std::mem::size_of::<NOTIFYICONDATAW>() as u32;
-        nid.hWnd = HWND(std::ptr::null_mut());
-        nid.uFlags = NIF_INFO;
-        nid.dwInfoFlags = if title.contains("⚠️") || title.to_lowercase().contains("critical") {
-            NIIF_WARNING
-        } else {
-            NIIF_INFO
+        let mut nid = NOTIFYICONDATAW {
+            cbSize: std::mem::size_of::<NOTIFYICONDATAW>() as u32,
+            hWnd: HWND(std::ptr::null_mut()),
+            uFlags: NIF_INFO,
+            dwInfoFlags: if title.contains("⚠️") || title.to_lowercase().contains("critical") {
+                NIIF_WARNING
+            } else {
+                NIIF_INFO
+            },
+            ..Default::default()
         };
 
         // Convert title to UTF-16

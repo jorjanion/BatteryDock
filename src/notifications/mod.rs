@@ -29,18 +29,15 @@ impl NotificationManager {
             let last_level = self.last_alerted_level.get(&device.id).copied();
 
             let should_alert_critical = pct <= config.critical_battery_threshold
-                && last_level.map_or(true, |l| l > config.critical_battery_threshold);
+                && last_level.is_none_or(|l| l > config.critical_battery_threshold);
 
             let should_alert_low = pct <= config.low_battery_threshold
-                && last_level.map_or(true, |l| l > config.low_battery_threshold);
+                && last_level.is_none_or(|l| l > config.low_battery_threshold);
 
             if should_alert_critical {
                 self.last_alerted_level.insert(device.id.clone(), pct);
                 let title = format!("⚠️ Critical Battery: {}", device.name);
-                let message = format!(
-                    "Battery is at {}%! Connect the charger immediately.",
-                    pct
-                );
+                let message = format!("Battery is at {}%! Connect the charger immediately.", pct);
 
                 if config.visual_alert_enabled {
                     toast::show_toast(&title, &message);
@@ -51,10 +48,7 @@ impl NotificationManager {
             } else if should_alert_low {
                 self.last_alerted_level.insert(device.id.clone(), pct);
                 let title = format!("Low Battery: {}", device.name);
-                let message = format!(
-                    "Battery has dropped to {}%. Time to charge soon.",
-                    pct
-                );
+                let message = format!("Battery has dropped to {}%. Time to charge soon.", pct);
 
                 if config.visual_alert_enabled {
                     toast::show_toast(&title, &message);
@@ -97,13 +91,13 @@ mod tests {
         };
 
         // At 25%, no alert
-        mgr.check_and_notify(&[dev.clone()], &config);
+        mgr.check_and_notify(std::slice::from_ref(&dev), &config);
         assert!(!mgr.last_alerted_level.contains_key("test_dev_1"));
 
         // Drops to 19% (low battery) -> should record alert
         let mut dev_low = dev.clone();
         dev_low.percentage = 19;
-        mgr.check_and_notify(&[dev_low.clone()], &config);
+        mgr.check_and_notify(&[dev_low], &config);
         assert_eq!(mgr.last_alerted_level.get("test_dev_1"), Some(&19));
 
         // Stays at 18% -> shouldn't re-trigger low alert

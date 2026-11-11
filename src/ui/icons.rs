@@ -67,11 +67,7 @@ impl DevicePainter {
                 // Key dots
                 for dx in [-4.0, 0.0, 4.0] {
                     for dy in [-2.0, 2.0] {
-                        painter.circle_filled(
-                            Pos2::new(center.x + dx, center.y + dy),
-                            0.8,
-                            color,
-                        );
+                        painter.circle_filled(Pos2::new(center.x + dx, center.y + dy), 0.8, color);
                     }
                 }
             }
@@ -105,7 +101,10 @@ impl DevicePainter {
                 painter.circle_filled(center, 2.0, color);
                 // Horizontal spokes
                 painter.line_segment(
-                    [Pos2::new(center.x - 7.0, center.y), Pos2::new(center.x + 7.0, center.y)],
+                    [
+                        Pos2::new(center.x - 7.0, center.y),
+                        Pos2::new(center.x + 7.0, center.y),
+                    ],
                     stroke,
                 );
             }
@@ -149,10 +148,8 @@ impl DevicePainter {
         };
 
         // Battery outer shell
-        let shell_rect = Rect::from_min_size(
-            rect.min,
-            Vec2::new(rect.width() - 2.5, rect.height()),
-        );
+        let shell_rect =
+            Rect::from_min_size(rect.min, Vec2::new(rect.width() - 2.5, rect.height()));
         let border_stroke = Stroke::new(1.0_f32, Color32::from_white_alpha(70));
         let bg_fill = Color32::from_black_alpha(100);
         painter.rect_filled(shell_rect, 2.5, bg_fill);
@@ -238,13 +235,20 @@ impl DevicePainter {
             let dy = angle.sin();
             painter.line_segment(
                 [
-                    Pos2::new(center.x + dx * inner_r * 0.75, center.y + dy * inner_r * 0.75),
+                    Pos2::new(
+                        center.x + dx * inner_r * 0.75,
+                        center.y + dy * inner_r * 0.75,
+                    ),
                     Pos2::new(center.x + dx * outer_r, center.y + dy * outer_r),
                 ],
                 Stroke::new(1.5_f32, color),
             );
         }
         painter.circle_stroke(center, inner_r, Stroke::new(1.4_f32, color));
-        painter.circle_filled(center, hole_r, Color32::from_rgba_premultiplied(18, 20, 24, 215));
+        painter.circle_filled(
+            center,
+            hole_r,
+            Color32::from_rgba_premultiplied(18, 20, 24, 215),
+        );
     }
 }

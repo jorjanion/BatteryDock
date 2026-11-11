@@ -1,12 +1,12 @@
 use crate::config::DockPositionMode;
 use std::ffi::c_void;
 use windows::core::{w, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
+use windows::Win32::Foundation::{CloseHandle, BOOL, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
     DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
 };
 use windows::Win32::Graphics::Gdi::{
-    GetMonitorInfoW, HMONITOR, MonitorFromRect, MonitorFromWindow, MONITORINFO,
+    GetMonitorInfoW, MonitorFromRect, MonitorFromWindow, HMONITOR, MONITORINFO,
     MONITOR_DEFAULTTONEAREST, MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
 };
 use windows::Win32::System::Threading::{
@@ -22,11 +22,11 @@ use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreatePopupMenu, DestroyMenu, FindWindowExW, FindWindowW, GetClassNameW,
     GetCursorPos, GetDesktopWindow, GetForegroundWindow, GetLayeredWindowAttributes,
     GetShellWindow, GetSystemMetrics, GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect,
-    GetWindowThreadProcessId, GWL_EXSTYLE, GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, IsIconic,
-    IsWindow, IsWindowVisible, LWA_ALPHA, MF_SEPARATOR, MF_STRING, PostMessageW,
-    SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, SM_CXSCREEN, SM_CYSCREEN,
-    SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
-    SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON, TrackPopupMenuEx,
+    GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, PostMessageW,
+    SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, TrackPopupMenuEx, GWL_EXSTYLE,
+    GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING, SM_CXSCREEN,
+    SM_CYSCREEN, SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+    SWP_NOZORDER, SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON,
     WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
 };
 
@@ -219,7 +219,12 @@ unsafe fn get_process_exe_lower(pid: u32) -> Option<String> {
     };
     let mut buf = [0u16; 512];
     let mut size = buf.len() as u32;
-    let res = QueryFullProcessImageNameW(handle, PROCESS_NAME_WIN32, PWSTR(buf.as_mut_ptr()), &mut size);
+    let res = QueryFullProcessImageNameW(
+        handle,
+        PROCESS_NAME_WIN32,
+        PWSTR(buf.as_mut_ptr()),
+        &mut size,
+    );
     let _ = CloseHandle(handle);
     if res.is_ok() && size > 0 {
         let full = String::from_utf16_lossy(&buf[..size as usize]);
@@ -295,6 +300,7 @@ pub fn is_shell_flyout_exe_and_class(exe_lower: Option<&str>, class_lower: &str)
         exe,
         "startmenuexperiencehost.exe"
             | "searchhost.exe"
+            | "searchapp.exe"
             | "shellexperiencehost.exe"
             | "shellhost.exe"
             | "searchui.exe"
@@ -380,9 +386,13 @@ impl TaskbarGeometry {
                         && taskbar_rect.right > taskbar_rect.left
                         && taskbar_rect.bottom > taskbar_rect.top
                     {
-                        let tray_hwnd =
-                            FindWindowExW(taskbar_hwnd, HWND(std::ptr::null_mut()), w!("TrayNotifyWnd"), None)
-                                .ok();
+                        let tray_hwnd = FindWindowExW(
+                            taskbar_hwnd,
+                            HWND(std::ptr::null_mut()),
+                            w!("TrayNotifyWnd"),
+                            None,
+                        )
+                        .ok();
                         let mut tray_rect = None;
                         if let Some(tray) = tray_hwnd {
                             if !tray.0.is_null() {
@@ -484,10 +494,8 @@ impl TaskbarGeometry {
     ) -> (f32, f32) {
         self.calculate_dock_position_scaled(
             mode,
-            logical_dock_width,
-            logical_dock_height,
-            custom_x,
-            custom_y,
+            (logical_dock_width, logical_dock_height),
+            (custom_x, custom_y),
             self.dpi_scale,
             Self::is_custom_rect_on_any_monitor,
         )
@@ -496,16 +504,16 @@ impl TaskbarGeometry {
     pub fn calculate_dock_position_scaled<F>(
         &self,
         mode: DockPositionMode,
-        logical_dock_width: f32,
-        logical_dock_height: f32,
-        custom_x: f32,
-        custom_y: f32,
+        logical_size: (f32, f32),
+        custom_pos: (f32, f32),
         scale: f32,
         is_custom_valid: F,
     ) -> (f32, f32)
     where
         F: Fn(f32, f32, f32, f32) -> bool,
     {
+        let (logical_dock_width, logical_dock_height) = logical_size;
+        let (custom_x, custom_y) = custom_pos;
         let scale = scale.clamp(0.75, 4.0);
         let phys_w = logical_dock_width * scale;
         let phys_h = logical_dock_height * scale;
@@ -529,14 +537,13 @@ impl TaskbarGeometry {
                             .max(tb.left as f32 + (8.0 * scale))
                     }
                 } else {
-                    (tb.right as f32 - (290.0 * scale) - phys_w)
-                        .max(tb.left as f32 + (8.0 * scale))
+                    (tb.right as f32 - (290.0 * scale) - phys_w).max(tb.left as f32 + (8.0 * scale))
                 };
                 (target_x, center_y)
             }
             DockPositionMode::TaskbarRight => {
-                let target_x = (tb.right as f32 - phys_w - (12.0 * scale))
-                    .max(tb.left as f32 + (8.0 * scale));
+                let target_x =
+                    (tb.right as f32 - phys_w - (12.0 * scale)).max(tb.left as f32 + (8.0 * scale));
                 (target_x, center_y)
             }
             DockPositionMode::TaskbarLeft => {
@@ -549,10 +556,8 @@ impl TaskbarGeometry {
                 } else {
                     self.calculate_dock_position_scaled(
                         DockPositionMode::TaskbarLeftOfTray,
-                        logical_dock_width,
-                        logical_dock_height,
-                        0.0,
-                        0.0,
+                        (logical_dock_width, logical_dock_height),
+                        (0.0, 0.0),
                         scale,
                         is_custom_valid,
                     )
@@ -598,25 +603,21 @@ impl TaskbarGeometry {
 
             let (monitor_rect, _) = get_monitor_rect_and_scale(target_monitor);
 
-            let (taskbar_rect, taskbar_visible, taskbar_cloaked) = if !tb_hwnd.0.is_null()
-                && IsWindow(tb_hwnd).as_bool()
-            {
-                let mut r = RECT::default();
-                let rect_opt = if GetWindowRect(tb_hwnd, &mut r).is_ok() {
-                    Some(r)
+            let (taskbar_rect, taskbar_visible, taskbar_cloaked) =
+                if !tb_hwnd.0.is_null() && IsWindow(tb_hwnd).as_bool() {
+                    let mut r = RECT::default();
+                    let rect_opt = if GetWindowRect(tb_hwnd, &mut r).is_ok() {
+                        Some(r)
+                    } else {
+                        None
+                    };
+                    let tb_ex = GetWindowLongW(tb_hwnd, GWL_EXSTYLE) as u32;
+                    let tb_vis =
+                        IsWindowVisible(tb_hwnd).as_bool() && !is_window_zero_alpha(tb_hwnd, tb_ex);
+                    (rect_opt, tb_vis, is_window_cloaked(tb_hwnd))
                 } else {
-                    None
+                    (None, false, false)
                 };
-                let tb_ex = GetWindowLongW(tb_hwnd, GWL_EXSTYLE) as u32;
-                let tb_vis = IsWindowVisible(tb_hwnd).as_bool() && !is_window_zero_alpha(tb_hwnd, tb_ex);
-                (
-                    rect_opt,
-                    tb_vis,
-                    is_window_cloaked(tb_hwnd),
-                )
-            } else {
-                (None, false, false)
-            };
 
             // Quick bailout if taskbar itself is absent/hidden/auto-hid
             if require_taskbar_window {
@@ -722,15 +723,12 @@ impl TaskbarGeometry {
     #[allow(dead_code)]
     pub fn is_fullscreen_app_active() -> bool {
         let tb = Self::detect();
-        let rect = tb
-            .as_ref()
-            .map(|g| g.taskbar_rect)
-            .unwrap_or(RECT {
-                left: 0,
-                top: 1392,
-                right: 120,
-                bottom: 1424,
-            });
+        let rect = tb.as_ref().map(|g| g.taskbar_rect).unwrap_or(RECT {
+            left: 0,
+            top: 1392,
+            right: 120,
+            bottom: 1424,
+        });
         !Self::should_dock_be_visible(
             DockPositionMode::TaskbarLeftOfTray,
             rect,
@@ -750,8 +748,8 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
             return;
         }
         let ex = GetWindowLongW(hwnd, GWL_EXSTYLE);
-        let desired = (ex | WS_EX_TOOLWINDOW.0 as i32 | WS_EX_TOPMOST.0 as i32)
-            & !(WS_EX_APPWINDOW.0 as i32);
+        let desired =
+            (ex | WS_EX_TOOLWINDOW.0 as i32 | WS_EX_TOPMOST.0 as i32) & !(WS_EX_APPWINDOW.0 as i32);
         if desired != ex {
             SetWindowLongW(hwnd, GWL_EXSTYLE, desired);
             let _ = SetWindowPos(
@@ -797,8 +795,8 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
         }
 
         let our_ex = GetWindowLongW(our_hwnd, GWL_EXSTYLE);
-        let need_reorder = (our_ex & WS_EX_TOPMOST.0 as i32) == 0
-            || !is_window_above_in_zorder(our_hwnd, tb_hwnd);
+        let need_reorder =
+            (our_ex & WS_EX_TOPMOST.0 as i32) == 0 || !is_window_above_in_zorder(our_hwnd, tb_hwnd);
 
         if need_reorder {
             let prev = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
@@ -1168,10 +1166,12 @@ mod tests {
         assert!(evaluate_dock_should_be_visible(&input));
 
         let mut fullscreen_on_left = input;
-        fullscreen_on_left.windows_above_taskbar.push(CandidateWindowRect {
-            rect: rect(-1080, -592, 0, 1328),
-            is_menu_or_tooltip: false,
-        });
+        fullscreen_on_left
+            .windows_above_taskbar
+            .push(CandidateWindowRect {
+                rect: rect(-1080, -592, 0, 1328),
+                is_menu_or_tooltip: false,
+            });
         assert!(!evaluate_dock_should_be_visible(&fullscreen_on_left));
     }
 
@@ -1188,10 +1188,8 @@ mod tests {
         // 100% DPI: centered inside 48px taskbar -> y = 1392 + (48 - 32)/2 = 1400
         let (x, y) = geo.calculate_dock_position_scaled(
             DockPositionMode::TaskbarLeftOfTray,
-            150.0,
-            32.0,
-            0.0,
-            0.0,
+            (150.0, 32.0),
+            (0.0, 0.0),
             1.0,
             |_, _, _, _| true,
         );
@@ -1208,10 +1206,8 @@ mod tests {
         };
         let (x150, y150) = geo_150.calculate_dock_position_scaled(
             DockPositionMode::TaskbarLeftOfTray,
-            150.0,
-            32.0,
-            0.0,
-            0.0,
+            (150.0, 32.0),
+            (0.0, 0.0),
             1.5,
             |_, _, _, _| true,
         );
@@ -1221,10 +1217,8 @@ mod tests {
         // Negative left-monitor custom coordinates must be preserved when valid
         let (cx, cy) = geo.calculate_dock_position_scaled(
             DockPositionMode::Custom,
-            150.0,
-            32.0,
-            -800.0,
-            1285.0,
+            (150.0, 32.0),
+            (-800.0, 1285.0),
             1.0,
             |x, y, _, _| x == -800.0 && y == 1285.0,
         );
@@ -1233,10 +1227,8 @@ mod tests {
         // Stale minimized-style coordinates fallback cleanly to taskbar
         let (fx, fy) = geo.calculate_dock_position_scaled(
             DockPositionMode::Custom,
-            150.0,
-            32.0,
-            -32000.0,
-            -32000.0,
+            (150.0, 32.0),
+            (-32000.0, -32000.0),
             1.0,
             |x, y, _, _| x > -2000.0 && y > -2000.0,
         );
@@ -1256,6 +1248,14 @@ mod tests {
         ));
         assert!(is_shell_flyout_exe_and_class(
             Some("searchhost.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("searchapp.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("searchui.exe"),
             "windows.ui.core.corewindow"
         ));
         assert!(is_shell_flyout_exe_and_class(
@@ -1283,7 +1283,10 @@ mod tests {
             Some("applicationframehost.exe"),
             "applicationframewindow"
         ));
-        assert!(!is_shell_flyout_exe_and_class(None, "windows.ui.core.corewindow"));
+        assert!(!is_shell_flyout_exe_and_class(
+            None,
+            "windows.ui.core.corewindow"
+        ));
     }
 
     #[test]
