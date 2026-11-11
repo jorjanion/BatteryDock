@@ -22,20 +22,12 @@
 
 ## 📸 Preview
 
-Sitting cleanly next to your Windows 11 system tray clock without getting in the way:
-
-<div align="center">
-  <img src="docs/screenshots/taskbar-preview.png" alt="BatteryDock integrated in the Windows 11 taskbar next to the system tray" width="760" />
-</div>
-
-<br />
-
 <div align="center">
   <table>
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="docs/screenshots/dock-closeup.png" alt="BatteryDock capsule closeup showing headset battery at 92%" /><br /><br />
-        <sub><b>Taskbar Capsule</b> — Crisp Per-Monitor DPI scaling with color-coded battery levels and live ⚡ charging badge.</sub>
+        <sub><b>Taskbar Capsule</b> — Embedded directly on the Windows taskbar with crisp Per-Monitor DPI scaling, color-coded battery levels, and live ⚡ charging badge.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="docs/screenshots/settings.png" alt="BatteryDock Settings window v0.1.11" width="340" /><br />
