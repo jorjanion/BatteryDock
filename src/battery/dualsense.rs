@@ -39,13 +39,15 @@ impl BatteryCollector for DualSenseCollector {
                                     // USB DualSense report
                                     let bat_byte = buf[53];
                                     let pct = (bat_byte & 0x0F).min(10) * 10;
-                                    let charging = (bat_byte & 0x10) != 0 || (bat_byte & 0x20) != 0;
+                                    let charge_state = (bat_byte >> 4) & 0x0F;
+                                    let charging = charge_state == 0x01 || charge_state == 0x02;
                                     (pct, charging)
                                 } else if buf[0] == 0x31 && bytes_read >= 55 {
                                     // Bluetooth DualSense report
                                     let bat_byte = buf[54];
                                     let pct = (bat_byte & 0x0F).min(10) * 10;
-                                    let charging = (bat_byte & 0x10) != 0;
+                                    let charge_state = (bat_byte >> 4) & 0x0F;
+                                    let charging = charge_state == 0x01 || charge_state == 0x02;
                                     (pct, charging)
                                 } else {
                                     (70, false)

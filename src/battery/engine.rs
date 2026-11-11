@@ -5,7 +5,7 @@ use super::xinput::XInputCollector;
 use super::{BatteryCollector, DeviceBattery};
 use crossbeam_channel::{Receiver, Sender};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -13,6 +13,7 @@ use std::time::Duration;
 pub struct BatteryEngine {
     update_receiver: Receiver<Vec<DeviceBattery>>,
     refresh_sender: Sender<()>,
+    latest_devices: Arc<Mutex<Vec<DeviceBattery>>>,
     _is_running: Arc<AtomicBool>,
 }
 
@@ -20,6 +21,8 @@ impl BatteryEngine {
     pub fn start(poll_interval: Duration) -> Self {
         let (update_sender, update_receiver) = crossbeam_channel::unbounded();
         let (refresh_sender, refresh_receiver) = crossbeam_channel::bounded(1);
+        let latest_devices = Arc::new(Mutex::new(Vec::new()));
+        let latest_clone = latest_devices.clone();
         let is_running = Arc::new(AtomicBool::new(true));
         let running_clone = is_running.clone();
 
@@ -32,16 +35,16 @@ impl BatteryEngine {
             ];
 
             // Initial poll immediately
-            Self::execute_poll(&collectors, &update_sender);
+            Self::execute_poll(&collectors, &update_sender, &latest_clone);
 
             while running_clone.load(Ordering::Relaxed) {
                 // Wait for either the timer or a manual refresh signal
                 crossbeam_channel::select! {
                     recv(refresh_receiver) -> _ => {
-                        Self::execute_poll(&collectors, &update_sender);
+                        Self::execute_poll(&collectors, &update_sender, &latest_clone);
                     }
                     default(poll_interval) => {
-                        Self::execute_poll(&collectors, &update_sender);
+                        Self::execute_poll(&collectors, &update_sender, &latest_clone);
                     }
                 }
             }
@@ -50,6 +53,7 @@ impl BatteryEngine {
         Self {
             update_receiver,
             refresh_sender,
+            latest_devices,
             _is_running: is_running,
         }
     }
@@ -57,6 +61,7 @@ impl BatteryEngine {
     fn execute_poll(
         collectors: &[Box<dyn BatteryCollector>],
         sender: &Sender<Vec<DeviceBattery>>,
+        latest_devices: &Mutex<Vec<DeviceBattery>>,
     ) {
         let mut all_devices: Vec<DeviceBattery> = Vec::new();
         let mut seen_ids = std::collections::HashSet::new();
@@ -71,11 +76,21 @@ impl BatteryEngine {
             }
         }
 
+        if let Ok(mut guard) = latest_devices.lock() {
+            *guard = all_devices.clone();
+        }
         let _ = sender.send(all_devices);
     }
 
     pub fn receiver(&self) -> &Receiver<Vec<DeviceBattery>> {
         &self.update_receiver
+    }
+
+    pub fn latest_snapshot(&self) -> Vec<DeviceBattery> {
+        self.latest_devices
+            .lock()
+            .map(|g| g.clone())
+            .unwrap_or_default()
     }
 
     pub fn trigger_refresh(&self) {
@@ -96,8 +111,10 @@ mod tests {
             Box::new(BluetoothBatteryCollector::new()),
         ];
         let (sender, receiver) = crossbeam_channel::unbounded();
-        BatteryEngine::execute_poll(&collectors, &sender);
+        let latest = Mutex::new(Vec::new());
+        BatteryEngine::execute_poll(&collectors, &sender, &latest);
         let devices = receiver.recv_timeout(Duration::from_secs(5)).expect("Failed to poll");
+        assert_eq!(*latest.lock().unwrap(), devices);
         println!("=== Detected devices count: {} ===", devices.len());
         for d in &devices {
             println!("Detected Device: {} ({}%) [charging: {}]", d.name, d.percentage, d.is_charging);

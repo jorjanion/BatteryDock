@@ -43,6 +43,9 @@ impl SettingsWindow {
                 .changed()
             {
                 config.low_battery_threshold = low;
+                if config.critical_battery_threshold > config.low_battery_threshold {
+                    config.critical_battery_threshold = config.low_battery_threshold;
+                }
                 config.save();
             }
         });
@@ -54,7 +57,7 @@ impl SettingsWindow {
                 .add(egui::Slider::new(&mut crit, 1..=15).suffix("%"))
                 .changed()
             {
-                config.critical_battery_threshold = crit;
+                config.critical_battery_threshold = crit.min(config.low_battery_threshold);
                 config.save();
             }
         });
@@ -268,7 +271,7 @@ fn set_run_at_startup(enable: bool) -> Result<(), ()> {
         if RegCreateKeyW(HKEY_CURRENT_USER, PCWSTR(subkey.as_ptr()), &mut hkey).is_ok() {
             if enable {
                 if let Ok(exe_path) = std::env::current_exe() {
-                    let path_str = exe_path.to_string_lossy().to_string();
+                    let path_str = format!("\"{}\"", exe_path.to_string_lossy());
                     let path_wide: Vec<u16> = std::ffi::OsStr::new(&path_str)
                         .encode_wide()
                         .chain(Some(0))

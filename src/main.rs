@@ -15,9 +15,8 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use ui::dock::DockOverlay;
 use ui::taskbar::{
-    apply_overlay_ex_style, ensure_window_above_monitor_taskbar, get_window_physical_rect,
-    is_window_visible_win32, set_window_physical_rect, set_window_visible_noactivate,
-    TaskbarGeometry,
+    apply_overlay_ex_style, ensure_window_above_monitor_taskbar, is_window_visible_win32,
+    set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry,
 };
 use ui::tray::SystemTray;
 use windows::core::w;
@@ -43,6 +42,8 @@ struct DockSyncState {
     our_hwnd: AtomicIsize,
     is_dragging: AtomicBool,
     is_dock_hidden: AtomicBool,
+    just_unhid: AtomicBool,
+    last_hidden_refresh: Mutex<Instant>,
     layout: Mutex<DockLayoutParams>,
 }
 
@@ -170,7 +171,29 @@ fn compute_target_physical_rect(
     (rect, phys_w, phys_h)
 }
 
-fn sync_dock_window_once(sync: &DockSyncState, ctx: Option<&egui::Context>) {
+fn refresh_layout_from_disk_and_engine(
+    sync: &DockSyncState,
+    engine: &BatteryEngine,
+) -> DockLayoutParams {
+    let devices = engine.latest_snapshot();
+    if let Some(cfg) = AppConfig::try_load() {
+        let logical_w = DockOverlay::required_width(&devices, &cfg);
+        let mut layout = sync.layout.lock().unwrap();
+        layout.mode = cfg.position_mode;
+        layout.custom_x = cfg.custom_pos_x;
+        layout.custom_y = cfg.custom_pos_y;
+        layout.logical_w = logical_w;
+        layout.logical_h = 32.0;
+        return layout.clone();
+    }
+    sync.layout.lock().unwrap().clone()
+}
+
+fn sync_dock_window_once(
+    sync: &DockSyncState,
+    engine: Option<&BatteryEngine>,
+    ctx: Option<&egui::Context>,
+) {
     let hwnd = sync.our_hwnd.load(Ordering::Acquire);
     if hwnd == 0 {
         return;
@@ -179,22 +202,49 @@ fn sync_dock_window_once(sync: &DockSyncState, ctx: Option<&egui::Context>) {
         return;
     }
 
-    let params = sync.layout.lock().unwrap().clone();
+    let currently_visible = is_window_visible_win32(hwnd);
+    let mut params = if !currently_visible {
+        if let Some(eng) = engine {
+            let mut due = false;
+            if let Ok(mut last) = sync.last_hidden_refresh.lock() {
+                if last.elapsed() >= Duration::from_millis(250) {
+                    *last = Instant::now();
+                    due = true;
+                }
+            }
+            if due {
+                refresh_layout_from_disk_and_engine(sync, eng)
+            } else {
+                sync.layout.lock().unwrap().clone()
+            }
+        } else {
+            sync.layout.lock().unwrap().clone()
+        }
+    } else {
+        sync.layout.lock().unwrap().clone()
+    };
+
     apply_overlay_ex_style(hwnd);
 
     let Some(tb) = TaskbarGeometry::detect() else {
         return;
     };
 
-    let (target_rect, phys_w, phys_h) = compute_target_physical_rect(&params, &tb);
-    let eval_rect = if params.mode == DockPositionMode::Custom {
-        get_window_physical_rect(hwnd).unwrap_or(target_rect)
-    } else {
-        target_rect
-    };
+    let (mut target_rect, mut phys_w, mut phys_h) = compute_target_physical_rect(&params, &tb);
+    let mut should_be_visible =
+        TaskbarGeometry::should_dock_be_visible(params.mode, target_rect, std::process::id());
 
-    let should_be_visible =
-        TaskbarGeometry::should_dock_be_visible(params.mode, eval_rect, std::process::id());
+    if should_be_visible && !currently_visible {
+        if let Some(eng) = engine {
+            params = refresh_layout_from_disk_and_engine(sync, eng);
+            if let Ok(mut last) = sync.last_hidden_refresh.lock() {
+                *last = Instant::now();
+            }
+            (target_rect, phys_w, phys_h) = compute_target_physical_rect(&params, &tb);
+            should_be_visible =
+                TaskbarGeometry::should_dock_be_visible(params.mode, target_rect, std::process::id());
+        }
+    }
 
     if !should_be_visible {
         if set_window_visible_noactivate(hwnd, false) {
@@ -209,9 +259,10 @@ fn sync_dock_window_once(sync: &DockSyncState, ctx: Option<&egui::Context>) {
             phys_h,
         );
         ensure_window_above_monitor_taskbar(hwnd, target_rect);
-        if !is_window_visible_win32(hwnd) {
+        if !currently_visible {
             set_window_visible_noactivate(hwnd, true);
             sync.is_dock_hidden.store(false, Ordering::Release);
+            sync.just_unhid.store(true, Ordering::Release);
             if let Some(c) = ctx {
                 c.request_repaint();
             }
@@ -245,6 +296,8 @@ impl BatteryDockApp {
             our_hwnd: AtomicIsize::new(our_hwnd),
             is_dragging: AtomicBool::new(false),
             is_dock_hidden: AtomicBool::new(false),
+            just_unhid: AtomicBool::new(false),
+            last_hidden_refresh: Mutex::new(Instant::now()),
             layout: Mutex::new(DockLayoutParams {
                 mode: config.position_mode,
                 custom_x: config.custom_pos_x,
@@ -255,7 +308,7 @@ impl BatteryDockApp {
         });
 
         // Immediately enforce overlay styles, initial taskbar rect, Z-order, and fullscreen check before frame 1
-        sync_dock_window_once(&sync, None);
+        sync_dock_window_once(&sync, None, None);
 
         let engine = BatteryEngine::start(Duration::from_secs(config.poll_interval_secs));
         let tray = SystemTray::new().ok();
@@ -346,12 +399,13 @@ impl BatteryDockApp {
             }
         });
 
-        // Dedicated 50ms Win32 visibility, Z-order (above Shell_TrayWnd), and taskbar sync thread
+        // Dedicated 25ms Win32 visibility, Z-order (above Shell_TrayWnd), and taskbar sync thread
         let sync_watcher = sync.clone();
+        let engine_watcher = engine.clone();
         let ctx_watcher = cc.egui_ctx.clone();
         std::thread::spawn(move || loop {
-            sync_dock_window_once(&sync_watcher, Some(&ctx_watcher));
-            std::thread::sleep(Duration::from_millis(50));
+            sync_dock_window_once(&sync_watcher, Some(&engine_watcher), Some(&ctx_watcher));
+            std::thread::sleep(Duration::from_millis(25));
         });
 
         Self {
@@ -396,19 +450,10 @@ impl eframe::App for BatteryDockApp {
             self.engine.trigger_refresh();
         }
 
-        // 2. Drain all pending battery updates so we immediately display the latest snapshot
-        let mut latest_devices = None;
-        while let Ok(updated_devices) = self.engine.receiver().try_recv() {
-            self.notification_mgr
-                .check_and_notify(&updated_devices, &self.config);
-            latest_devices = Some(updated_devices);
-        }
-        if let Some(updated_devices) = latest_devices {
-            self.devices = updated_devices;
-        }
-
-        // 3. Reload ALL config fields from disk every 500ms when not actively dragging
-        if !self.dock.is_dragging() && self.last_config_reload.elapsed() >= Duration::from_millis(500)
+        // 2. Reload ALL config fields from disk before processing notifications
+        let forced_reload = self.sync.just_unhid.swap(false, Ordering::AcqRel);
+        if !self.dock.is_dragging()
+            && (forced_reload || self.last_config_reload.elapsed() >= Duration::from_millis(500))
         {
             self.last_config_reload = Instant::now();
             if let Some(loaded) = AppConfig::try_load() {
@@ -417,6 +462,17 @@ impl eframe::App for BatteryDockApp {
                     self.last_position_mode = self.config.position_mode;
                 }
             }
+        }
+
+        // 3. Drain all pending battery updates and evaluate notifications only on the latest snapshot
+        let mut latest_devices = None;
+        while let Ok(updated_devices) = self.engine.receiver().try_recv() {
+            latest_devices = Some(updated_devices);
+        }
+        if let Some(updated_devices) = latest_devices {
+            self.notification_mgr
+                .check_and_notify(&updated_devices, &self.config);
+            self.devices = updated_devices;
         }
 
         // 4. Resize viewport if device list, charging state, or percentage text toggle changed pill width

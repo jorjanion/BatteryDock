@@ -275,8 +275,10 @@ pub fn parse_ghub_devices_list(json: &str) -> Vec<GhubDeviceInfo> {
                                     } else {
                                         format!("Logitech {}", raw_name)
                                     };
-                                    let has_battery =
-                                        parse_json_bool_field(obj, "hasBatteryStatus").unwrap_or(true);
+                                    let has_battery = parse_json_bool_field(obj, "hasBatteryStatus")
+                                        .unwrap_or_else(|| {
+                                            find_json_field_value_start(obj, "capabilities").is_none()
+                                        });
                                     devices.push(GhubDeviceInfo {
                                         id,
                                         name,
@@ -312,11 +314,12 @@ pub fn parse_ghub_battery_state(json: &str, expected_path: &str) -> Option<(u8, 
 }
 
 /// Validates and parses an HID++ 2.0 battery status reply (`0x1004` get_status or `0x1000` getBatteryLevelStatus).
-pub fn parse_hidpp_battery_response(
+pub fn parse_hidpp_battery_response_for_feature(
     resp: &[u8],
     expected_dev_idx: u8,
     expected_feat_idx: u8,
     expected_sw_id: u8,
+    is_unified_battery: bool,
 ) -> Option<(u8, bool)> {
     if resp.len() < 7 {
         return None;
@@ -328,8 +331,30 @@ pub fn parse_hidpp_battery_response(
         return None;
     }
     let pct = resp[4].min(100);
-    let charging = matches!(resp[6], 1 | 2 | 4);
+    let charging = if is_unified_battery {
+        // 0x1004: 1=charging, 2=charging_slow, 3=charge_complete (plugged in); 4=charging_error
+        matches!(resp[6], 1 | 2 | 3)
+    } else {
+        // 0x1000: 1=recharging, 2=final_stage, 3=charge_complete, 4=recharging_below_optimal
+        matches!(resp[6], 1 | 2 | 3 | 4)
+    };
     Some((pct, charging))
+}
+
+#[allow(dead_code)]
+pub fn parse_hidpp_battery_response(
+    resp: &[u8],
+    expected_dev_idx: u8,
+    expected_feat_idx: u8,
+    expected_sw_id: u8,
+) -> Option<(u8, bool)> {
+    parse_hidpp_battery_response_for_feature(
+        resp,
+        expected_dev_idx,
+        expected_feat_idx,
+        expected_sw_id,
+        false,
+    )
 }
 
 fn query_hidpp_feature_index(
@@ -372,6 +397,7 @@ fn query_hidpp_battery_feature(
     feat_idx: u8,
     function_id: u8,
     sw_id: u8,
+    is_unified_battery: bool,
 ) -> Option<(u8, bool)> {
     let mut req = [0u8; 20];
     req[0] = 0x11;
@@ -391,7 +417,13 @@ fn query_hidpp_battery_feature(
         if resp[2] == 0xFF {
             return None;
         }
-        if let Some(parsed) = parse_hidpp_battery_response(&resp[..n], dev_idx, feat_idx, sw_id) {
+        if let Some(parsed) = parse_hidpp_battery_response_for_feature(
+            &resp[..n],
+            dev_idx,
+            feat_idx,
+            sw_id,
+            is_unified_battery,
+        ) {
             return Some(parsed);
         }
     }
@@ -548,11 +580,11 @@ Origin: file://\r\n\r\n";
                 let battery_opt = if let Some(feat_1004) =
                     query_hidpp_feature_index(&device, dev_idx, 0x10, 0x04, sw_id)
                 {
-                    query_hidpp_battery_feature(&device, dev_idx, feat_1004, 1, sw_id)
+                    query_hidpp_battery_feature(&device, dev_idx, feat_1004, 1, sw_id, true)
                 } else if let Some(feat_1000) =
                     query_hidpp_feature_index(&device, dev_idx, 0x10, 0x00, sw_id)
                 {
-                    query_hidpp_battery_feature(&device, dev_idx, feat_1000, 0, sw_id)
+                    query_hidpp_battery_feature(&device, dev_idx, feat_1000, 0, sw_id, false)
                 } else {
                     None
                 };
@@ -638,6 +670,12 @@ mod tests {
                         "displayName": "Logitech G PRO X SUPERLIGHT",
                         "capabilities": { "hasBatteryStatus": true },
                         "state": "ACTIVE"
+                    },
+                    {
+                        "id": "dev00000003",
+                        "extendedDisplayName": "G513 Mechanical Keyboard",
+                        "capabilities": { "lightingSupport": {} },
+                        "state": "ACTIVE"
                     }
                 ]
             },
@@ -645,13 +683,14 @@ mod tests {
         }"#;
 
         let parsed = parse_ghub_devices_list(list_json);
-        assert_eq!(parsed.len(), 3);
+        assert_eq!(parsed.len(), 4);
         assert_eq!(parsed[0].id, "dev00000000");
         assert_eq!(parsed[0].name, "Logitech G733 Gaming Headset");
         assert!(parsed[0].has_battery);
         assert!(!parsed[1].has_battery);
         assert_eq!(parsed[2].name, "Logitech G PRO X SUPERLIGHT");
         assert!(parsed[2].has_battery);
+        assert!(!parsed[3].has_battery, "Wired device with capabilities but no hasBatteryStatus must default false");
 
         let charging_json = r#"{"path":"/battery/dev00000000/state","payload":{"charging":true,"percentage":64.0},"result":{"code":"SUCCESS"}}"#;
         assert_eq!(
@@ -688,6 +727,22 @@ mod tests {
         // Unrelated notification feature must be rejected
         let wrong_feat = [0x11u8, 0xFF, 0x02, 0x11, 55, 0, 1];
         assert_eq!(parse_hidpp_battery_response(&wrong_feat, 0xFF, 0x05, 1), None);
+
+        // 0x1004 charge complete (3) is charging/plugged, while 4 is charging_error (not charging)
+        let unified_complete = [0x11u8, 0xFF, 0x05, 0x11, 100, 0, 3];
+        assert_eq!(
+            parse_hidpp_battery_response_for_feature(&unified_complete, 0xFF, 0x05, 1, true),
+            Some((100, true))
+        );
+        let unified_err = [0x11u8, 0xFF, 0x05, 0x11, 50, 0, 4];
+        assert_eq!(
+            parse_hidpp_battery_response_for_feature(&unified_err, 0xFF, 0x05, 1, true),
+            Some((50, false))
+        );
+        assert_eq!(
+            parse_hidpp_battery_response_for_feature(&unified_err, 0xFF, 0x05, 1, false),
+            Some((50, true))
+        );
     }
 
     #[test]

@@ -1,7 +1,7 @@
 use crate::config::DockPositionMode;
 use std::ffi::c_void;
 use windows::core::{w, PWSTR};
-use windows::Win32::Foundation::{BOOL, CloseHandle, COLORREF, HWND, LPARAM, POINT, RECT};
+use windows::Win32::Foundation::{BOOL, CloseHandle, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
     DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
 };
@@ -13,18 +13,21 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_RBUTTON};
 use windows::Win32::UI::Shell::{
     SHAppBarMessage, SHQueryUserNotificationState, ABM_GETTASKBARPOS, APPBARDATA,
     QUNS_RUNNING_D3D_FULL_SCREEN,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    FindWindowExW, FindWindowW, GetClassNameW, GetCursorPos, GetDesktopWindow,
-    GetForegroundWindow, GetLayeredWindowAttributes, GetShellWindow, GetSystemMetrics, GetTopWindow,
-    GetWindow, GetWindowLongW, GetWindowRect, GetWindowThreadProcessId, GWL_EXSTYLE, GW_HWNDNEXT,
-    GW_HWNDPREV, HWND_TOPMOST, IsIconic, IsWindow, IsWindowVisible, LWA_ALPHA, SetWindowLongW,
-    SetWindowPos, ShowWindow, SM_CXSCREEN, SM_CYSCREEN, SWP_FRAMECHANGED, SWP_NOACTIVATE,
-    SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNOACTIVATE, WS_EX_APPWINDOW,
-    WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
+    AppendMenuW, CreatePopupMenu, DestroyMenu, FindWindowExW, FindWindowW, GetClassNameW,
+    GetCursorPos, GetDesktopWindow, GetForegroundWindow, GetLayeredWindowAttributes,
+    GetShellWindow, GetSystemMetrics, GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect,
+    GetWindowThreadProcessId, GWL_EXSTYLE, GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, IsIconic,
+    IsWindow, IsWindowVisible, LWA_ALPHA, MF_SEPARATOR, MF_STRING, PostMessageW,
+    SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, SM_CXSCREEN, SM_CYSCREEN,
+    SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
+    SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON, TrackPopupMenuEx,
+    WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
 };
 
 #[derive(Debug, Clone)]
@@ -274,23 +277,64 @@ unsafe fn is_shell_desktop_or_overlay_class(class_lower: &str) -> bool {
             | "notifyiconoverflowwindow"
             | "toplevelwindowforoverflowxamlisland"
             | "xamlexplorerhostislandwindow"
+            | "xamlexplorerhostislandwindow_wasdk"
+            | "taskswitcherwnd"
+            | "multitaskingviewframe"
+            | "controlcenterwindow"
+            | "shell_inputswitchtoplevelwindow"
+            | "wnd_startfeed"
             | "traynotifywnd"
     )
 }
 
-unsafe fn is_shell_flyout_process(pid: u32) -> bool {
-    let Some(exe) = get_process_exe_lower(pid) else {
+pub fn is_shell_flyout_exe_and_class(exe_lower: Option<&str>, class_lower: &str) -> bool {
+    let Some(exe) = exe_lower else {
         return false;
     };
-    matches!(
-        exe.as_str(),
+    if matches!(
+        exe,
         "startmenuexperiencehost.exe"
             | "searchhost.exe"
             | "shellexperiencehost.exe"
+            | "shellhost.exe"
             | "searchui.exe"
             | "textinputhost.exe"
             | "widgets.exe"
-    )
+            | "widgetservice.exe"
+            | "microsoftstartfeedprovider.exe"
+    ) {
+        return true;
+    }
+    if exe == "explorer.exe" {
+        return matches!(
+            class_lower,
+            "windows.ui.core.corewindow"
+                | "xamlexplorerhostislandwindow"
+                | "xamlexplorerhostislandwindow_wasdk"
+                | "taskswitcherwnd"
+                | "multitaskingviewframe"
+                | "controlcenterwindow"
+                | "shell_inputswitchtoplevelwindow"
+        );
+    }
+    false
+}
+
+unsafe fn is_shell_flyout_window(pid: u32, class_lower: &str) -> bool {
+    let exe = get_process_exe_lower(pid);
+    is_shell_flyout_exe_and_class(exe.as_deref(), class_lower)
+}
+
+unsafe fn is_window_zero_alpha(hwnd: HWND, ex_style: u32) -> bool {
+    if (ex_style & WS_EX_LAYERED.0) == 0 {
+        return false;
+    }
+    let mut cr = COLORREF(0);
+    let mut alpha = 255u8;
+    let mut flags = Default::default();
+    GetLayeredWindowAttributes(hwnd, Some(&mut cr), Some(&mut alpha), Some(&mut flags)).is_ok()
+        && (flags.0 & LWA_ALPHA.0 != 0)
+        && alpha == 0
 }
 
 struct SecondaryTaskbarSearch {
@@ -563,9 +607,11 @@ impl TaskbarGeometry {
                 } else {
                     None
                 };
+                let tb_ex = GetWindowLongW(tb_hwnd, GWL_EXSTYLE) as u32;
+                let tb_vis = IsWindowVisible(tb_hwnd).as_bool() && !is_window_zero_alpha(tb_hwnd, tb_ex);
                 (
                     rect_opt,
-                    IsWindowVisible(tb_hwnd).as_bool(),
+                    tb_vis,
                     is_window_cloaked(tb_hwnd),
                 )
             } else {
@@ -608,7 +654,7 @@ impl TaskbarGeometry {
             let mut windows_above = Vec::new();
             let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
             let mut steps = 0usize;
-            while !cur.0.is_null() && steps < 512 {
+            while !cur.0.is_null() && steps < 4096 {
                 steps += 1;
                 if !tb_hwnd.0.is_null() && cur == tb_hwnd {
                     break;
@@ -623,24 +669,7 @@ impl TaskbarGeometry {
                         let ex_style = GetWindowLongW(cur, GWL_EXSTYLE) as u32;
                         let is_clickthrough = (ex_style & WS_EX_LAYERED.0 != 0)
                             && (ex_style & WS_EX_TRANSPARENT.0 != 0);
-                        let mut is_zero_alpha = false;
-                        if !is_clickthrough && (ex_style & WS_EX_LAYERED.0 != 0) {
-                            let mut cr = COLORREF(0);
-                            let mut alpha = 255u8;
-                            let mut flags = Default::default();
-                            if GetLayeredWindowAttributes(
-                                cur,
-                                Some(&mut cr),
-                                Some(&mut alpha),
-                                Some(&mut flags),
-                            )
-                            .is_ok()
-                                && (flags.0 & LWA_ALPHA.0 != 0)
-                                && alpha == 0
-                            {
-                                is_zero_alpha = true;
-                            }
-                        }
+                        let is_zero_alpha = !is_clickthrough && is_window_zero_alpha(cur, ex_style);
 
                         if !is_clickthrough && !is_zero_alpha {
                             let class = get_window_class_lower(cur);
@@ -657,7 +686,7 @@ impl TaskbarGeometry {
                                                 .and_then(|tb_r| rect_intersection(rect, tb_r))
                                                 .is_some();
                                         let skip_flyout =
-                                            might_occlude && is_shell_flyout_process(pid);
+                                            might_occlude && is_shell_flyout_window(pid, &class);
                                         if !skip_flyout {
                                             windows_above.push(CandidateWindowRect {
                                                 rect,
@@ -738,6 +767,22 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
     }
 }
 
+unsafe fn is_window_above_in_zorder(our_hwnd: HWND, tb_hwnd: HWND) -> bool {
+    let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
+    let mut steps = 0usize;
+    while !cur.0.is_null() && steps < 4096 {
+        if cur == our_hwnd {
+            return true;
+        }
+        if cur == tb_hwnd {
+            return false;
+        }
+        cur = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
+        steps += 1;
+    }
+    false
+}
+
 /// Ensures `our_hwnd` sits strictly ABOVE `Shell_TrayWnd` in the `HWND_TOPMOST` Z-order band.
 /// Fixes the Windows key / taskbar click burying BatteryDock behind `Shell_TrayWnd`.
 pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
@@ -752,23 +797,8 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
         }
 
         let our_ex = GetWindowLongW(our_hwnd, GWL_EXSTYLE);
-        let mut need_reorder = (our_ex & WS_EX_TOPMOST.0 as i32) == 0;
-
-        if !need_reorder {
-            let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
-            let mut steps = 0usize;
-            while !cur.0.is_null() && steps < 512 {
-                if cur == our_hwnd {
-                    return; // Already above taskbar!
-                }
-                if cur == tb_hwnd {
-                    need_reorder = true;
-                    break;
-                }
-                cur = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
-                steps += 1;
-            }
-        }
+        let need_reorder = (our_ex & WS_EX_TOPMOST.0 as i32) == 0
+            || !is_window_above_in_zorder(our_hwnd, tb_hwnd);
 
         if need_reorder {
             let prev = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
@@ -780,7 +810,7 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
             } else {
                 HWND_TOPMOST
             };
-            let _ = SetWindowPos(
+            let res = SetWindowPos(
                 our_hwnd,
                 insert_after,
                 0,
@@ -789,6 +819,17 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
                 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
             );
+            if res.is_err() || !is_window_above_in_zorder(our_hwnd, tb_hwnd) {
+                let _ = SetWindowPos(
+                    our_hwnd,
+                    HWND_TOPMOST,
+                    0,
+                    0,
+                    0,
+                    0,
+                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+                );
+            }
         }
     }
 }
@@ -943,6 +984,80 @@ pub fn set_window_visible_noactivate(hwnd_val: isize, visible: bool) -> bool {
         }
         let _ = ShowWindow(hwnd, if visible { SW_SHOWNOACTIVATE } else { SW_HIDE });
         true
+    }
+}
+
+/// Checks live Win32 mouse button state (immune to uncaptured cursor exits outside the 32px pill).
+pub fn is_primary_mouse_button_down() -> bool {
+    unsafe {
+        let swapped = GetSystemMetrics(SM_SWAPBUTTON) != 0;
+        let vk = if swapped {
+            VK_RBUTTON.0 as i32
+        } else {
+            VK_LBUTTON.0 as i32
+        };
+        (GetAsyncKeyState(vk) as u16 & 0x8000) != 0
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DockContextMenuAction {
+    Settings,
+    Refresh,
+    ResetPosition,
+    Restart,
+    Exit,
+}
+
+/// Shows a crisp native Win32 popup menu above/beside the dock pill (never clipped by the 32px viewport).
+pub fn show_dock_context_menu(hwnd_val: isize) -> Option<DockContextMenuAction> {
+    if hwnd_val == 0 {
+        return None;
+    }
+    unsafe {
+        let hwnd = HWND(hwnd_val as *mut c_void);
+        if !IsWindow(hwnd).as_bool() {
+            return None;
+        }
+        let Ok(menu) = CreatePopupMenu() else {
+            return None;
+        };
+
+        const CMD_SETTINGS: usize = 1001;
+        const CMD_REFRESH: usize = 1002;
+        const CMD_RESET: usize = 1003;
+        const CMD_RESTART: usize = 1004;
+        const CMD_EXIT: usize = 1005;
+
+        let _ = AppendMenuW(menu, MF_STRING, CMD_SETTINGS, w!("Settings"));
+        let _ = AppendMenuW(menu, MF_STRING, CMD_REFRESH, w!("Refresh Devices"));
+        let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
+        let _ = AppendMenuW(menu, MF_STRING, CMD_RESET, w!("Reset to Taskbar Clock"));
+        let _ = AppendMenuW(menu, MF_STRING, CMD_RESTART, w!("Restart BatteryDock"));
+        let _ = AppendMenuW(menu, MF_STRING, CMD_EXIT, w!("Exit BatteryDock"));
+
+        let mut pt = POINT::default();
+        let _ = GetCursorPos(&mut pt);
+        let _ = SetForegroundWindow(hwnd);
+        let cmd = TrackPopupMenuEx(
+            menu,
+            (TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON).0,
+            pt.x,
+            pt.y,
+            hwnd,
+            None,
+        );
+        let _ = PostMessageW(hwnd, WM_NULL, WPARAM(0), LPARAM(0));
+        let _ = DestroyMenu(menu);
+
+        match cmd.0 as usize {
+            CMD_SETTINGS => Some(DockContextMenuAction::Settings),
+            CMD_REFRESH => Some(DockContextMenuAction::Refresh),
+            CMD_RESET => Some(DockContextMenuAction::ResetPosition),
+            CMD_RESTART => Some(DockContextMenuAction::Restart),
+            CMD_EXIT => Some(DockContextMenuAction::Exit),
+            _ => None,
+        }
     }
 }
 
@@ -1127,6 +1242,48 @@ mod tests {
         );
         assert_eq!(fx, 2250.0 - 150.0 - 12.0);
         assert_eq!(fy, 1400.0);
+    }
+
+    #[test]
+    fn test_shell_flyout_classification() {
+        assert!(is_shell_flyout_exe_and_class(
+            Some("startmenuexperiencehost.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("shellhost.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("searchhost.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("widgetservice.exe"),
+            "widgets"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("explorer.exe"),
+            "xamlexplorerhostislandwindow_wasdk"
+        ));
+        assert!(is_shell_flyout_exe_and_class(
+            Some("explorer.exe"),
+            "windows.ui.core.corewindow"
+        ));
+        // Normal File Explorer window or regular fullscreen UWP/browser must NOT be skipped
+        assert!(!is_shell_flyout_exe_and_class(
+            Some("explorer.exe"),
+            "cabinetwclass"
+        ));
+        assert!(!is_shell_flyout_exe_and_class(
+            Some("brave.exe"),
+            "chrome_widgetwin_1"
+        ));
+        assert!(!is_shell_flyout_exe_and_class(
+            Some("applicationframehost.exe"),
+            "applicationframewindow"
+        ));
+        assert!(!is_shell_flyout_exe_and_class(None, "windows.ui.core.corewindow"));
     }
 
     #[test]

@@ -2,7 +2,8 @@ use crate::battery::{DeviceBattery, DeviceType};
 use crate::config::{AppConfig, DockPositionMode};
 use crate::ui::icons::DevicePainter;
 use crate::ui::taskbar::{
-    get_cursor_physical_pos, get_window_physical_rect, set_window_physical_pos,
+    get_cursor_physical_pos, get_window_physical_rect, is_primary_mouse_button_down,
+    set_window_physical_pos, show_dock_context_menu, DockContextMenuAction,
 };
 use egui::{Color32, CornerRadius, Pos2, Rect, Stroke, StrokeKind, Vec2};
 use std::time::{Duration, Instant};
@@ -106,30 +107,22 @@ impl DockOverlay {
                     egui::Sense::click_and_drag(),
                 );
 
-                dock_response.context_menu(|ui| {
-                    ui.label(egui::RichText::new("BatteryDock").strong());
-                    ui.separator();
-                    if ui.button("Settings").clicked() {
-                        *open_settings = true;
-                        ui.close_menu();
+                if dock_response.secondary_clicked() {
+                    if let Some(action) = show_dock_context_menu(our_hwnd) {
+                        match action {
+                            DockContextMenuAction::Settings => *open_settings = true,
+                            DockContextMenuAction::Refresh => refresh_requested = true,
+                            DockContextMenuAction::ResetPosition => {
+                                config.position_mode = DockPositionMode::TaskbarLeftOfTray;
+                                config.custom_pos_x = 0.0;
+                                config.custom_pos_y = 0.0;
+                                config.save();
+                            }
+                            DockContextMenuAction::Restart => crate::restart_app(),
+                            DockContextMenuAction::Exit => std::process::exit(0),
+                        }
                     }
-                    if ui.button("Refresh Devices").clicked() {
-                        refresh_requested = true;
-                        ui.close_menu();
-                    }
-                    ui.separator();
-                    if ui.button("Reset to Taskbar Clock").clicked() {
-                        config.position_mode = DockPositionMode::TaskbarLeftOfTray;
-                        config.save();
-                        ui.close_menu();
-                    }
-                    if ui.button("Restart BatteryDock").clicked() {
-                        crate::restart_app();
-                    }
-                    if ui.button("Exit BatteryDock").clicked() {
-                        std::process::exit(0);
-                    }
-                });
+                }
 
                 let mut settings_clicked = false;
                 let mut settings_pressed = false;
@@ -156,6 +149,7 @@ impl DockOverlay {
                                     .size(11.5)
                                     .color(Color32::from_white_alpha(165)),
                             )
+                            .wrap_mode(egui::TextWrapMode::Extend)
                             .selectable(false),
                         );
                         ui.add_space(4.0);
@@ -174,7 +168,7 @@ impl DockOverlay {
                                 ui.add_space(1.0 + 6.0);
                             }
 
-                            let item_response = ui.horizontal(|ui| {
+                            ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 0.0;
 
                                 // Device Icon
@@ -249,26 +243,10 @@ impl DockOverlay {
                                                 .color(text_color)
                                                 .strong(),
                                         )
+                                        .wrap_mode(egui::TextWrapMode::Extend)
                                         .selectable(false),
                                     );
                                 }
-                            });
-
-                            let charging_desc = if dev.is_charging { " (Charging)" } else { "" };
-                            item_response.response.on_hover_ui(|ui| {
-                                ui.label(egui::RichText::new(&dev.name).strong());
-                                ui.label(format!(
-                                    "Type: {} | Battery: {}%{}",
-                                    dev.device_type.display_name(),
-                                    dev.percentage,
-                                    charging_desc
-                                ));
-                                ui.label(
-                                    egui::RichText::new("Click for Settings • Drag to move")
-                                        .size(10.0)
-                                        .italics()
-                                        .weak(),
-                                );
                             });
                         }
                     }
@@ -291,17 +269,16 @@ impl DockOverlay {
                         settings_clicked = true;
                     }
                     settings_pressed = settings_btn.is_pointer_button_down_on() || settings_btn.hovered();
-                    settings_btn.on_hover_text("Open Settings");
 
                     ui.add_space(6.0);
                 });
 
-                // Custom Win32 drag with >5px threshold (immune to click-jitter & taskbar edge clamping)
+                // Custom Win32 drag with >5px threshold (uses Win32 GetAsyncKeyState so release outside 32px pill never sticks)
                 if our_hwnd != 0 {
                     let primary_pressed = ui.input(|i| i.pointer.primary_pressed());
-                    let primary_down = ui.input(|i| i.pointer.primary_down());
+                    let pointer_in_pill = ui.rect_contains_pointer(avail_rect);
 
-                    if primary_pressed && !settings_pressed && dock_response.hovered() {
+                    if primary_pressed && !settings_pressed && pointer_in_pill {
                         if let (Some((cx, cy)), Some(win_r)) =
                             (get_cursor_physical_pos(), get_window_physical_rect(our_hwnd))
                         {
@@ -311,7 +288,9 @@ impl DockOverlay {
                     }
 
                     if let Some((cx0, cy0, wx0, wy0)) = self.drag_anchor {
-                        if primary_down {
+                        let physical_down = is_primary_mouse_button_down()
+                            || ui.input(|i| i.pointer.primary_down());
+                        if physical_down {
                             if let Some((cx, cy)) = get_cursor_physical_pos() {
                                 let dx = cx - cx0;
                                 let dy = cy - cy0;
@@ -320,9 +299,9 @@ impl DockOverlay {
                                 }
                                 if self.is_actively_dragging {
                                     set_window_physical_pos(our_hwnd, wx0 + dx, wy0 + dy);
-                                    ctx.request_repaint_after(Duration::from_millis(16));
                                 }
                             }
+                            ctx.request_repaint_after(Duration::from_millis(16));
                         } else {
                             was_dragging_on_release = self.is_actively_dragging;
                             if self.is_actively_dragging {
@@ -348,12 +327,12 @@ impl DockOverlay {
             on_refresh();
         }
 
-        // Smooth animation timer only while critical or charging pulse is active
+        // Smooth animation timer while dragging, critical, or charging pulse is active
         let needs_pulse = devices.iter().any(|d| {
             d.is_charging || d.percentage <= config.critical_battery_threshold
         });
-        if self.is_actively_dragging || needs_pulse {
-            ctx.request_repaint_after(Duration::from_millis(50));
+        if self.drag_anchor.is_some() || self.is_actively_dragging || needs_pulse {
+            ctx.request_repaint_after(Duration::from_millis(if self.drag_anchor.is_some() { 16 } else { 50 }));
         } else {
             ctx.request_repaint_after(Duration::from_millis(1000));
         }
@@ -397,5 +376,79 @@ mod tests {
         cfg.show_percentage_text = false;
         let w_no_text = DockOverlay::required_width(&one_charging, &cfg);
         assert!(w_no_text < w_chg);
+    }
+
+    #[test]
+    fn test_dock_render_fits_required_width_and_renders_charging_bolt() {
+        let mut cfg = AppConfig::default();
+        let cases = vec![
+            vec![],
+            vec![sample_dev(27, false)],
+            vec![sample_dev(27, true)],
+            vec![sample_dev(100, true)],
+            vec![sample_dev(5, false), sample_dev(88, true)],
+        ];
+
+        for devs in cases {
+            let req_w = DockOverlay::required_width(&devs, &cfg);
+            let ctx = egui::Context::default();
+            let mut dock = DockOverlay::new();
+            let mut open_settings = false;
+            let raw_input = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(req_w, 32.0))),
+                ..Default::default()
+            };
+
+            let out = ctx.run(raw_input, |ctx| {
+                dock.render(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
+            });
+
+            // Collect all rendered text galleys & verify zero unwanted line wrapping or horizontal overflow
+            let mut saw_text = false;
+            let mut max_right = 0.0_f32;
+            for clipped in &out.shapes {
+                let bb = clipped.shape.visual_bounding_rect();
+                if bb.is_finite() && bb.width() > 0.0 {
+                    max_right = max_right.max(bb.right());
+                }
+                if let egui::epaint::Shape::Text(text_shape) = &clipped.shape {
+                    saw_text = true;
+                    assert_eq!(
+                        text_shape.galley.rows.len(),
+                        1,
+                        "Text '{}' wrapped onto multiple lines inside {}px dock",
+                        text_shape.galley.text(),
+                        req_w
+                    );
+                }
+            }
+            assert!(saw_text, "Expected rendered text inside dock");
+            assert!(
+                max_right <= req_w + 1.5,
+                "Rendered content overflowed right edge: max_right={max_right} > req_w={req_w}"
+            );
+        }
+
+        // Charging pill must emit additional convex polygon shapes for the internal + external lightning bolts
+        let ctx = egui::Context::default();
+        let mut dock = DockOverlay::new();
+        let mut open_settings = false;
+        let mut run_count_shapes = |devs: &[DeviceBattery]| -> usize {
+            let w = DockOverlay::required_width(devs, &cfg);
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+                ..Default::default()
+            };
+            let out = ctx.run(raw, |ctx| {
+                dock.render(ctx, &mut cfg, devs, 0, &mut open_settings, || {});
+            });
+            out.shapes.len()
+        };
+        let norm_shapes = run_count_shapes(&[sample_dev(50, false)]);
+        let chg_shapes = run_count_shapes(&[sample_dev(50, true)]);
+        assert!(
+            chg_shapes >= norm_shapes + 6,
+            "Charging state must paint lightning bolt shapes (norm={norm_shapes}, chg={chg_shapes})"
+        );
     }
 }
