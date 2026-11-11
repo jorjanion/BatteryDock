@@ -85,9 +85,13 @@ impl BatteryDockApp {
                     }
                     if let Some(reid) = &restart_id {
                         if &event.id == reid {
-                            // Instant restart: spawn fresh instance and exit
+                            // Instant restart: launch delayed child that waits for mutex release, then exit
                             if let Ok(exe) = std::env::current_exe() {
-                                let _ = std::process::Command::new(exe).spawn();
+                                let exe_str = exe.to_string_lossy().to_string();
+                                let _ = std::process::Command::new("cmd")
+                                    .args(["/c", "timeout /t 1 /nobreak >nul & start \"\""])
+                                    .arg(exe_str)
+                                    .spawn();
                             }
                             std::process::exit(0);
                         }
@@ -215,17 +219,15 @@ impl eframe::App for BatteryDockApp {
         if is_fullscreen && !self.open_settings {
             if !self.is_dock_hidden {
                 self.is_dock_hidden = true;
-                // Move off-screen instead of SW_HIDE so winit event loop and timers never sleep
-                ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(egui::Pos2::new(
-                    -10000.0, -10000.0,
-                )));
+                // Make clickthrough and transparent without moving window off-screen
+                ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(true));
             }
-            // Keep polling every 150ms so we detect immediately when fullscreen exits
             ctx.request_repaint_after(Duration::from_millis(150));
             return;
         } else if self.is_dock_hidden {
-            // Fullscreen has ended: snap immediately back to taskbar!
+            // Fullscreen has ended: restore interaction and redraw
             self.is_dock_hidden = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(false));
             let width = self.calculate_dock_width();
             self.reposition_dock_to_taskbar(ctx, width);
             ctx.request_repaint();

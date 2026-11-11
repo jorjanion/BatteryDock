@@ -82,7 +82,7 @@ impl TaskbarGeometry {
     }
 
     /// Checks if a true fullscreen application/video (e.g. YouTube fullscreen, VLC, Games) is currently active.
-    /// Excludes desktop, taskbar, Explorer windows, and our own process.
+    /// Excludes desktop, taskbar, Explorer windows, secondary monitors, and our own process.
     pub fn is_fullscreen_app_active() -> bool {
         use windows::Win32::Foundation::RECT;
         use windows::Win32::Graphics::Gdi::{
@@ -90,13 +90,18 @@ impl TaskbarGeometry {
         };
         use windows::Win32::UI::WindowsAndMessaging::{
             GetClassNameW, GetDesktopWindow, GetForegroundWindow, GetShellWindow, GetWindowRect,
-            GetWindowThreadProcessId,
+            GetWindowThreadProcessId, IsIconic,
         };
 
         unsafe {
             // 1. Get foreground window
             let fg = GetForegroundWindow();
             if fg.0.is_null() {
+                return false;
+            }
+
+            // Minimized windows are never fullscreen
+            if IsIconic(fg).as_bool() {
                 return false;
             }
 
@@ -128,13 +133,14 @@ impl TaskbarGeometry {
                     || c.contains("xamlexplorerhostislandwindow")
                     || c.contains("toplevelwindowforoverflowxamlisland")
                     || c.contains("corewindow")
-                    || c.contains("cabinetwclass") // Windows File Explorer
+                    || c.contains("cabinetwclass")
+                    || c.contains("explorewclass")
                 {
                     return false;
                 }
             }
 
-            // 5. Check if foreground window covers all 4 edges of the physical monitor
+            // 5. Check if foreground window covers all 4 edges of the primary physical monitor
             let mut win_rect = RECT::default();
             if GetWindowRect(fg, &mut win_rect).is_ok() {
                 let monitor = MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST);
@@ -143,6 +149,12 @@ impl TaskbarGeometry {
                     ..Default::default()
                 };
                 if GetMonitorInfoW(monitor, &mut mi).as_bool() {
+                    // If the foreground window is NOT on the primary monitor, the primary taskbar is not obscured!
+                    let is_primary = (mi.dwFlags & 1) != 0;
+                    if !is_primary {
+                        return false;
+                    }
+
                     let m = mi.rcMonitor;
                     // A true fullscreen app, video (e.g. YouTube), or game covers all 4 edges of the physical screen.
                     // A normal maximized window does NOT cover the taskbar (its rect stops at rcWork).

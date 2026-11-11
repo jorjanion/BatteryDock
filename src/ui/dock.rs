@@ -85,7 +85,11 @@ impl DockOverlay {
                     }
                     if ui.button("♻ Restart BatteryDock").clicked() {
                         if let Ok(exe) = std::env::current_exe() {
-                            let _ = std::process::Command::new(exe).spawn();
+                            let exe_str = exe.to_string_lossy().to_string();
+                            let _ = std::process::Command::new("cmd")
+                                .args(["/c", "timeout /t 1 /nobreak >nul & start \"\""])
+                                .arg(exe_str)
+                                .spawn();
                         }
                         std::process::exit(0);
                     }

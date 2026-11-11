@@ -44,21 +44,32 @@ impl SettingsWindow {
                 .with_active(true)
                 .with_visible(true),
             |ctx, _class| {
-                egui::CentralPanel::default().show(ctx, |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        Self::render_contents(
-                            ui,
-                            open,
-                            config,
-                            devices,
-                            || {
-                                if let Some(cb) = on_refresh_opt.take() {
-                                    cb();
-                                }
-                            },
-                        );
+                let mut v = egui::Visuals::dark();
+                v.panel_fill = egui::Color32::from_rgb(26, 28, 34);
+                v.window_fill = egui::Color32::from_rgb(26, 28, 34);
+                ctx.set_visuals(v);
+
+                egui::CentralPanel::default()
+                    .frame(
+                        egui::Frame::NONE
+                            .fill(egui::Color32::from_rgb(26, 28, 34))
+                            .inner_margin(egui::Margin::same(12)),
+                    )
+                    .show(ctx, |ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            Self::render_contents(
+                                ui,
+                                open,
+                                config,
+                                devices,
+                                || {
+                                    if let Some(cb) = on_refresh_opt.take() {
+                                        cb();
+                                    }
+                                },
+                            );
+                        });
                     });
-                });
 
                 if ctx.input(|i| i.viewport().close_requested()) {
                     *open = false;
