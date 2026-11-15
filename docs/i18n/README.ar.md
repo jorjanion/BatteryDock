@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="شعار BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**مؤشر بطارية أنيق ومكتوب بلغة Rust مدمج مباشرة في شريط مهام Windows 10/11 — بدون برامج الشركات الثقيلة.**
+**مؤشر بطارية أنيق ومكتوب بلغة Rust مدمج مباشرة في شريط مهام Windows 10/11 - بدون برامج الشركات الثقيلة.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -57,11 +57,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="لقطة قريبة لكبسولة BatteryDock تعرض بطارية السماعة بنسبة 92%" /><br /><br />
-        <sub><b>كبسولة شريط المهام</b> — مدمجة مباشرة في شريط مهام Windows مع دعم DPI لكل شاشة وألوان الحالة وشارة الشحن ⚡.</sub>
+        <sub><b>كبسولة شريط المهام</b> - مدمجة مباشرة في شريط مهام Windows مع دعم DPI لكل شاشة وألوان الحالة وشارة الشحن ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="نافذة إعدادات BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>إعدادات مستقلة</b> — حدود التنبيه، معاينة الصوت، أوضاع التموضع وقائمة الأجهزة المتصلة.</sub>
+        <sub><b>إعدادات مستقلة</b> - حدود التنبيه، معاينة الصوت، أوضاع التموضع وقائمة الأجهزة المتصلة.</sub>
       </td>
     </tr>
   </table>
@@ -76,7 +76,7 @@
 تخفي معظم الأجهزة اللاسلكية نسبة البطارية داخل برامج ثقيلة تشغّل عشرات الخدمات في الخلفية. يجمع **BatteryDock** كل أجهزتك في كبسولة أنيقة داخل شريط المهام:
 
 - **بدون برامج ثقيلة:** ملف تنفيذي واحد بلغة Rust بحجم **~4 ميجابايت** (بدون Electron أو تتبع، ~77 ميجابايت ذاكرة خاصة على Windows 11).
-- **قراءة مباشرة من العتاد:** يستعلم مباشرة عن **Logitech HID++ 2.0** و**Windows Bluetooth / BLE GATT** و**XInput** و**Sony DualSense / DualShock 4 HID** — وتعمل أجهزة Logitech حتى دون فتح G HUB.
+- **قراءة مباشرة من العتاد:** يستعلم مباشرة عن **Logitech HID++ 2.0** و**Windows Bluetooth / BLE GATT** و**XInput** و**Sony DualSense / DualShock 4 HID** - وتعمل أجهزة Logitech حتى دون فتح G HUB.
 - **قواعد ذكية لملء الشاشة:** يختفي تلقائياً أثناء الألعاب أو الفيديو بملء الشاشة أو إخفاء شريط المهام، ويبقى ثابتاً عند الضغط على مفتاح `Win` أو فتح القائمة أو النقر على سطح المكتب.
 - **مؤشر شحن حي:** يلوّن الجهاز باللون **السماوي** مع أيقونة **البرق ⚡** أثناء الشحن.
 - **تنبيهات موثوقة في الخلفية:** تعمل أصوات وإشعارات النظام حتى عندما تكون الكبسولة مخفية أثناء اللعب.
@@ -87,7 +87,7 @@
 
 حمّل أحدث إصدار من **[صفحة الإصدارات](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. حمّل **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 ميجابايت) — أو `BatteryDock-Windows-Portable.zip` للنسخة المحمولة.
+1. حمّل **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 ميجابايت) - أو `BatteryDock-Windows-Portable.zip` للنسخة المحمولة.
 2. شغّل المثبّت وفعّل اختيارياً **"Start BatteryDock when Windows boots"**.
 3. ستظهر الكبسولة بجانب الساعة في شريط المهام.
 
@@ -112,7 +112,7 @@
 <div dir="rtl">
 
 **هل علامتك التجارية غير موجودة (Razer, Corsair, SteelSeries, Keychron...)؟**
-👉 **[افتح طلب دعم جهاز](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — نرحب أيضاً بطلبات السحب (PRs)!
+👉 **[افتح طلب دعم جهاز](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - نرحب أيضاً بطلبات السحب (PRs)!
 
 ---
 

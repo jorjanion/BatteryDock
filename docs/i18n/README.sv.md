@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock Logotyp" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**En stilren, inbyggd batteriindikator i Rust direkt i Windows 10/11-aktivitetsfältet — utan tung tillverkarprogramvara.**
+**En stilren, inbyggd batteriindikator i Rust direkt i Windows 10/11-aktivitetsfältet - utan tung tillverkarprogramvara.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Närbild på BatteryDock-kapsel med 92% headsetbatteri" /><br /><br />
-        <sub><b>Aktivitetsfältskapsel</b> — Integrerad direkt i Windows aktivitetsfält med Per-Monitor DPI-skalning, statusfärger och ⚡ laddningsikon.</sub>
+        <sub><b>Aktivitetsfältskapsel</b> - Integrerad direkt i Windows aktivitetsfält med Per-Monitor DPI-skalning, statusfärger och ⚡ laddningsikon.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Inställningsfönster för BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Fristående inställningar</b> — Varningsgränser, ljudtest, placering och anslutna enheter.</sub>
+        <sub><b>Fristående inställningar</b> - Varningsgränser, ljudtest, placering och anslutna enheter.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 De flesta trådlösa tillbehör låser batterinivån i tunga tillverkarprogram med mängder av bakgrundstjänster. **BatteryDock** visar allt i en ren kapsel i aktivitetsfältet:
 
 - **Ingen bloatware:** En enda **~4 MB** native Rust-binär (ingen Electron, ingen telemetri, ~77 MB privat minne uppmätt live på Windows 11).
-- **Direkt hårdvaruläsning:** Läser **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** och **Sony DualSense / DualShock 4 HID** direkt — Logitech fungerar även utan att öppna G HUB.
+- **Direkt hårdvaruläsning:** Läser **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** och **Sony DualSense / DualShock 4 HID** direkt - Logitech fungerar även utan att öppna G HUB.
 - **Smart helskärmshantering:** Döljs automatiskt i helskärmsspel, helskärmsvideo eller när aktivitetsfältet är auto-dolt, men förblir synlig när du trycker på `Win`-tangenten, öppnar Start/Widgets eller klickar på skrivbordet.
 - **Live-laddningsindikator:** Visar enheter i **cyan** med **⚡ blixtsymbol** under laddning.
 - **Pålitliga bakgrundsvarningar:** Ljudsignaler och skrivbordsnotiser triggas från bakgrundstråden även när kapseln är dold i helskärm.
@@ -81,7 +81,7 @@ De flesta trådlösa tillbehör låser batterinivån i tunga tillverkarprogram m
 
 Hämta senaste versionen från **[Releases-sidan](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Ladda ner **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — eller `BatteryDock-Windows-Portable.zip` för portabel användning.
+1. Ladda ner **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - eller `BatteryDock-Windows-Portable.zip` för portabel användning.
 2. Kör installationsprogrammet och bocka valfritt i **"Start BatteryDock when Windows boots"**.
 3. Kapseln dyker upp bredvid klockan i aktivitetsfältet.
 
@@ -102,7 +102,7 @@ Eftersom BatteryDock är gratis öppen källkod utan dyrt EV-kodsigneringscertif
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (flera kontroller + laddningsstatus) |
 
 **Saknas ditt märke (Razer, Corsair, SteelSeries, Keychron osv.)?**
-👉 **[Begär enhetsstöd](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Requests välkomnas också!
+👉 **[Begär enhetsstöd](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requests välkomnas också!
 
 ---
 

@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Indikator baterai Rust yang ringan dan native langsung di taskbar Windows 10/11 — tanpa bloatware pabrikan.**
+**Indikator baterai Rust yang ringan dan native langsung di taskbar Windows 10/11 - tanpa bloatware pabrikan.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Tampilan dekat kapsul BatteryDock menampilkan baterai headset 92%" /><br /><br />
-        <sub><b>Kapsul Taskbar</b> — Terintegrasi langsung di taskbar Windows dengan skalabilitas DPI per monitor dan lencana pengisian ⚡.</sub>
+        <sub><b>Kapsul Taskbar</b> - Terintegrasi langsung di taskbar Windows dengan skalabilitas DPI per monitor dan lencana pengisian ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Jendela Pengaturan BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Pengaturan Mandiri</b> — Ambang peringatan, pratinjau suara, mode posisi, dan daftar perangkat terhubung.</sub>
+        <sub><b>Pengaturan Mandiri</b> - Ambang peringatan, pratinjau suara, mode posisi, dan daftar perangkat terhubung.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Sebagian besar periferal nirkabel mengunci informasi baterai di dalam suite pabrikan berat yang menjalankan puluhan layanan latar belakang. **BatteryDock** menyatukan semuanya dalam satu kapsul bersih di taskbar:
 
 - **Tanpa Bloatware:** Satu file biner native Rust berukuran **~4 MB** (tanpa Electron, tanpa telemetri, ~77 MB memori privat di Windows 11).
-- **Pembacaan Hardware Langsung:** Mengakses **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, dan **Sony DualSense / DualShock 4 HID** secara langsung — perangkat Logitech tetap terbaca meski G HUB tidak dibuka (mendukung IPC G HUB juga).
+- **Pembacaan Hardware Langsung:** Mengakses **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, dan **Sony DualSense / DualShock 4 HID** secara langsung - perangkat Logitech tetap terbaca meski G HUB tidak dibuka (mendukung IPC G HUB juga).
 - **Aturan Layar Penuh Cerdas:** Otomatis bersembunyi saat game/video layar penuh atau taskbar tersembunyi, namun tetap stabil saat menekan tombol `Win`, membuka Start/Widget, atau klik desktop.
 - **Indikator Pengisian Daya Langsung:** Menandai perangkat yang sedang diisi dengan warna **sian** dan **ikon petir ⚡**.
 - **Peringatan Latar Belakang:** Suara lembut dan notifikasi Windows tetap aktif meski kapsul sedang tersembunyi di layar penuh.
@@ -81,7 +81,7 @@ Sebagian besar periferal nirkabel mengunci informasi baterai di dalam suite pabr
 
 Unduh rilis terbaru dari **[Halaman Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Unduh **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — atau `BatteryDock-Windows-Portable.zip` untuk versi portabel.
+1. Unduh **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - atau `BatteryDock-Windows-Portable.zip` untuk versi portabel.
 2. Jalankan installer dan centang **"Start BatteryDock when Windows boots"** jika diperlukan.
 3. Kapsul akan muncul di taskbar sebelah jam sistem.
 
@@ -102,7 +102,7 @@ Karena BatteryDock adalah aplikasi open-source gratis tanpa sertifikat penandata
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (banyak kontroler + status pengisian) |
 
 **Merek Anda belum ada (Razer, Corsair, SteelSeries, Keychron, dll.)?**
-👉 **[Buka Permintaan Dukungan Perangkat](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Request juga sangat diterima!
+👉 **[Buka Permintaan Dukungan Perangkat](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request juga sangat diterima!
 
 ---
 

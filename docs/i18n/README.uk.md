@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Логотип BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Мінімалістичний нативний індикатор батареї на Rust прямо на панелі завдань Windows 10/11 — без важкого ПЗ виробників.**
+**Мінімалістичний нативний індикатор батареї на Rust прямо на панелі завдань Windows 10/11 - без важкого ПЗ виробників.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Капсула BatteryDock із зарядом гарнітури 92%" /><br /><br />
-        <sub><b>Капсула на панелі завдань</b> — Вбудована безпосередньо в панель завдань Windows із Per-Monitor DPI-масштабуванням, кольорами рівнів та іконкою зарядки ⚡.</sub>
+        <sub><b>Капсула на панелі завдань</b> - Вбудована безпосередньо в панель завдань Windows із Per-Monitor DPI-масштабуванням, кольорами рівнів та іконкою зарядки ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Вікно налаштувань BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Окремі налаштування</b> — Пороги сповіщень, перевірка звуку, режими позиції та список підключених пристроїв.</sub>
+        <sub><b>Окремі налаштування</b> - Пороги сповіщень, перевірка звуку, режими позиції та список підключених пристроїв.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Більшість бездротових пристроїв ховають відсоток батареї у важких фірмових пакетах із десятками фонових сервісів. **BatteryDock** показує все в акуратній капсулі на панелі завдань:
 
 - **Жодного bloatware:** Єдиний нативний файл на Rust розміром **~4 МБ** (без Electron і телеметрії, ~77 МБ приватної пам'яті у Windows 11).
-- **Пряме читання обладнання:** Опитує **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** та **Sony DualSense / DualShock 4 HID** напряму — пристрої Logitech працюють навіть без відкритого G HUB (G HUB IPC також підтримується).
+- **Пряме читання обладнання:** Опитує **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** та **Sony DualSense / DualShock 4 HID** напряму - пристрої Logitech працюють навіть без відкритого G HUB (G HUB IPC також підтримується).
 - **Розумний повноекранний режим:** Автоматично ховається у повноекранних іграх, відео або при автоприховуванні панелі, але не зникає при натисканні `Win`, відкритті Пуску/Віджетів чи кліку по робочому столу.
 - **Індикатор заряджання наживо:** Підсвічує пристрій **блакитним** із **блискавкою ⚡**.
 - **Надійні фонові сповіщення:** Звук та сповіщення Windows спрацьовують із фонового рушія навіть коли капсула прихована у грі.
@@ -81,12 +81,12 @@
 
 Завантажте останню версію зі **[сторінки Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Завантажте **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 МБ) — або `BatteryDock-Windows-Portable.zip` для портативної версії.
+1. Завантажте **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 МБ) - або `BatteryDock-Windows-Portable.zip` для портативної версії.
 2. Запустіть інсталятор і за бажанням увімкніть **"Start BatteryDock when Windows boots"**.
 3. Капсула з'явиться на панелі завдань біля годинника.
 
 ### 🛡️ Примітка щодо Windows SmartScreen
-Оскільки BatteryDock — безкоштовний open-source проєкт без платного EV-сертифіката підпису, SmartScreen може показати *"Windows захистила ваш ПК"* (**Докладніше → Виконати в будь-якому разі**).
+Оскільки BatteryDock - безкоштовний open-source проєкт без платного EV-сертифіката підпису, SmartScreen може показати *"Windows захистила ваш ПК"* (**Докладніше → Виконати в будь-якому разі**).
 - Кожен реліз відкрито збирається на серверах GitHub Actions у [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 - Ви можете переглянути код на Rust і [зібрати програму самостійно](#build-from-source) менше ніж за хвилину.
 
@@ -102,7 +102,7 @@
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense та DualShock 4 (кілька геймпадів + статус зарядки) |
 
 **Немає вашого бренду (Razer, Corsair, SteelSeries, Keychron тощо)?**
-👉 **[Відкрити запит на підтримку пристрою](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Request-и також вітаються!
+👉 **[Відкрити запит на підтримку пристрою](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request-и також вітаються!
 
 ---
 

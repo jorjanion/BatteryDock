@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Čistý nativní indikátor baterie v Rustu integrovaný přímo do hlavního panelu Windows 10/11 — bez těžkopádného softwaru výrobců.**
+**Čistý nativní indikátor baterie v Rustu integrovaný přímo do hlavního panelu Windows 10/11 - bez těžkopádného softwaru výrobců.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Detail kapsle BatteryDock se sluchátky na 92%" /><br /><br />
-        <sub><b>Kapsle na hlavním panelu</b> — Přímo v hlavním panelu Windows s DPI škálováním pro každý monitor, barevnými úrovněmi a ikonou nabíjení ⚡.</sub>
+        <sub><b>Kapsle na hlavním panelu</b> - Přímo v hlavním panelu Windows s DPI škálováním pro každý monitor, barevnými úrovněmi a ikonou nabíjení ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Okno nastavení BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Samostatné nastavení</b> — Prahy upozornění, ukázka zvuku, umístění a seznam připojených zařízení.</sub>
+        <sub><b>Samostatné nastavení</b> - Prahy upozornění, ukázka zvuku, umístění a seznam připojených zařízení.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Většina bezdrátových periferií uzamyká stav baterie do objemných balíků výrobců s desítkami služeb na pozadí. **BatteryDock** vše přehledně spojí do jediné kapsle na hlavním panelu:
 
 - **Bez bloatwaru:** Jediná nativní binárka v Rustu o velikosti **~4 MB** (žádný Electron, žádná telemetrie, ~77 MB soukromé paměti naměřených živě ve Windows 11).
-- **Přímé čtení hardwaru:** Čte přímo **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** a **Sony DualSense / DualShock 4 HID** — zařízení Logitech hlásí baterii i bez otevřeného G HUB.
+- **Přímé čtení hardwaru:** Čte přímo **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** a **Sony DualSense / DualShock 4 HID** - zařízení Logitech hlásí baterii i bez otevřeného G HUB.
 - **Chytrá pravidla celé obrazovky:** Automaticky se skryje při hrách a videích na celou obrazovku nebo při automatickém skrytí panelu, ale zůstává viditelný po stisku klávesy `Win`, otevření Startu/Widgetů i kliknutí na plochu.
 - **Živý indikátor nabíjení:** Zvýrazní nabíjené zařízení **azurově** ikonou blesku **⚡**.
 - **Spolehlivá upozornění na pozadí:** Zvukové signály i systémová oznámení fungují, i když je kapsle během hry skrytá.
@@ -81,7 +81,7 @@ Většina bezdrátových periferií uzamyká stav baterie do objemných balíků
 
 Stáhněte nejnovější verzi ze **[stránky Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Stáhněte **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — nebo `BatteryDock-Windows-Portable.zip` pro přenosnou verzi.
+1. Stáhněte **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - nebo `BatteryDock-Windows-Portable.zip` pro přenosnou verzi.
 2. Spusťte instalátor a případně zaškrtněte **"Start BatteryDock when Windows boots"**.
 3. Kapsle se zobrazí vedle hodin na hlavním panelu.
 
@@ -102,7 +102,7 @@ Protože je BatteryDock bezplatný open-source projekt bez placeného certifiká
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense a DualShock 4 (více ovladačů + stav nabíjení) |
 
 **Chybí vaše značka (Razer, Corsair, SteelSeries, Keychron atd.)?**
-👉 **[Požádejte o podporu zařízení](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Requesty jsou také vítány!
+👉 **[Požádejte o podporu zařízení](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requesty jsou také vítány!
 
 ---
 

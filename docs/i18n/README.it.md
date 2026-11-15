@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Un indicatore di batteria nativo in Rust integrato nella barra delle applicazioni di Windows 10/11 — zero bloatware dei produttori.**
+**Un indicatore di batteria nativo in Rust integrato nella barra delle applicazioni di Windows 10/11 - zero bloatware dei produttori.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Dettaglio della capsula BatteryDock con cuffie al 92%" /><br /><br />
-        <sub><b>Capsula sulla barra delle applicazioni</b> — Integrata direttamente sulla taskbar di Windows con scaling DPI per monitor, colori di stato e badge di ricarica ⚡.</sub>
+        <sub><b>Capsula sulla barra delle applicazioni</b> - Integrata direttamente sulla taskbar di Windows con scaling DPI per monitor, colori di stato e badge di ricarica ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Finestra impostazioni di BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Impostazioni dedicate</b> — Soglie di avviso, anteprima suono, posizionamento e dispositivi connessi.</sub>
+        <sub><b>Impostazioni dedicate</b> - Soglie di avviso, anteprima suono, posizionamento e dispositivi connessi.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Quasi tutte le periferiche wireless nascondono la carica della batteria dentro suite pesanti con decine di servizi in background. **BatteryDock** mostra tutto in una capsula pulita sulla barra delle applicazioni:
 
 - **Zero bloatware:** Un singolo eseguibile nativo Rust da **~4 MB** (niente Electron, nessuna telemetria, ~77 MB di memoria privata misurati su Windows 11).
-- **Lettura hardware diretta:** Interroga direttamente **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** e **Sony DualSense / DualShock 4 HID** — i dispositivi Logitech funzionano anche senza aprire G HUB (supportando anche G HUB IPC se attivo).
+- **Lettura hardware diretta:** Interroga direttamente **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** e **Sony DualSense / DualShock 4 HID** - i dispositivi Logitech funzionano anche senza aprire G HUB (supportando anche G HUB IPC se attivo).
 - **Gestione intelligente schermo intero:** Si nasconde automaticamente con giochi o video a schermo intero e barra a scomparsa, restando visibile alla pressione del tasto `Win`, Start/Ricerca/Widget o clic sul desktop.
 - **Indicatore di ricarica live:** Evidenzia in **ciano** con un **fulmine ⚡** quando il dispositivo è in carica.
 - **Avvisi attivi in background:** Suoni e notifiche desktop funzionano anche mentre la capsula è nascosta durante il gioco a schermo intero.
@@ -81,7 +81,7 @@ Quasi tutte le periferiche wireless nascondono la carica della batteria dentro s
 
 Scarica l'ultima versione dalla **[pagina Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Scarica **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — oppure `BatteryDock-Windows-Portable.zip` per la versione portatile.
+1. Scarica **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - oppure `BatteryDock-Windows-Portable.zip` per la versione portatile.
 2. Avvia l'installer e seleziona opzionalmente **"Start BatteryDock when Windows boots"**.
 3. La capsula apparirà accanto all'orologio nella barra delle applicazioni.
 
@@ -102,7 +102,7 @@ Essendo un'app open-source gratuita senza certificato EV a pagamento, SmartScree
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense e DualShock 4 (supporto multi-controller + stato ricarica) |
 
 **Manca la tua marca (Razer, Corsair, SteelSeries, Keychron, ecc.)?**
-👉 **[Richiedi supporto per un dispositivo](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — anche le Pull Request sono benvenute!
+👉 **[Richiedi supporto per un dispositivo](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - anche le Pull Request sono benvenute!
 
 ---
 

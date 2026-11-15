@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Un indicateur de batterie natif en Rust intégré directement dans la barre des tâches Windows 10/11 — sans logiciel constructeur lourd.**
+**Un indicateur de batterie natif en Rust intégré directement dans la barre des tâches Windows 10/11 - sans logiciel constructeur lourd.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Gros plan de la capsule BatteryDock affichant 92 %" /><br /><br />
-        <sub><b>Capsule barre des tâches</b> — Intégrée directement à la barre Windows avec mise à l'échelle DPI par moniteur, couleurs par seuil et badge ⚡ en charge.</sub>
+        <sub><b>Capsule barre des tâches</b> - Intégrée directement à la barre Windows avec mise à l'échelle DPI par moniteur, couleurs par seuil et badge ⚡ en charge.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Fenêtre des paramètres BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Paramètres dédiés</b> — Curseurs d'alerte, test audio, positionnement et liste des périphériques connectés.</sub>
+        <sub><b>Paramètres dédiés</b> - Curseurs d'alerte, test audio, positionnement et liste des périphériques connectés.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 La plupart des périphériques sans fil enferment l'état de la batterie dans des suites logicielles lourdes exécutant des dizaines de services. **BatteryDock** affiche tout dans une pilule discrète sur votre barre des tâches :
 
 - **Zéro bloatware :** Un unique binaire natif Rust de **~4 Mo** (sans Electron, sans télémétrie, ~77 Mo de mémoire privée mesurés sous Windows 11).
-- **Lecture matérielle directe :** Interroge **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** et **Sony DualSense / DualShock 4 HID** directement — vos appareils Logitech fonctionnent même sans ouvrir G HUB (et l'IPC G HUB est utilisé s'il tourne).
+- **Lecture matérielle directe :** Interroge **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** et **Sony DualSense / DualShock 4 HID** directement - vos appareils Logitech fonctionnent même sans ouvrir G HUB (et l'IPC G HUB est utilisé s'il tourne).
 - **Gestion intelligente du plein écran :** Se masque automatiquement devant les jeux plein écran, vidéos plein écran ou barres masquées automatiquement, tout en restant stable lors de l'appui sur la touche `Win`, l'ouverture de Démarrer/Widgets ou un clic sur le bureau.
 - **Indicateur de charge en temps réel :** Affiche l'appareil en **cyan** avec un **éclair ⚡** lorsqu'il est branché.
 - **Alertes actives même en jeu :** Les alertes sonores et notifications Windows partent depuis le moteur d'arrière-plan même lorsque la pilule est masquée en plein écran.
@@ -81,7 +81,7 @@ La plupart des périphériques sans fil enferment l'état de la batterie dans de
 
 Récupérez la dernière version sur la **[page Releases](https://github.com/jorjanion/BatteryDock/releases/latest)** :
 
-1. Téléchargez **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 Mo) — ou `BatteryDock-Windows-Portable.zip` pour une utilisation portable.
+1. Téléchargez **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 Mo) - ou `BatteryDock-Windows-Portable.zip` pour une utilisation portable.
 2. Lancez l'installateur et cochez éventuellement **"Start BatteryDock when Windows boots"**.
 3. La capsule s'affiche immédiatement à côté de l'horloge.
 
@@ -102,7 +102,7 @@ BatteryDock étant un projet open-source gratuit sans certificat EV payant, Wind
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (multi-manettes + état de charge) |
 
 **Votre marque manque (Razer, Corsair, SteelSeries, Keychron...) ?**
-👉 **[Ouvrir une demande d'appareil](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — les contributions via PR sont également bienvenues !
+👉 **[Ouvrir une demande d'appareil](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - les contributions via PR sont également bienvenues !
 
 ---
 

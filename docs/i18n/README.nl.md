@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock Logo" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Een strakke, native Rust-batterijindicator rechtstreeks in de Windows 10/11-taakbalk — zonder zware fabrikantensoftware.**
+**Een strakke, native Rust-batterijindicator rechtstreeks in de Windows 10/11-taakbalk - zonder zware fabrikantensoftware.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Close-up van BatteryDock-capsule met koptelefoon op 92%" /><br /><br />
-        <sub><b>Taakbalkcapsule</b> — Direct in de Windows-taakbalk geïntegreerd met DPI-schaling per monitor, kleurcodering en live ⚡ oplaadicoon.</sub>
+        <sub><b>Taakbalkcapsule</b> - Direct in de Windows-taakbalk geïntegreerd met DPI-schaling per monitor, kleurcodering en live ⚡ oplaadicoon.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock Instellingenvenster v0.1.11" width="340" /><br />
-        <sub><b>Zelfstandige instellingen</b> — Waarschuwingsdrempels, geluids voorbeeld, posities en lijst met verbonden apparaten.</sub>
+        <sub><b>Zelfstandige instellingen</b> - Waarschuwingsdrempels, geluids voorbeeld, posities en lijst met verbonden apparaten.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Veel draadloze randapparatuur verbergt het batterijpercentage in logge softwaresuites met tientallen achtergrondservices. **BatteryDock** zet al je apparaten in één strakke taakbalkcapsule:
 
 - **Geen bloatware:** Eén enkel **~4 MB** native Rust-bestand (geen Electron, geen telemetrie, ~77 MB privé-geheugen live gemeten op Windows 11).
-- **Directe hardware-uitlezing:** Leest rechtstreeks **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** en **Sony DualSense / DualShock 4 HID** uit — Logitech-apparaten werken ook zonder G HUB (G HUB IPC wordt ondersteund als het draait).
+- **Directe hardware-uitlezing:** Leest rechtstreeks **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** en **Sony DualSense / DualShock 4 HID** uit - Logitech-apparaten werken ook zonder G HUB (G HUB IPC wordt ondersteund als het draait).
 - **Slimme fullscreen-regels:** Verbergt automatisch bij games of video's op volledig scherm en automatisch verbergende taakbalken, en blijft stabiel zichtbaar bij de `Win`-toets, Start, Zoeken, Widgets of bureaubladkliks.
 - **Live oplaadindicator:** Kleurt apparaten **cyaan** met een **⚡ bliksem-icoon** zodra ze opladen.
 - **Achtergrondmeldingen werken altijd:** Geluidssignalen en bureaubladmeldingen blijven werken vanuit de achtergrondthread, zelfs tijdens fullscreen-games.
@@ -81,7 +81,7 @@ Veel draadloze randapparatuur verbergt het batterijpercentage in logge softwares
 
 Download de nieuwste release van de **[Releases-pagina](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — of `BatteryDock-Windows-Portable.zip` voor gebruik zonder installatie.
+1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - of `BatteryDock-Windows-Portable.zip` voor gebruik zonder installatie.
 2. Start de installer en vink optioneel **"Start BatteryDock when Windows boots"** aan.
 3. De capsule verschijnt direct naast het systeemvak en de klok.
 
@@ -102,7 +102,7 @@ Omdat BatteryDock gratis open-source is zonder betaald EV-certificaat, kan Windo
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (meerdere controllers + oplaadstatus) |
 
 **Mist jouw merk (Razer, Corsair, SteelSeries, Keychron, enz.)?**
-👉 **[Vraag apparaatondersteuning aan](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Requests zijn ook welkom!
+👉 **[Vraag apparaatondersteuning aan](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requests zijn ook welkom!
 
 ---
 

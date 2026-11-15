@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="assets/logo.png" alt="BatteryDock Logo" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**A sleek, native Rust battery overlay embedded directly into your Windows 10/11 taskbar — zero vendor suite bloat.**
+**A sleek, native Rust battery overlay embedded directly into your Windows 10/11 taskbar - zero vendor suite bloat.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="docs/screenshots/dock-closeup.png" alt="BatteryDock capsule closeup showing headset battery at 92%" /><br /><br />
-        <sub><b>Taskbar Capsule</b> — Embedded directly on the Windows taskbar with crisp Per-Monitor DPI scaling, color-coded battery levels, and live ⚡ charging badge.</sub>
+        <sub><b>Taskbar Capsule</b> - Embedded directly on the Windows taskbar with crisp Per-Monitor DPI scaling, color-coded battery levels, and live ⚡ charging badge.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="docs/screenshots/settings.png" alt="BatteryDock Settings window v0.1.11" width="340" /><br />
-        <sub><b>Standalone Settings</b> — Threshold sliders, chime preview, placement modes, and connected device list.</sub>
+        <sub><b>Standalone Settings</b> - Threshold sliders, chime preview, placement modes, and connected device list.</sub>
       </td>
     </tr>
   </table>
@@ -70,8 +70,8 @@
 Most wireless peripherals lock your battery percentage inside bloated manufacturer suites running dozens of background services. **BatteryDock** puts all your devices in one clean taskbar pill:
 
 - **Zero Vendor Bloat:** A single **~4 MB** native Rust binary (zero Electron, zero telemetry, ~77 MB private memory observed live on Windows 11).
-- **Direct Hardware Reading:** Queries **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, and **Sony DualSense / DualShock 4 HID** directly — Logitech devices can report without even opening G HUB (and also read via G HUB IPC when running).
-- **Smart Fullscreen & Taskbar Rules:** Automatically hides when fullscreen games, fullscreen videos, or auto-hidden taskbars cover the bar — and stays rock-solid when pressing the `Win` key, opening Start/Search/Widgets, or clicking the desktop.
+- **Direct Hardware Reading:** Queries **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, and **Sony DualSense / DualShock 4 HID** directly - Logitech devices can report without even opening G HUB (and also read via G HUB IPC when running).
+- **Smart Fullscreen & Taskbar Rules:** Automatically hides when fullscreen games, fullscreen videos, or auto-hidden taskbars cover the bar - and stays rock-solid when pressing the `Win` key, opening Start/Search/Widgets, or clicking the desktop.
 - **Live Charging Indicator:** Highlights charging devices in **cyan** with a **⚡ lightning bolt badge** so you know at a glance when peripherals are plugged in.
 - **Background Alerts That Actually Fire:** Low and critical battery chimes & desktop notifications continue working from the background polling engine even while the pill is hidden in a fullscreen game.
 
@@ -81,7 +81,7 @@ Most wireless peripherals lock your battery percentage inside bloated manufactur
 
 Grab the latest release from the **[Releases Page](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) — or `BatteryDock-Windows-Portable.zip` if you prefer zero installation.
+1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) - or `BatteryDock-Windows-Portable.zip` if you prefer zero installation.
 2. Run the installer (English & Spanish supported) and optionally check **"Start BatteryDock when Windows boots"**.
 3. The pill will appear on your taskbar next to the clock tray.
 
@@ -102,7 +102,7 @@ Because BatteryDock is a free, community open-source app without a paid EV code-
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (supports multiple controllers + charging status) |
 
 **Missing your brand (Razer, Corsair, SteelSeries, Keychron, etc.)?**
-👉 **[Open a Device Support Request](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — adding HID/Bluetooth profiles is welcome via PRs too!
+👉 **[Open a Device Support Request](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - adding HID/Bluetooth profiles is welcome via PRs too!
 
 ---
 

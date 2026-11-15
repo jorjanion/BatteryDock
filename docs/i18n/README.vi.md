@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Trình hiển thị pin gọn nhẹ bằng Rust nhúng trực tiếp vào thanh tác vụ Windows 10/11 — không cần phần mềm nặng nề của hãng.**
+**Trình hiển thị pin gọn nhẹ bằng Rust nhúng trực tiếp vào thanh tác vụ Windows 10/11 - không cần phần mềm nặng nề của hãng.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Cận cảnh thanh BatteryDock hiển thị pin tai nghe 92%" /><br /><br />
-        <sub><b>Thanh pin trên Taskbar</b> — Gắn trực tiếp vào thanh tác vụ Windows với DPI theo từng màn hình, màu trạng thái và biểu tượng sạc ⚡.</sub>
+        <sub><b>Thanh pin trên Taskbar</b> - Gắn trực tiếp vào thanh tác vụ Windows với DPI theo từng màn hình, màu trạng thái và biểu tượng sạc ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Cửa sổ Cài đặt BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Cài đặt độc lập</b> — Ngưỡng cảnh báo, nghe thử âm thanh, chế độ vị trí và danh sách thiết bị đang kết nối.</sub>
+        <sub><b>Cài đặt độc lập</b> - Ngưỡng cảnh báo, nghe thử âm thanh, chế độ vị trí và danh sách thiết bị đang kết nối.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Phần lớn thiết bị không dây giấu phần trăm pin trong các bộ phần mềm cồng kềnh chạy hàng chục dịch vụ nền. **BatteryDock** gom tất cả vào một thanh nhỏ gọn trên taskbar:
 
 - **Không bloatware:** Chỉ một file thực thi Rust thuần **~4 MB** (không Electron, không thu thập dữ liệu, ~77 MB bộ nhớ riêng trên Windows 11).
-- **Đọc phần cứng trực tiếp:** Truy vấn **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** và **Sony DualSense / DualShock 4 HID** — thiết bị Logitech vẫn hiển thị ngay cả khi chưa mở G HUB.
+- **Đọc phần cứng trực tiếp:** Truy vấn **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** và **Sony DualSense / DualShock 4 HID** - thiết bị Logitech vẫn hiển thị ngay cả khi chưa mở G HUB.
 - **Quy tắc toàn màn hình thông minh:** Tự động ẩn khi chơi game, xem video toàn màn hình hoặc ẩn taskbar, và luôn ổn định khi bấm phím `Win`, mở Start/Widget hay nhấp desktop.
 - **Báo sạc trực tiếp:** Tô màu **xanh lơ** cùng biểu tượng **tia sét ⚡** khi thiết bị đang cắm sạc.
 - **Cảnh báo nền đáng tin cậy:** Âm báo và thông báo desktop vẫn hoạt động từ tiến trình nền kể cả khi thanh bị ẩn trong game.
@@ -81,7 +81,7 @@ Phần lớn thiết bị không dây giấu phần trăm pin trong các bộ ph
 
 Tải phiên bản mới nhất từ **[Trang Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Tải **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) — hoặc `BatteryDock-Windows-Portable.zip` cho bản chạy ngay không cần cài.
+1. Tải **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - hoặc `BatteryDock-Windows-Portable.zip` cho bản chạy ngay không cần cài.
 2. Chạy bộ cài và chọn **"Start BatteryDock when Windows boots"** nếu muốn khởi động cùng Windows.
 3. Thanh pin sẽ xuất hiện ngay cạnh đồng hồ khay hệ thống.
 
@@ -102,7 +102,7 @@ Do BatteryDock là ứng dụng mã nguồn mở miễn phí chưa có chứng c
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (hỗ trợ nhiều tay cầm + trạng thái sạc) |
 
 **Chưa có thương hiệu của bạn (Razer, Corsair, SteelSeries, Keychron...)?**
-👉 **[Mở yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — rất hoan nghênh các đóng góp Pull Request!
+👉 **[Mở yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - rất hoan nghênh các đóng góp Pull Request!
 
 ---
 

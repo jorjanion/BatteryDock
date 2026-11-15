@@ -1,10 +1,10 @@
-<div align="center">
+﻿<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock लोगो" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 टास्कबार में सीधे एम्बेड किया गया Rust में बना हल्का बैटरी इंडिकेटर — बिना भारी कंपनी सॉफ्टवेयर के।**
+**Windows 10/11 टास्कबार में सीधे एम्बेड किया गया Rust में बना हल्का बैटरी इंडिकेटर - बिना भारी कंपनी सॉफ्टवेयर के।**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="BatteryDock कैप्सूल का क्लोज़-अप जिसमें हेडसेट की बैटरी 92% दिख रही है" /><br /><br />
-        <sub><b>टास्कबार कैप्सूल</b> — Per-Monitor DPI स्केलिंग, बैटरी रंग और लाइव ⚡ चार्जिंग बैज के साथ सीधे Windows टास्कबार में।</sub>
+        <sub><b>टास्कबार कैप्सूल</b> - Per-Monitor DPI स्केलिंग, बैटरी रंग और लाइव ⚡ चार्जिंग बैज के साथ सीधे Windows टास्कबार में।</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock सेटिंग्स विंडो v0.1.11" width="340" /><br />
-        <sub><b>स्टैंडअलोन सेटिंग्स</b> — अलर्ट सीमाएं, साउंड प्रीव्यू, पोजिशन मोड और कनेक्टेड डिवाइस सूची।</sub>
+        <sub><b>स्टैंडअलोन सेटिंग्स</b> - अलर्ट सीमाएं, साउंड प्रीव्यू, पोजिशन मोड और कनेक्टेड डिवाइस सूची।</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 ज़्यादातर वायरलेस डिवाइस बैटरी प्रतिशत को भारी-भरकम निर्माता सॉफ़्टवेयर में छिपा देते हैं जो बैकग्राउंड में दर्जनों सर्विस चलाते हैं। **BatteryDock** सब कुछ टास्कबार की एक साफ़ कैप्सूल में दिखाता है:
 
 - **कोई ब्लोटवेयर नहीं:** केवल **~4 MB** की एक नेटिव Rust बाइनरी (बिना Electron, बिना टेलीमेट्री, Windows 11 पर लाइव ~77 MB प्राइवेट मेमोरी)।
-- **सीधा हार्डवेयर रीडिंग:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** और **Sony DualSense / DualShock 4 HID** से सीधे पढ़ता है — Logitech डिवाइस बिना G HUB खोले भी काम करते हैं।
+- **सीधा हार्डवेयर रीडिंग:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** और **Sony DualSense / DualShock 4 HID** से सीधे पढ़ता है - Logitech डिवाइस बिना G HUB खोले भी काम करते हैं।
 - **स्मार्ट फ़ुलस्क्रीन नियम:** फ़ुलस्क्रीन गेम, वीडियो या ऑटो-हाइड टास्कबार होने पर अपने-आप छिप जाता है, और `Win` कुंजी दबाने, Start/Widgets खोलने या डेस्कटॉप क्लिक करने पर दिखता रहता है।
 - **लाइव चार्जिंग इंडिकेटर:** चार्ज होते समय डिवाइस को **सियान** रंग और **⚡ बिजली आइकन** से दिखाता है।
 - **बैकग्राउंड अलर्ट:** गेम के दौरान कैप्सूल छिपी होने पर भी लो-बैटरी साउंड और डेस्कटॉप नोटिफिकेशन चलते रहते हैं।
@@ -81,7 +81,7 @@
 
 **[Releases पेज](https://github.com/jorjanion/BatteryDock/releases/latest)** से नवीनतम वर्ज़न डाउनलोड करें:
 
-1. **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) डाउनलोड करें — या पोर्टेबल उपयोग के लिए `BatteryDock-Windows-Portable.zip` चुनें।
+1. **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) डाउनलोड करें - या पोर्टेबल उपयोग के लिए `BatteryDock-Windows-Portable.zip` चुनें।
 2. इंस्टॉलर चलाएँ और चाहें तो **"Start BatteryDock when Windows boots"** चुनें।
 3. टास्कबार में घड़ी के पास कैप्सूल दिखाई देगी।
 
@@ -102,7 +102,7 @@
 | **PlayStation** | Sony HID (`VID 0x054C`) USB और Bluetooth | DualSense व DualShock 4 (मल्टी-कंट्रोलर + चार्जिंग स्थिति) |
 
 **आपका ब्रांड मौजूद नहीं है (Razer, Corsair, SteelSeries, Keychron आदि)?**
-👉 **[डिवाइस सपोर्ट अनुरोध खोलें](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** — Pull Requests का भी स्वागत है!
+👉 **[डिवाइस सपोर्ट अनुरोध खोलें](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requests का भी स्वागत है!
 
 ---
 
