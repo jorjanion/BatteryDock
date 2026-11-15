@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="Логотип BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Минималистичный нативный индикатор заряда на Rust прямо в панели задач Windows 10/11 - без тяжёлого ПО производителей.**
+**Минималистичный нативный индикатор заряда на Rust прямо в панели задач Windows 10/11, без тяжёлого ПО производителей.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Крупный план капсулы BatteryDock с зарядом гарнитуры 92%" /><br /><br />
-        <sub><b>Капсула в панели задач</b> - Встроена прямо в панель задач Windows, с DPI-масштабированием на каждый монитор и иконкой зарядки ⚡.</sub>
+        <sub><b>Капсула в панели задач</b>: Встроена прямо в панель задач Windows, с DPI-масштабированием на каждый монитор и иконкой зарядки ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Окно настроек BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Отдельные настройки</b> - Пороги уведомлений, тест звука, выбор позиции и список подключённых устройств.</sub>
+        <sub><b>Отдельные настройки</b>: Пороги уведомлений, тест звука, выбор позиции и список подключённых устройств.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Большинство беспроводных устройств скрывают уровень заряда внутри громоздких фирменных утилит с десятками фоновых служб. **BatteryDock** выводит всё в компактную капсулу на панели задач:
 
 - **Никакого лишнего ПО:** Один нативный исполняемый файл на Rust размером **~4 МБ** (без Electron и телеметрии, ~77 МБ приватной памяти в Windows 11).
-- **Прямое чтение устройств:** Опрашивает **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** и **Sony DualSense / DualShock 4 HID** напрямую - устройства Logitech работают даже без открытого G HUB (поддерживается и G HUB IPC).
+- **Прямое чтение устройств:** Опрашивает **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** и **Sony DualSense / DualShock 4 HID** напрямую, устройства Logitech работают даже без открытого G HUB (поддерживается и G HUB IPC).
 - **Умный полноэкранный режим:** Автоматически скрывается в полноэкранных играх, видео или при автоскрытии панели задач, но остаётся видимым при нажатии клавиши `Win`, открытии Пуск/Поиска/Виджетов или кликах по рабочему столу.
 - **Индикатор зарядки в реальном времени:** Подсвечивает заряжаемое устройство **голубым** цветом со значком **молнии ⚡**.
 - **Надёжные фоновые оповещения:** Звуковой сигнал и уведомления Windows срабатывают из фонового движка даже в полноэкранных играх.
@@ -81,12 +81,12 @@
 
 Загрузите последнюю версию со **[страницы Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Скачайте **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 МБ) - или `BatteryDock-Windows-Portable.zip` для портативного запуска.
+1. Скачайте **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 МБ), или `BatteryDock-Windows-Portable.zip` для портативного запуска.
 2. Запустите установщик и при желании отметьте **"Start BatteryDock when Windows boots"**.
 3. Капсула появится на панели задач слева от часов.
 
 ### 🛡️ Примечание о Windows SmartScreen
-Поскольку BatteryDock - бесплатный open-source проект без платного EV-сертификата подписи, SmartScreen при первом запуске может показать *"Система Windows защитила ваш компьютер"* (**Подробнее → Выполнить в любом случае**).
+Поскольку BatteryDock, бесплатный open-source проект без платного EV-сертификата подписи, SmartScreen при первом запуске может показать *"Система Windows защитила ваш компьютер"* (**Подробнее → Выполнить в любом случае**).
 - Каждый билд собирается открыто на серверах GitHub Actions в [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 - Вы можете проверить исходный код и [собрать проект самостоятельно](#build-from-source) меньше чем за минуту.
 
@@ -102,7 +102,7 @@
 | **PlayStation** | Sony HID (`VID 0x054C`) USB и Bluetooth | DualSense и DualShock 4 (несколько контроллеров + статус зарядки) |
 
 **Нет вашего бренда (Razer, Corsair, SteelSeries, Keychron и т.д.)?**
-👉 **[Открыть запрос на поддержку устройства](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request'ы также приветствуются!
+👉 **[Открыть запрос на поддержку устройства](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Request'ы также приветствуются!
 
 ---
 

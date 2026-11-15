@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo do BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Um indicador de bateria nativo em Rust integrado diretamente à barra de tarefas do Windows 10/11 - sem programas pesados de fabricantes.**
+**Um indicador de bateria nativo em Rust integrado diretamente à barra de tarefas do Windows 10/11, sem programas pesados de fabricantes.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Close da cápsula do BatteryDock mostrando fone em 92%" /><br /><br />
-        <sub><b>Cápsula na barra de tarefas</b> - Integrada diretamente à barra do Windows com escala DPI por monitor, cores por nível e ícone ⚡ de carregamento.</sub>
+        <sub><b>Cápsula na barra de tarefas</b>: Integrada diretamente à barra do Windows com escala DPI por monitor, cores por nível e ícone ⚡ de carregamento.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Janela de configurações do BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Configurações independentes</b> - Limites de alerta, teste de som, posicionamento e lista de dispositivos conectados.</sub>
+        <sub><b>Configurações independentes</b>: Limites de alerta, teste de som, posicionamento e lista de dispositivos conectados.</sub>
       </td>
     </tr>
   </table>
@@ -70,8 +70,8 @@
 A maioria dos periféricos sem fio prende a porcentagem da bateria dentro de softwares pesados rodando dezenas de serviços. O **BatteryDock** mostra tudo em uma cápsula minimalista na barra de tarefas:
 
 - **Zero bloatware:** Um único binário nativo em Rust de **~4 MB** (sem Electron, sem telemetria, ~77 MB de memória privada medidos ao vivo no Windows 11).
-- **Leitura direta de hardware:** Consulta **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** e **Sony DualSense / DualShock 4 HID** diretamente - dispositivos Logitech reportam mesmo sem o G HUB aberto (e também lê via G HUB IPC quando ativo).
-- **Regras inteligentes de tela cheia:** Oculta automaticamente quando jogos em tela cheia, vídeos ou a barra oculta cobrem a taskbar - e continua firme ao pressionar a tecla `Win`, abrir Iniciar/Pesquisa/Widgets ou clicar na área de trabalho.
+- **Leitura direta de hardware:** Consulta **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** e **Sony DualSense / DualShock 4 HID** diretamente, dispositivos Logitech reportam mesmo sem o G HUB aberto (e também lê via G HUB IPC quando ativo).
+- **Regras inteligentes de tela cheia:** Oculta automaticamente quando jogos em tela cheia, vídeos ou a barra oculta cobrem a taskbar, e continua firme ao pressionar a tecla `Win`, abrir Iniciar/Pesquisa/Widgets ou clicar na área de trabalho.
 - **Indicador de carregamento ao vivo:** Destaca o dispositivo em **ciano** com um **raio ⚡** quando estiver carregando.
 - **Alertas funcionam em segundo plano:** Sinais sonoros e notificações disparam mesmo quando a cápsula está oculta durante um jogo em tela cheia.
 
@@ -81,7 +81,7 @@ A maioria dos periféricos sem fio prende a porcentagem da bateria dentro de sof
 
 Baixe a versão mais recente na **[página de Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Baixe **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - ou `BatteryDock-Windows-Portable.zip` para usar sem instalar.
+1. Baixe **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), ou `BatteryDock-Windows-Portable.zip` para usar sem instalar.
 2. Execute o instalador e marque **"Start BatteryDock when Windows boots"** se desejar iniciar junto com o Windows.
 3. A cápsula aparecerá ao lado do relógio na barra de tarefas.
 
@@ -102,7 +102,7 @@ Como o BatteryDock é um projeto open-source gratuito sem certificado pago de as
 | **PlayStation** | Sony HID (`VID 0x054C`) USB e Bluetooth | DualSense e DualShock 4 (múltiplos controles + status de carregamento) |
 
 **Faltou sua marca (Razer, Corsair, SteelSeries, Keychron, etc.)?**
-👉 **[Solicite suporte a um dispositivo](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requests também são muito bem-vindos!
+👉 **[Solicite suporte a um dispositivo](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requests também são muito bem-vindos!
 
 ---
 

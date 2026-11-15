@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock 로고" width="160" style="border-radius: 24px;" />
 
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="헤드셋 배터리 92%를 표시하는 BatteryDock 캡슐 확대 이미지" /><br /><br />
-        <sub><b>작업 표시줄 캡슐</b> - 모니터별 DPI 스케일링, 배터리 상태 색상 및 실시간 ⚡ 충전 배지와 함께 Windows 작업 표시줄에 직접 통합.</sub>
+        <sub><b>작업 표시줄 캡슐</b>: 모니터별 DPI 스케일링, 배터리 상태 색상 및 실시간 ⚡ 충전 배지와 함께 Windows 작업 표시줄에 직접 통합.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock 설정 창 v0.1.11" width="340" /><br />
-        <sub><b>독립 실행형 설정</b> - 경고 임계값, 알림음 미리 듣기, 위치 모드 및 연결된 장치 목록.</sub>
+        <sub><b>독립 실행형 설정</b>: 경고 임계값, 알림음 미리 듣기, 위치 모드 및 연결된 장치 목록.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 대부분의 무선 주변기기는 수십 개의 백그라운드 서비스를 실행하는 무거운 제조사 프로그램 안에 배터리 잔량을 가둬둡니다. **BatteryDock**은 모든 장치를 작업 표시줄의 깔끔한 캡슐 하나에 보여줍니다:
 
 - **블로트웨어 제로:** **~4 MB** 단일 네이티브 Rust 바이너리 (Electron 없음, 원격 측정 없음, Windows 11 실측 전용 메모리 약 77 MB).
-- **직접 하드웨어 조회:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, **Sony DualSense / DualShock 4 HID**를 직접 읽습니다 - Logitech 장치는 G HUB를 켜지 않아도 표시됩니다 (실행 중이면 G HUB IPC도 지원).
+- **직접 하드웨어 조회:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput**, **Sony DualSense / DualShock 4 HID**를 직접 읽습니다, Logitech 장치는 G HUB를 켜지 않아도 표시됩니다 (실행 중이면 G HUB IPC도 지원).
 - **스마트 전체 화면 규칙:** 전체 화면 게임, 영상 또는 자동 숨김 작업 표시줄에서는 자동으로 숨겨지고, `Win` 키, 시작 메뉴, 검색, 위젯, 바탕화면 클릭 시에도 사라지지 않습니다.
 - **실시간 충전 표시:** 충전 중인 장치는 **시안(Cyan)** 색상과 **⚡ 번개 아이콘**으로 즉시 구분됩니다.
 - **게임 중에도 작동하는 알림:** 전체 화면으로 캡슐이 숨겨져 있어도 백그라운드 엔진에서 알림음과 Windows 알림이 정상 발송됩니다.
@@ -102,7 +102,7 @@ BatteryDock은 유료 EV 코드 서명 인증서가 없는 무료 오픈 소스 
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (다중 컨트롤러 + 충전 상태 지원) |
 
 **사용 중인 브랜드가 없나요 (Razer, Corsair, SteelSeries, Keychron 등)?**
-👉 **[기기 지원 요청 열기](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request 기여도 환영합니다!
+👉 **[기기 지원 요청 열기](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Request 기여도 환영합니다!
 
 ---
 

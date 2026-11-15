@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock 標誌" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**以 Rust 打造的原生 Windows 10/11 工作列週邊電量指示膠囊 - 無需臃腫的原廠軟體。**
+**以 Rust 打造的原生 Windows 10/11 工作列週邊電量指示膠囊，無需臃腫的原廠軟體。**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="顯示耳機電量 92% 的 BatteryDock 膠囊特寫" /><br /><br />
-        <sub><b>工作列膠囊</b> - 直接嵌入 Windows 工作列，支援各螢幕獨立 DPI 縮放、電量分級色彩與即時 ⚡ 充電圖示。</sub>
+        <sub><b>工作列膠囊</b>：直接嵌入 Windows 工作列，支援各螢幕獨立 DPI 縮放、電量分級色彩與即時 ⚡ 充電圖示。</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock 設定視窗 v0.1.11" width="340" /><br />
-        <sub><b>獨立設定視窗</b> - 電量警示門檻、提示音試聽、顯示位置模式與已連線裝置列表。</sub>
+        <sub><b>獨立設定視窗</b>：電量警示門檻、提示音試聽、顯示位置模式與已連線裝置列表。</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 多數無線週邊將電量百分比鎖在背景執行大量服務的臃腫原廠軟體裡。**BatteryDock** 將一切收進工作列的一顆俐落膠囊中：
 
 - **零臃腫軟體：** 單一 **約 4 MB** 原生 Rust 執行檔（無 Electron、無遙測，Windows 11 實測私人記憶體約 77 MB）。
-- **硬體直接讀取：** 直接查詢 **Logitech HID++ 2.0**、**Windows Bluetooth / BLE GATT**、**XInput** 與 **Sony DualSense / DualShock 4 HID** - 羅技裝置免開 G HUB 也能回報（執行時亦支援 G HUB IPC）。
+- **硬體直接讀取：** 直接查詢 **Logitech HID++ 2.0**、**Windows Bluetooth / BLE GATT**、**XInput** 與 **Sony DualSense / DualShock 4 HID**，羅技裝置免開 G HUB 也能回報（執行時亦支援 G HUB IPC）。
 - **智慧全螢幕規則：** 全螢幕遊戲、影片或自動隱藏工作列時會自動隱藏；按下 `Win` 鍵、開啟開始/搜尋/小工具或點擊桌面時保持穩定顯示。
 - **即時充電顯示：** 充電中的裝置會以**青色**顯示並附上 **⚡ 閃電圖示**。
 - **可靠的背景通知：** 即使在遊戲中膠囊處於隱藏狀態，低電量音效與系統通知仍會正常觸發。
@@ -81,7 +81,7 @@
 
 前往 **[Releases 頁面](https://github.com/jorjanion/BatteryDock/releases/latest)** 下載最新版本：
 
-1. 下載 **`BatteryDock-Setup-v0.1.11.exe`**（約 4.4 MB） - 或選擇免安裝的 `BatteryDock-Windows-Portable.zip`。
+1. 下載 **`BatteryDock-Setup-v0.1.11.exe`**（約 4.4 MB），或選擇免安裝的 `BatteryDock-Windows-Portable.zip`。
 2. 執行安裝程式並依需求勾選 **"Start BatteryDock when Windows boots"**。
 3. 膠囊會顯示於工作列系統匣時鐘左側。
 
@@ -102,7 +102,7 @@
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4（支援多手把 + 充電狀態） |
 
 **找不到您的品牌（Razer、Corsair、SteelSeries、Keychron 等）？**
-👉 **[提交裝置支援請求](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - 也歡迎提交 PR！
+👉 **[提交裝置支援請求](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**，也歡迎提交 PR！
 
 ---
 

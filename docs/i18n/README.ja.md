@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock ロゴ" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 タスクバーに直接溶け込む、Rust製の超軽量バッテリーインジケーター - メーカー製常駐ソフト不要。**
+**Windows 10/11 タスクバーに直接溶け込む、Rust製の超軽量バッテリーインジケーター，メーカー製常駐ソフト不要。**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="ヘッドセットのバッテリー92%を表示するBatteryDockカプセルの拡大図" /><br /><br />
-        <sub><b>タスクバーカプセル</b> - モニターごとのDPIスケーリング・残量カラー・⚡充電バッジ付きでタスクバーに直接表示。</sub>
+        <sub><b>タスクバーカプセル</b>：モニターごとのDPIスケーリング・残量カラー・⚡充電バッジ付きでタスクバーに直接表示。</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock 設定ウィンドウ v0.1.11" width="340" /><br />
-        <sub><b>設定ウィンドウ</b> - 通知しきい値、サウンドテスト、表示位置、接続中デバイス一覧。</sub>
+        <sub><b>設定ウィンドウ</b>：通知しきい値、サウンドテスト、表示位置、接続中デバイス一覧。</sub>
       </td>
     </tr>
   </table>
@@ -102,7 +102,7 @@ BatteryDock は有料の EV コード署名証明書を持たない無料オー�
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4（複数台接続＋充電状態対応） |
 
 **お使いのメーカーがありませんか（Razer、Corsair、SteelSeries、Keychron など）？**
-👉 **[デバイス対応リクエストを開く](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request も大歓迎です！
+👉 **[デバイス対応リクエストを開く](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**，Pull Request も大歓迎です！
 
 ---
 

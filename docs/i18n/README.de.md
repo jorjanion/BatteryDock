@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock Logo" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Eine schlanke, native Rust-Batterieanzeige direkt in der Windows 10/11-Taskleiste - ganz ohne Hersteller-Bloatware.**
+**Eine schlanke, native Rust-Batterieanzeige direkt in der Windows 10/11-Taskleiste, ganz ohne Hersteller-Bloatware.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Nahaufnahme der BatteryDock-Kapsel mit 92 % Akkustand" /><br /><br />
-        <sub><b>Taskleisten-Kapsel</b> - Direkt in die Windows-Taskleiste integriert, mit Per-Monitor-DPI-Skalierung, Farbstufen und live ⚡ Ladeanzeige.</sub>
+        <sub><b>Taskleisten-Kapsel</b>: Direkt in die Windows-Taskleiste integriert, mit Per-Monitor-DPI-Skalierung, Farbstufen und live ⚡ Ladeanzeige.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock Einstellungsfenster v0.1.11" width="340" /><br />
-        <sub><b>Einstellungen</b> - Warnschwellen, Tonvorschau, Positionierung und Liste verbundener Geräte.</sub>
+        <sub><b>Einstellungen</b>: Warnschwellen, Tonvorschau, Positionierung und Liste verbundener Geräte.</sub>
       </td>
     </tr>
   </table>
@@ -70,8 +70,8 @@
 Die meisten kabellosen Peripheriegeräte verstecken ihren Akkustand in überladenen Hersteller-Suiten mit Dutzenden Hintergrunddiensten. **BatteryDock** zeigt alles sauber in einer kompakten Taskleisten-Kapsel an:
 
 - **Keine Bloatware:** Eine einzelne **~4 MB** große native Rust-Datei (kein Electron, keine Telemetrie, ~77 MB privater Speicher live unter Windows 11).
-- **Direkte Hardware-Abfrage:** Liest **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** und **Sony DualSense / DualShock 4 HID** direkt aus - Logitech-Geräte funktionieren auch ohne gestartetes G HUB (G HUB IPC wird zusätzlich unterstützt).
-- **Intelligente Vollbild-Regeln:** Blendet automatisch aus, sobald Vollbildspiele, Vollbildvideos oder eine ausgeblendete Taskleiste aktiv sind - und bleibt bei `Win`-Taste, Startmenü, Suche, Widgets oder Desktop-Klicks zuverlässig sichtbar.
+- **Direkte Hardware-Abfrage:** Liest **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** und **Sony DualSense / DualShock 4 HID** direkt aus, Logitech-Geräte funktionieren auch ohne gestartetes G HUB (G HUB IPC wird zusätzlich unterstützt).
+- **Intelligente Vollbild-Regeln:** Blendet automatisch aus, sobald Vollbildspiele, Vollbildvideos oder eine ausgeblendete Taskleiste aktiv sind, und bleibt bei `Win`-Taste, Startmenü, Suche, Widgets oder Desktop-Klicks zuverlässig sichtbar.
 - **Live-Ladesymbol:** Markiert ladende Geräte in **Cyan** mit einem **⚡ Blitz-Symbol**.
 - **Zuverlässige Hintergrund-Warnungen:** Töne und Windows-Benachrichtigungen werden auch dann ausgelöst, wenn die Kapsel im Vollbild ausgeblendet ist.
 
@@ -81,7 +81,7 @@ Die meisten kabellosen Peripheriegeräte verstecken ihren Akkustand in überlade
 
 Lade die neueste Version von der **[Releases-Seite](https://github.com/jorjanion/BatteryDock/releases/latest)** herunter:
 
-1. Lade **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) herunter - oder `BatteryDock-Windows-Portable.zip` für die portable Nutzung.
+1. Lade **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) herunter, oder `BatteryDock-Windows-Portable.zip` für die portable Nutzung.
 2. Starte den Installer und aktiviere optional **"Start BatteryDock when Windows boots"**.
 3. Die Kapsel erscheint neben dem System-Tray und der Uhr.
 
@@ -102,7 +102,7 @@ Da BatteryDock eine kostenlose Open-Source-App ohne teures EV-Code-Signing-Zerti
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (Multi-Controller-Support + Ladestatus) |
 
 **Deine Marke fehlt (Razer, Corsair, SteelSeries, Keychron usw.)?**
-👉 **[Geräte-Unterstützung anfragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requests für weitere HID-/Bluetooth-Profile sind ebenfalls willkommen!
+👉 **[Geräte-Unterstützung anfragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requests für weitere HID-/Bluetooth-Profile sind ebenfalls willkommen!
 
 ---
 

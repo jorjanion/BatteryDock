@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Lekki, natywny wskaźnik baterii w Rust osadzony bezpośrednio na pasku zadań Windows 10/11 - bez ciężkiego oprogramowania producentów.**
+**Lekki, natywny wskaźnik baterii w Rust osadzony bezpośrednio na pasku zadań Windows 10/11, bez ciężkiego oprogramowania producentów.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Zbliżenie kapsułki BatteryDock pokazującej słuchawki 92%" /><br /><br />
-        <sub><b>Kapsułka na pasku zadań</b> - Osadzona w pasku Windows ze skalowaniem DPI dla każdego monitora, kolorami poziomów i ikoną ładowania ⚡.</sub>
+        <sub><b>Kapsułka na pasku zadań</b>: Osadzona w pasku Windows ze skalowaniem DPI dla każdego monitora, kolorami poziomów i ikoną ładowania ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="Okno ustawień BatteryDock v0.1.11" width="340" /><br />
-        <sub><b>Osobne ustawienia</b> - Progi alertów, test dźwięku, tryby pozycjonowania i lista podłączonych urządzeń.</sub>
+        <sub><b>Osobne ustawienia</b>: Progi alertów, test dźwięku, tryby pozycjonowania i lista podłączonych urządzeń.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Większość urządzeń bezprzewodowych ukrywa poziom baterii w ciężkich pakietach producentów uruchamiających dziesiątki usług w tle. **BatteryDock** umieszcza wszystko w jednej minimalistycznej pigułce na pasku zadań:
 
 - **Zero bloatware'u:** Pojedyncza natywna binarka Rust **~4 MB** (bez Electrona, bez telemetrii, ~77 MB pamięci prywatnej w Windows 11).
-- **Bezpośredni odczyt sprzętu:** Odpytuje **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** oraz **Sony DualSense / DualShock 4 HID** - urządzenia Logitech działają nawet bez włączonego G HUB (a jeśli G HUB działa, wspiera też G HUB IPC).
+- **Bezpośredni odczyt sprzętu:** Odpytuje **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** oraz **Sony DualSense / DualShock 4 HID**, urządzenia Logitech działają nawet bez włączonego G HUB (a jeśli G HUB działa, wspiera też G HUB IPC).
 - **Inteligentny tryb pełnoekranowy:** Ukrywa się automatycznie w grach pełnoekranowych, wideo i przy ukrywaniu paska zadań, ale nie znika po naciśnięciu klawisza `Win`, otwarciu Startu/Widgetów ani kliknięciu pulpitu.
 - **Wskaźnik ładowania na żywo:** Podświetla ładowane urządzenie na **cyjanowo** z ikoną **⚡**.
 - **Powiadomienia działające w tle:** Dźwięk i powiadomienia systemowe działają także wtedy, gdy pigułka jest ukryta podczas gry.
@@ -81,7 +81,7 @@ Większość urządzeń bezprzewodowych ukrywa poziom baterii w ciężkich pakie
 
 Pobierz najnowszą wersję ze strony **[Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Pobierz **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) - lub `BatteryDock-Windows-Portable.zip` w wersji przenośnej.
+1. Pobierz **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), lub `BatteryDock-Windows-Portable.zip` w wersji przenośnej.
 2. Uruchom instalator i opcjonalnie zaznacz **"Start BatteryDock when Windows boots"**.
 3. Kapsułka pojawi się na pasku zadań obok zegara.
 
@@ -102,7 +102,7 @@ Ponieważ BatteryDock jest darmowym projektem open-source bez płatnego certyfik
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense i DualShock 4 (wiele padów + status ładowania) |
 
 **Brakuje Twojej marki (Razer, Corsair, SteelSeries, Keychron itd.)?**
-👉 **[Zgłoś prośbę o wsparcie urządzenia](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Requesty również mile widziane!
+👉 **[Zgłoś prośbę o wsparcie urządzenia](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requesty również mile widziane!
 
 ---
 

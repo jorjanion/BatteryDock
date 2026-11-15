@@ -1,10 +1,10 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="../../assets/logo.png" alt="BatteryDock Logosu" width="160" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 görev çubuğuna doğrudan gömülü, Rust ile yazılmış sade bir pil göstergesi - üretici yazılımlarının ağırlığı olmadan.**
+**Windows 10/11 görev çubuğuna doğrudan gömülü, Rust ile yazılmış sade bir pil göstergesi, üretici yazılımlarının ağırlığı olmadan.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -53,11 +53,11 @@
     <tr>
       <td align="center" valign="middle" width="42%">
         <img src="../screenshots/dock-closeup.png" alt="Kulaklık pilini %92 gösteren BatteryDock kapsülü yakından" /><br /><br />
-        <sub><b>Görev Çubuğu Kapsülü</b> - Windows görev çubuğuna doğrudan gömülü, monitör başına DPI ölçekleme ve canlı ⚡ şarj simgesi ile.</sub>
+        <sub><b>Görev Çubuğu Kapsülü</b>: Windows görev çubuğuna doğrudan gömülü, monitör başına DPI ölçekleme ve canlı ⚡ şarj simgesi ile.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
         <img src="../screenshots/settings.png" alt="BatteryDock Ayarlar penceresi v0.1.11" width="340" /><br />
-        <sub><b>Bağımsız Ayarlar</b> - Uyarı eşikleri, ses önizlemesi, konum modları ve bağlı cihaz listesi.</sub>
+        <sub><b>Bağımsız Ayarlar</b>: Uyarı eşikleri, ses önizlemesi, konum modları ve bağlı cihaz listesi.</sub>
       </td>
     </tr>
   </table>
@@ -70,7 +70,7 @@
 Kablosuz çevre birimlerinin çoğu pil yüzdesini arka planda onlarca servis çalıştıran hantal üretici yazılımlarının içine hapseder. **BatteryDock** tüm cihazlarınızı tek bir şık kapsülde toplar:
 
 - **Sıfır Bloatware:** Tek bir **~4 MB** yerel Rust ikili dosyası (Electron yok, telemetri yok, Windows 11'de canlı ~77 MB özel bellek).
-- **Doğrudan Donanım Okuma:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** ve **Sony DualSense / DualShock 4 HID**'yi doğrudan sorgular - Logitech cihazlar G HUB açılmadan bile rapor verebilir (açıksa G HUB IPC de desteklenir).
+- **Doğrudan Donanım Okuma:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** ve **Sony DualSense / DualShock 4 HID**'yi doğrudan sorgular, Logitech cihazlar G HUB açılmadan bile rapor verebilir (açıksa G HUB IPC de desteklenir).
 - **Akıllı Tam Ekran Kuralları:** Tam ekran oyunlar, videolar veya otomatik gizlenen görev çubuklarında kendini gizler; `Win` tuşuna basıldığında, Başlat/Widget açıldığında veya masaüstüne tıklandığında görünür kalır.
 - **Canlı Şarj Göstergesi:** Şarj olan cihazları **camgöbeği** renkte ve **⚡ şimşek simgesiyle** vurgular.
 - **Her Zaman Çalışan Arka Plan Uyarıları:** Kapsül oyunda gizliyken bile düşük ve kritik pil bildirimleri ile sesli uyarılar arka plandan tetiklenir.
@@ -81,7 +81,7 @@ Kablosuz çevre birimlerinin çoğu pil yüzdesini arka planda onlarca servis ç
 
 **[Releases Sayfasından](https://github.com/jorjanion/BatteryDock/releases/latest)** son sürümü indirin:
 
-1. **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) dosyasını indirin - veya kurulumsuz kullanım için `BatteryDock-Windows-Portable.zip` seçin.
+1. **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) dosyasını indirin, veya kurulumsuz kullanım için `BatteryDock-Windows-Portable.zip` seçin.
 2. Yükleyiciyi çalıştırın ve isterseniz **"Start BatteryDock when Windows boots"** kutusunu işaretleyin.
 3. Kapsül görev çubuğunda saatin yanında belirecektir.
 
@@ -102,7 +102,7 @@ BatteryDock ücretli EV imza sertifikasına sahip olmayan ücretsiz bir açık k
 | **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (çoklu kontrolcü + şarj durumu) |
 
 **Markanız eksik mi (Razer, Corsair, SteelSeries, Keychron vb.)?**
-👉 **[Cihaz Desteği Talebi Açın](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** - Pull Request katkıları da memnuniyetle karşılanır!
+👉 **[Cihaz Desteği Talebi Açın](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Request katkıları da memnuniyetle karşılanır!
 
 ---
 
