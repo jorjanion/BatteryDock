@@ -840,8 +840,21 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
     }
 }
 
-/// Ensures `our_hwnd` maintains `HWND_TOPMOST` without aggressive Z-order thrashing.
-pub fn ensure_window_above_taskbar(our_hwnd_val: isize, _tb_hwnd_val: isize) {
+unsafe fn is_dock_above_taskbar(our_hwnd: HWND, tb_hwnd: HWND) -> bool {
+    let mut cur = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
+    let mut steps = 0usize;
+    while !cur.0.is_null() && steps < 64 {
+        if cur == our_hwnd {
+            return true;
+        }
+        cur = GetWindow(cur, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
+        steps += 1;
+    }
+    false
+}
+
+/// Ensures `our_hwnd` maintains `HWND_TOPMOST` and sits physically ABOVE `tb_hwnd` in Z-order.
+pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
     if our_hwnd_val == 0 {
         return;
     }
@@ -852,7 +865,16 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, _tb_hwnd_val: isize) {
         }
 
         let our_ex = GetWindowLongW(our_hwnd, GWL_EXSTYLE);
-        if (our_ex & WS_EX_TOPMOST.0 as i32) == 0 {
+        let has_topmost = (our_ex & WS_EX_TOPMOST.0 as i32) != 0;
+
+        let tb_hwnd = HWND(tb_hwnd_val as *mut c_void);
+        let is_above = if !tb_hwnd.0.is_null() && IsWindow(tb_hwnd).as_bool() {
+            is_dock_above_taskbar(our_hwnd, tb_hwnd)
+        } else {
+            has_topmost
+        };
+
+        if !has_topmost || !is_above {
             let _ = SetWindowPos(
                 our_hwnd,
                 HWND_TOPMOST,

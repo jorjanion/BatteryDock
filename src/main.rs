@@ -101,18 +101,20 @@ pub fn open_settings_window() {
         }
 
         if let Ok(exe) = std::env::current_exe() {
-            let exe_str = exe.to_string_lossy().to_string();
-            let exe_hstring = windows::core::HSTRING::from(exe_str);
-            let open_hstring = windows::core::HSTRING::from("open");
-            let param_hstring = windows::core::HSTRING::from("--settings");
-            windows::Win32::UI::Shell::ShellExecuteW(
-                windows::Win32::Foundation::HWND(std::ptr::null_mut()),
-                windows::core::PCWSTR(open_hstring.as_ptr()),
-                windows::core::PCWSTR(exe_hstring.as_ptr()),
-                windows::core::PCWSTR(param_hstring.as_ptr()),
-                windows::core::PCWSTR(std::ptr::null()),
-                windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
-            );
+            if std::process::Command::new(&exe).arg("--settings").spawn().is_err() {
+                let exe_str = exe.to_string_lossy().to_string();
+                let exe_hstring = windows::core::HSTRING::from(exe_str);
+                let open_hstring = windows::core::HSTRING::from("open");
+                let param_hstring = windows::core::HSTRING::from("--settings");
+                windows::Win32::UI::Shell::ShellExecuteW(
+                    windows::Win32::Foundation::HWND(std::ptr::null_mut()),
+                    windows::core::PCWSTR(open_hstring.as_ptr()),
+                    windows::core::PCWSTR(exe_hstring.as_ptr()),
+                    windows::core::PCWSTR(param_hstring.as_ptr()),
+                    windows::core::PCWSTR(std::ptr::null()),
+                    windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
+                );
+            }
         }
     }
 }
