@@ -474,11 +474,13 @@ impl eframe::App for BatteryDockApp {
         }
         if let Some(updated_devices) = latest_devices {
             self.devices = updated_devices;
+            ctx.request_repaint();
         }
         if forced_reload {
             let snapshot = self.engine.latest_snapshot();
             if !snapshot.is_empty() || !self.devices.is_empty() {
                 self.devices = snapshot;
+                ctx.request_repaint();
             }
         }
 
@@ -517,6 +519,9 @@ impl eframe::App for BatteryDockApp {
             self.open_settings = false;
             open_settings_window();
         }
+
+        // Keep event loop alive to drain background battery events, animations, and taskbar sync
+        ctx.request_repaint_after(Duration::from_millis(250));
     }
 }
 

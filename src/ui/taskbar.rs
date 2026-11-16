@@ -25,10 +25,11 @@ use windows::Win32::UI::WindowsAndMessaging::{
     GetShellWindow, GetSystemMetrics, GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect,
     GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, PostMessageW,
     SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, TrackPopupMenuEx, GWL_EXSTYLE,
-    GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING, SM_CXSCREEN,
-    SM_CYSCREEN, SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-    SWP_NOZORDER, SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON,
-    WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
+    GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING,
+    SM_CXSCREEN, SM_CYSCREEN, SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
+    SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD,
+    TPM_RIGHTBUTTON, WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
+    WS_EX_TRANSPARENT,
 };
 
 #[derive(Debug, Clone)]
@@ -291,6 +292,15 @@ unsafe fn is_shell_desktop_or_overlay_class(class_lower: &str) -> bool {
             | "wnd_startfeed"
             | "traynotifywnd"
             | "tasklistthumbnailwnd"
+            | "foregroundstaging"
+            | "thumbnaildevicehelperwnd"
+            | "systemtray_main"
+            | "windows.ui.core.corewindow"
+            | "applicationmanager_desktopshellwindow"
+            | "edgeuiinputtopwndclass"
+            | "dummydwmlistenerwindow"
+            | "winit thread event target"
+            | "tray_icon_app"
     )
 }
 
@@ -667,57 +677,106 @@ impl TaskbarGeometry {
                 }
             }
 
-            // Walk top-down Z-order above tb_hwnd (or all top windows if secondary display has no taskbar)
+            // Collect windows above the taskbar in Z-order
             let mut windows_above = Vec::new();
-            let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
-            let mut steps = 0usize;
-            while !cur.0.is_null() && steps < 4096 {
-                steps += 1;
-                if !tb_hwnd.0.is_null() && cur == tb_hwnd {
-                    break;
-                }
+            if !tb_hwnd.0.is_null() && IsWindow(tb_hwnd).as_bool() {
+                // When we have a live taskbar window, walk strictly UPWARDS from tb_hwnd using GW_HWNDPREV.
+                // Every window in tb_hwnd's PREV chain is physically above the taskbar, avoiding leaks
+                // into non-topmost background apps (like overlays, browsers, or games).
+                let mut cur = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
+                let mut steps = 0usize;
+                while !cur.0.is_null() && steps < 256 {
+                    steps += 1;
+                    let next = GetWindow(cur, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
 
-                let next = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
+                    if IsWindowVisible(cur).as_bool() && !IsIconic(cur).as_bool() {
+                        let mut pid = 0u32;
+                        GetWindowThreadProcessId(cur, Some(&mut pid));
+                        if pid != 0 && pid != our_pid {
+                            let ex_style = GetWindowLongW(cur, GWL_EXSTYLE) as u32;
+                            let is_clickthrough = (ex_style & WS_EX_LAYERED.0 != 0)
+                                && (ex_style & WS_EX_TRANSPARENT.0 != 0);
+                            let is_zero_alpha = !is_clickthrough && is_window_zero_alpha(cur, ex_style);
 
-                if IsWindowVisible(cur).as_bool() && !IsIconic(cur).as_bool() {
-                    let mut pid = 0u32;
-                    GetWindowThreadProcessId(cur, Some(&mut pid));
-                    if pid != 0 && pid != our_pid {
-                        let ex_style = GetWindowLongW(cur, GWL_EXSTYLE) as u32;
-                        let is_clickthrough = (ex_style & WS_EX_LAYERED.0 != 0)
-                            && (ex_style & WS_EX_TRANSPARENT.0 != 0);
-                        let is_zero_alpha = !is_clickthrough && is_window_zero_alpha(cur, ex_style);
-
-                        if !is_clickthrough && !is_zero_alpha {
-                            let class = get_window_class_lower(cur);
-                            if !is_shell_desktop_or_overlay_class(&class) && !is_window_cloaked(cur)
-                            {
-                                if let Some(rect) = get_effective_window_rect(cur) {
-                                    if rect_intersection(rect, monitor_rect).is_some()
-                                        && (rect.right - rect.left) >= 16
-                                        && (rect.bottom - rect.top) >= 16
-                                    {
-                                        // Only query process exe name when window is actually large enough to matter
-                                        let might_occlude = rect_covers_monitor(rect, monitor_rect)
-                                            || taskbar_rect
-                                                .and_then(|tb_r| rect_intersection(rect, tb_r))
-                                                .is_some();
-                                        let skip_flyout =
-                                            might_occlude && is_shell_flyout_window(pid, &class);
-                                        if !skip_flyout {
-                                            windows_above.push(CandidateWindowRect {
-                                                rect,
-                                                is_menu_or_tooltip: class == "#32768",
-                                            });
+                            if !is_clickthrough && !is_zero_alpha {
+                                let class = get_window_class_lower(cur);
+                                if !is_shell_desktop_or_overlay_class(&class) && !is_window_cloaked(cur)
+                                {
+                                    if let Some(rect) = get_effective_window_rect(cur) {
+                                        if rect_intersection(rect, monitor_rect).is_some()
+                                            && (rect.right - rect.left) >= 16
+                                            && (rect.bottom - rect.top) >= 16
+                                        {
+                                            let might_occlude = rect_covers_monitor(rect, monitor_rect)
+                                                || taskbar_rect
+                                                    .and_then(|tb_r| rect_intersection(rect, tb_r))
+                                                    .is_some();
+                                            let skip_flyout =
+                                                might_occlude && is_shell_flyout_window(pid, &class);
+                                            if !skip_flyout {
+                                                windows_above.push(CandidateWindowRect {
+                                                    rect,
+                                                    is_menu_or_tooltip: class == "#32768",
+                                                });
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                cur = next;
+                    cur = next;
+                }
+            } else {
+                // Secondary monitor without taskbar: walk downwards from top window within TOPMOST band only
+                let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
+                let mut steps = 0usize;
+                while !cur.0.is_null() && steps < 256 {
+                    steps += 1;
+                    let next = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
+                    let ex_style = GetWindowLongW(cur, GWL_EXSTYLE) as u32;
+                    if (ex_style & WS_EX_TOPMOST.0) == 0 {
+                        // Cease scan when leaving the topmost band
+                        break;
+                    }
+
+                    if IsWindowVisible(cur).as_bool() && !IsIconic(cur).as_bool() {
+                        let mut pid = 0u32;
+                        GetWindowThreadProcessId(cur, Some(&mut pid));
+                        if pid != 0 && pid != our_pid {
+                            let is_clickthrough = (ex_style & WS_EX_LAYERED.0 != 0)
+                                && (ex_style & WS_EX_TRANSPARENT.0 != 0);
+                            let is_zero_alpha = !is_clickthrough && is_window_zero_alpha(cur, ex_style);
+
+                            if !is_clickthrough && !is_zero_alpha {
+                                let class = get_window_class_lower(cur);
+                                if !is_shell_desktop_or_overlay_class(&class) && !is_window_cloaked(cur)
+                                {
+                                    if let Some(rect) = get_effective_window_rect(cur) {
+                                        if rect_intersection(rect, monitor_rect).is_some()
+                                            && (rect.right - rect.left) >= 16
+                                            && (rect.bottom - rect.top) >= 16
+                                        {
+                                            let might_occlude = rect_covers_monitor(rect, monitor_rect)
+                                                || rect_intersection(rect, dock_phys_rect).is_some();
+                                            let skip_flyout =
+                                                might_occlude && is_shell_flyout_window(pid, &class);
+                                            if !skip_flyout {
+                                                windows_above.push(CandidateWindowRect {
+                                                    rect,
+                                                    is_menu_or_tooltip: class == "#32768",
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    cur = next;
+                }
             }
 
             let input = MonitorVisibilityInput {
@@ -781,69 +840,28 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
     }
 }
 
-unsafe fn is_window_above_in_zorder(our_hwnd: HWND, tb_hwnd: HWND) -> bool {
-    let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
-    let mut steps = 0usize;
-    while !cur.0.is_null() && steps < 4096 {
-        if cur == our_hwnd {
-            return true;
-        }
-        if cur == tb_hwnd {
-            return false;
-        }
-        cur = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
-        steps += 1;
-    }
-    false
-}
-
-/// Ensures `our_hwnd` sits strictly ABOVE `Shell_TrayWnd` in the `HWND_TOPMOST` Z-order band.
-/// Fixes the Windows key / taskbar click burying BatteryDock behind `Shell_TrayWnd`.
-pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
-    if our_hwnd_val == 0 || tb_hwnd_val == 0 {
+/// Ensures `our_hwnd` maintains `HWND_TOPMOST` without aggressive Z-order thrashing.
+pub fn ensure_window_above_taskbar(our_hwnd_val: isize, _tb_hwnd_val: isize) {
+    if our_hwnd_val == 0 {
         return;
     }
     unsafe {
         let our_hwnd = HWND(our_hwnd_val as *mut c_void);
-        let tb_hwnd = HWND(tb_hwnd_val as *mut c_void);
-        if !IsWindow(our_hwnd).as_bool() || !IsWindow(tb_hwnd).as_bool() {
+        if !IsWindow(our_hwnd).as_bool() {
             return;
         }
 
         let our_ex = GetWindowLongW(our_hwnd, GWL_EXSTYLE);
-        let need_reorder =
-            (our_ex & WS_EX_TOPMOST.0 as i32) == 0 || !is_window_above_in_zorder(our_hwnd, tb_hwnd);
-
-        if need_reorder {
-            let prev = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
-            let insert_after = if !prev.0.is_null()
-                && prev != our_hwnd
-                && (GetWindowLongW(prev, GWL_EXSTYLE) & WS_EX_TOPMOST.0 as i32) != 0
-            {
-                prev
-            } else {
-                HWND_TOPMOST
-            };
-            let res = SetWindowPos(
+        if (our_ex & WS_EX_TOPMOST.0 as i32) == 0 {
+            let _ = SetWindowPos(
                 our_hwnd,
-                insert_after,
+                HWND_TOPMOST,
                 0,
                 0,
                 0,
                 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
             );
-            if res.is_err() || !is_window_above_in_zorder(our_hwnd, tb_hwnd) {
-                let _ = SetWindowPos(
-                    our_hwnd,
-                    HWND_TOPMOST,
-                    0,
-                    0,
-                    0,
-                    0,
-                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
-                );
-            }
         }
     }
 }
