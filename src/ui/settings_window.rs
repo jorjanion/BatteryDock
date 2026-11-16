@@ -13,6 +13,7 @@ impl SettingsWindow {
         on_refresh: impl FnOnce(),
     ) {
         let mut should_refresh = false;
+        let lang = config.language;
 
         ui.add_space(8.0);
 
@@ -21,22 +22,45 @@ impl SettingsWindow {
             ui.heading("🔋 BatteryDock");
             ui.label(egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION"))).weak());
         });
-        ui.label(
-            egui::RichText::new("Ultra-lightweight peripheral battery overlay for Windows")
-                .italics()
-                .weak(),
-        );
+        ui.label(egui::RichText::new(lang.header_subtitle()).italics().weak());
+
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
+
+        // Language Selector Section
+        ui.heading(lang.heading_language());
+        ui.add_space(4.0);
+        let mut cur_lang = config.language;
+        egui::ComboBox::from_id_salt("settings_language_combobox")
+            .selected_text(cur_lang.display_name())
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut cur_lang,
+                    crate::i18n::Language::English,
+                    crate::i18n::Language::English.display_name(),
+                );
+                ui.selectable_value(
+                    &mut cur_lang,
+                    crate::i18n::Language::Spanish,
+                    crate::i18n::Language::Spanish.display_name(),
+                );
+            });
+        if cur_lang != config.language {
+            config.language = cur_lang;
+            config.save();
+        }
 
         ui.add_space(6.0);
         ui.separator();
         ui.add_space(6.0);
 
         // Alert Thresholds Section
-        ui.heading("⚡ Battery Alert Thresholds");
+        ui.heading(lang.heading_alert_thresholds());
         ui.add_space(4.0);
 
         ui.horizontal(|ui| {
-            ui.label("Low Battery Warning:");
+            ui.label(lang.low_battery_warning());
             let mut low = config.low_battery_threshold;
             if ui
                 .add(egui::Slider::new(&mut low, 5..=40).suffix("%"))
@@ -51,7 +75,7 @@ impl SettingsWindow {
         });
 
         ui.horizontal(|ui| {
-            ui.label("Critical Battery Warning:");
+            ui.label(lang.critical_battery_warning());
             let mut crit = config.critical_battery_threshold;
             if ui
                 .add(egui::Slider::new(&mut crit, 1..=15).suffix("%"))
@@ -67,12 +91,12 @@ impl SettingsWindow {
         ui.add_space(6.0);
 
         // Notification Toggles Section
-        ui.heading("🔔 Notifications & Sound");
+        ui.heading(lang.heading_notifications());
         ui.add_space(4.0);
 
         let mut audio_on = config.audio_alert_enabled;
         if ui
-            .checkbox(&mut audio_on, "Play gentle chime on low battery")
+            .checkbox(&mut audio_on, lang.play_chime_checkbox())
             .changed()
         {
             config.audio_alert_enabled = audio_on;
@@ -81,14 +105,14 @@ impl SettingsWindow {
 
         ui.horizontal(|ui| {
             ui.add_space(20.0);
-            if ui.button("▶ Test Chime Sound").clicked() {
+            if ui.button(lang.test_chime_button()).clicked() {
                 audio::play_gentle_chime();
             }
         });
 
         let mut visual_on = config.visual_alert_enabled;
         if ui
-            .checkbox(&mut visual_on, "Show desktop notifications")
+            .checkbox(&mut visual_on, lang.desktop_notifications_checkbox())
             .changed()
         {
             config.visual_alert_enabled = visual_on;
@@ -100,36 +124,36 @@ impl SettingsWindow {
         ui.add_space(6.0);
 
         // Placement Section
-        ui.heading("📌 Dock Placement");
+        ui.heading(lang.heading_dock_placement());
         ui.add_space(4.0);
 
         let current_mode = config.position_mode;
         ui.radio_value(
             &mut config.position_mode,
             DockPositionMode::TaskbarLeftOfTray,
-            "Taskbar: Next to System Tray (Clock)",
+            lang.placement_tray_clock(),
         );
         ui.radio_value(
             &mut config.position_mode,
             DockPositionMode::TaskbarRight,
-            "Taskbar: Far Right",
+            lang.placement_far_right(),
         );
         ui.radio_value(
             &mut config.position_mode,
             DockPositionMode::TaskbarLeft,
-            "Taskbar: Left Side",
+            lang.placement_left_side(),
         );
         ui.radio_value(
             &mut config.position_mode,
             DockPositionMode::Custom,
-            "Custom (Click & drag the dock anywhere)",
+            lang.placement_custom(),
         );
 
         if config.position_mode != current_mode {
             config.save();
         }
 
-        if ui.button("📍 Reset Dock Position to Clock").clicked() {
+        if ui.button(lang.reset_position_button()).clicked() {
             config.position_mode = DockPositionMode::TaskbarLeftOfTray;
             config.custom_pos_x = 0.0;
             config.custom_pos_y = 0.0;
@@ -142,9 +166,9 @@ impl SettingsWindow {
 
         // Connected Devices Section
         ui.horizontal(|ui| {
-            ui.heading(format!("🎧 Connected Devices ({})", devices.len()));
+            ui.heading(lang.heading_connected_devices(devices.len()));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button("🔄 Refresh Now").clicked() {
+                if ui.button(lang.refresh_now_button()).clicked() {
                     should_refresh = true;
                 }
             });
@@ -153,7 +177,7 @@ impl SettingsWindow {
 
         if devices.is_empty() {
             ui.label(
-                egui::RichText::new("No active wireless peripherals detected.")
+                egui::RichText::new(lang.no_devices_detected_label())
                     .italics()
                     .weak(),
             );
@@ -171,7 +195,8 @@ impl SettingsWindow {
                             crate::battery::DeviceType::Camera => "📷",
                             crate::battery::DeviceType::Unknown => "🔋",
                         };
-                        ui.label(icon).on_hover_text(dev.device_type.display_name());
+                        ui.label(icon)
+                            .on_hover_text(lang.device_type_name(&dev.device_type));
                         ui.label(egui::RichText::new(&dev.name).strong());
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -185,7 +210,7 @@ impl SettingsWindow {
                                 egui::Color32::from_rgb(34, 197, 94)
                             };
                             let label = if dev.is_charging {
-                                format!("{}% (Charging)", dev.percentage)
+                                format!("{}%{}", dev.percentage, lang.charging_suffix())
                             } else {
                                 format!("{}%", dev.percentage)
                             };
@@ -213,7 +238,7 @@ impl SettingsWindow {
 
         let mut show_pct = config.show_percentage_text;
         if ui
-            .checkbox(&mut show_pct, "Show battery percentage text on dock")
+            .checkbox(&mut show_pct, lang.show_percentage_checkbox())
             .changed()
         {
             config.show_percentage_text = show_pct;
@@ -223,7 +248,7 @@ impl SettingsWindow {
         // Windows Startup Option
         let mut start_win = config.start_with_windows;
         if ui
-            .checkbox(&mut start_win, "Start BatteryDock when Windows boots")
+            .checkbox(&mut start_win, lang.start_with_windows_checkbox())
             .changed()
         {
             config.start_with_windows = start_win;
@@ -236,12 +261,12 @@ impl SettingsWindow {
         ui.add_space(6.0);
 
         // Application Updates
-        ui.heading("🔄 Application Updates");
+        ui.heading(lang.heading_updates());
         ui.add_space(4.0);
 
         let mut auto_up = config.auto_update;
         if ui
-            .checkbox(&mut auto_up, "Check for and install updates automatically")
+            .checkbox(&mut auto_up, lang.auto_update_checkbox())
             .changed()
         {
             config.auto_update = auto_up;
@@ -249,18 +274,18 @@ impl SettingsWindow {
         }
 
         ui.horizontal(|ui| {
-            if ui.button("🔍 Check for Updates Now").clicked() {
+            if ui.button(lang.check_updates_now_button()).clicked() {
                 crate::updater::check_for_updates_async(false);
             }
 
             match crate::updater::get_update_status() {
                 crate::updater::UpdateStatus::Idle => {}
                 crate::updater::UpdateStatus::Checking => {
-                    ui.label(egui::RichText::new("Checking GitHub...").weak());
+                    ui.label(egui::RichText::new(lang.checking_github_label()).weak());
                 }
                 crate::updater::UpdateStatus::UpToDate => {
                     ui.label(
-                        egui::RichText::new("BatteryDock is up to date!")
+                        egui::RichText::new(lang.up_to_date_label())
                             .color(egui::Color32::from_rgb(34, 197, 94)),
                     );
                 }
@@ -269,11 +294,11 @@ impl SettingsWindow {
                     download_url,
                 } => {
                     ui.label(
-                        egui::RichText::new(format!("New version {} available!", version))
+                        egui::RichText::new(lang.new_version_available_label(&version))
                             .color(egui::Color32::from_rgb(56, 189, 248))
                             .strong(),
                     );
-                    if ui.button("📥 Install Update").clicked() {
+                    if ui.button(lang.install_update_button()).clicked() {
                         let v = version.clone();
                         let u = download_url.clone();
                         std::thread::spawn(move || {
@@ -283,20 +308,20 @@ impl SettingsWindow {
                 }
                 crate::updater::UpdateStatus::Downloading { version } => {
                     ui.label(
-                        egui::RichText::new(format!("Downloading {}...", version))
+                        egui::RichText::new(lang.downloading_label(&version))
                             .color(egui::Color32::from_rgb(56, 189, 248)),
                     );
                 }
                 crate::updater::UpdateStatus::Installing { version } => {
                     ui.label(
-                        egui::RichText::new(format!("Installing {}...", version))
+                        egui::RichText::new(lang.installing_label(&version))
                             .color(egui::Color32::from_rgb(34, 197, 94))
                             .strong(),
                     );
                 }
                 crate::updater::UpdateStatus::Failed(err) => {
                     ui.label(
-                        egui::RichText::new(format!("Update check failed: {}", err))
+                        egui::RichText::new(lang.update_failed_label(&err))
                             .color(egui::Color32::from_rgb(239, 68, 68))
                             .weak(),
                     );
@@ -305,7 +330,7 @@ impl SettingsWindow {
         });
 
         ui.add_space(10.0);
-        if ui.button("Close Settings").clicked() {
+        if ui.button(lang.close_settings_button()).clicked() {
             *open = false;
         }
 

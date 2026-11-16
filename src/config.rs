@@ -1,3 +1,4 @@
+use crate::i18n::Language;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -33,6 +34,7 @@ pub struct AppConfig {
     pub show_percentage_text: bool,
     pub compact_mode: bool,
     pub auto_update: bool,
+    pub language: Language,
 }
 
 impl Default for AppConfig {
@@ -51,6 +53,7 @@ impl Default for AppConfig {
             show_percentage_text: true,
             compact_mode: false,
             auto_update: true,
+            language: Language::default(),
         }
     }
 }

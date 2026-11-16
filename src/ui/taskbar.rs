@@ -1,6 +1,7 @@
 use crate::config::DockPositionMode;
+use crate::i18n::Language;
 use std::ffi::c_void;
-use windows::core::{w, PWSTR};
+use windows::core::{w, PCWSTR, PWSTR};
 use windows::Win32::Foundation::{CloseHandle, BOOL, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
     DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
@@ -1023,7 +1024,7 @@ pub enum DockContextMenuAction {
 }
 
 /// Shows a crisp native Win32 popup menu above/beside the dock pill (never clipped by the 32px viewport).
-pub fn show_dock_context_menu(hwnd_val: isize) -> Option<DockContextMenuAction> {
+pub fn show_dock_context_menu(hwnd_val: isize, lang: Language) -> Option<DockContextMenuAction> {
     if hwnd_val == 0 {
         return None;
     }
@@ -1042,12 +1043,17 @@ pub fn show_dock_context_menu(hwnd_val: isize) -> Option<DockContextMenuAction> 
         const CMD_RESTART: usize = 1004;
         const CMD_EXIT: usize = 1005;
 
-        let _ = AppendMenuW(menu, MF_STRING, CMD_SETTINGS, w!("Settings"));
-        let _ = AppendMenuW(menu, MF_STRING, CMD_REFRESH, w!("Refresh Devices"));
+        let append_item = |id: usize, text: &str| {
+            let wide: Vec<u16> = text.encode_utf16().chain(std::iter::once(0)).collect();
+            let _ = AppendMenuW(menu, MF_STRING, id, PCWSTR(wide.as_ptr()));
+        };
+
+        append_item(CMD_SETTINGS, lang.context_menu_settings());
+        append_item(CMD_REFRESH, lang.context_menu_refresh());
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, None);
-        let _ = AppendMenuW(menu, MF_STRING, CMD_RESET, w!("Reset to Taskbar Clock"));
-        let _ = AppendMenuW(menu, MF_STRING, CMD_RESTART, w!("Restart BatteryDock"));
-        let _ = AppendMenuW(menu, MF_STRING, CMD_EXIT, w!("Exit BatteryDock"));
+        append_item(CMD_RESET, lang.context_menu_reset());
+        append_item(CMD_RESTART, lang.context_menu_restart());
+        append_item(CMD_EXIT, lang.context_menu_exit());
 
         let mut pt = POINT::default();
         let _ = GetCursorPos(&mut pt);

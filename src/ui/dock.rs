@@ -43,8 +43,8 @@ impl DockOverlay {
         let mut w = 8.0_f32; // left padding
 
         if devices.is_empty() {
-            // icon (16) + gap (6) + text ("No devices connected", ~120) + gap (4)
-            w += 16.0 + 6.0 + 120.0 + 4.0;
+            let label_w = config.language.empty_dock_text_width();
+            w += 16.0 + 6.0 + label_w + 4.0;
         } else {
             for (idx, dev) in devices.iter().enumerate() {
                 if idx > 0 {
@@ -77,6 +77,7 @@ impl DockOverlay {
         open_settings: &mut bool,
         on_refresh: impl FnOnce(),
     ) {
+        let lang = config.language;
         self.render_with_context_menu(
             ctx,
             config,
@@ -84,7 +85,7 @@ impl DockOverlay {
             our_hwnd,
             open_settings,
             on_refresh,
-            show_dock_context_menu,
+            move |hwnd| show_dock_context_menu(hwnd, lang),
         );
     }
 
@@ -148,10 +149,11 @@ impl DockOverlay {
                             Color32::from_white_alpha(150),
                         );
                         ui.add_space(6.0);
+                        let label_w = config.language.empty_dock_text_width();
                         ui.add_sized(
-                            Vec2::new(120.0, 16.0),
+                            Vec2::new(label_w, 16.0),
                             egui::Label::new(
-                                egui::RichText::new("No devices connected")
+                                egui::RichText::new(config.language.no_devices_connected())
                                     .size(11.5)
                                     .color(Color32::from_white_alpha(165)),
                             )
@@ -374,6 +376,7 @@ impl DockOverlay {
 mod tests {
     use super::*;
     use crate::battery::BatterySource;
+    use crate::i18n::Language;
 
     fn sample_dev(pct: u8, charging: bool) -> DeviceBattery {
         DeviceBattery {
@@ -389,9 +392,17 @@ mod tests {
 
     #[test]
     fn test_required_width_accounts_for_charging_icon_and_percentage_toggle() {
-        let mut cfg = AppConfig::default();
+        let mut cfg = AppConfig {
+            language: Language::English,
+            ..Default::default()
+        };
         let empty_w = DockOverlay::required_width(&[], &cfg);
         assert_eq!(empty_w, 178.0);
+
+        cfg.language = Language::Spanish;
+        let empty_es_w = DockOverlay::required_width(&[], &cfg);
+        assert_eq!(empty_es_w, 210.0);
+        cfg.language = Language::English;
 
         let one_normal = vec![sample_dev(27, false)];
         let one_charging = vec![sample_dev(27, true)];

@@ -1,7 +1,8 @@
 #![windows_subsystem = "windows"]
 
 mod battery;
-mod config;
+pub mod config;
+pub mod i18n;
 mod notifications;
 mod ui;
 pub mod updater;
