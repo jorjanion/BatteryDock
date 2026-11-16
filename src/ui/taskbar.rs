@@ -25,11 +25,11 @@ use windows::Win32::UI::WindowsAndMessaging::{
     GetShellWindow, GetSystemMetrics, GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect,
     GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, PostMessageW,
     SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, TrackPopupMenuEx, GWL_EXSTYLE,
-    GW_HWNDNEXT, GW_HWNDPREV, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING,
+    GW_HWNDNEXT, GW_HWNDPREV, GW_OWNER, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING,
     SM_CXSCREEN, SM_CYSCREEN, SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
     SWP_NOSIZE, SWP_NOZORDER, SW_HIDE, SW_SHOWNOACTIVATE, TPM_NONOTIFY, TPM_RETURNCMD,
     TPM_RIGHTBUTTON, WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
-    WS_EX_TRANSPARENT,
+    WS_EX_TRANSPARENT, GWLP_HWNDPARENT, SetWindowLongPtrW,
 };
 
 #[derive(Debug, Clone)]
@@ -864,10 +864,20 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
             return;
         }
 
+        let tb_hwnd = HWND(tb_hwnd_val as *mut c_void);
+        if !tb_hwnd.0.is_null() && IsWindow(tb_hwnd).as_bool() {
+            // Setting Shell_TrayWnd as the OWNER of our dock window permanently guarantees
+            // in the Windows DWM window manager that BatteryDock stays above the taskbar,
+            // even when Windows Search, Start Menu, or flyouts gain foreground focus!
+            let current_owner = GetWindow(our_hwnd, GW_OWNER);
+            if current_owner != Ok(tb_hwnd) {
+                let _ = SetWindowLongPtrW(our_hwnd, GWLP_HWNDPARENT, tb_hwnd.0 as isize);
+            }
+        }
+
         let our_ex = GetWindowLongW(our_hwnd, GWL_EXSTYLE);
         let has_topmost = (our_ex & WS_EX_TOPMOST.0 as i32) != 0;
 
-        let tb_hwnd = HWND(tb_hwnd_val as *mut c_void);
         let is_above = if !tb_hwnd.0.is_null() && IsWindow(tb_hwnd).as_bool() {
             is_dock_above_taskbar(our_hwnd, tb_hwnd)
         } else {
