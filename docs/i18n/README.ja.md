@@ -56,7 +56,7 @@
         <sub><b>タスクバーカプセル</b>：モニターごとのDPIスケーリング・残量カラー・⚡充電バッジ付きでタスクバーに直接表示。</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 設定ウィンドウ v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock 設定ウィンドウ v0.1.12" width="340" /><br />
         <sub><b>設定ウィンドウ</b>：通知しきい値、サウンドテスト、表示位置、接続中デバイス一覧。</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 **[Releases ページ](https://github.com/jorjanion/BatteryDock/releases/latest)** から最新版を入手してください：
 
-1. **`BatteryDock-Setup-v0.1.11.exe`**（約 4.4 MB）をダウンロード（インストール不要の `BatteryDock-Windows-Portable.zip` もあります）。
+1. **`BatteryDock-Setup-v0.1.12.exe`**（約 4.4 MB）をダウンロード（インストール不要の `BatteryDock-Windows-Portable.zip` もあります）。
 2. インストーラーを実行し、必要に応じて **"Start BatteryDock when Windows boots"** にチェックを入れます。
 3. タスクバーの時計横にカプセルが表示されます。
 

@@ -56,7 +56,7 @@
         <sub><b>Cápsula na barra de tarefas</b>: Integrada diretamente à barra do Windows com escala DPI por monitor, cores por nível e ícone ⚡ de carregamento.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Janela de configurações do BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Janela de configurações do BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Configurações independentes</b>: Limites de alerta, teste de som, posicionamento e lista de dispositivos conectados.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ A maioria dos periféricos sem fio prende a porcentagem da bateria dentro de sof
 
 Baixe a versão mais recente na **[página de Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Baixe **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), ou `BatteryDock-Windows-Portable.zip` para usar sem instalar.
+1. Baixe **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), ou `BatteryDock-Windows-Portable.zip` para usar sem instalar.
 2. Execute o instalador e marque **"Start BatteryDock when Windows boots"** se desejar iniciar junto com o Windows.
 3. A cápsula aparecerá ao lado do relógio na barra de tarefas.
 

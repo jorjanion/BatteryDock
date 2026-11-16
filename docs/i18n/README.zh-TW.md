@@ -56,7 +56,7 @@
         <sub><b>工作列膠囊</b>：直接嵌入 Windows 工作列，支援各螢幕獨立 DPI 縮放、電量分級色彩與即時 ⚡ 充電圖示。</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 設定視窗 v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock 設定視窗 v0.1.12" width="340" /><br />
         <sub><b>獨立設定視窗</b>：電量警示門檻、提示音試聽、顯示位置模式與已連線裝置列表。</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 前往 **[Releases 頁面](https://github.com/jorjanion/BatteryDock/releases/latest)** 下載最新版本：
 
-1. 下載 **`BatteryDock-Setup-v0.1.11.exe`**（約 4.4 MB），或選擇免安裝的 `BatteryDock-Windows-Portable.zip`。
+1. 下載 **`BatteryDock-Setup-v0.1.12.exe`**（約 4.4 MB），或選擇免安裝的 `BatteryDock-Windows-Portable.zip`。
 2. 執行安裝程式並依需求勾選 **"Start BatteryDock when Windows boots"**。
 3. 膠囊會顯示於工作列系統匣時鐘左側。
 

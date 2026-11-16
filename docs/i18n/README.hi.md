@@ -56,7 +56,7 @@
         <sub><b>टास्कबार कैप्सूल</b>: Per-Monitor DPI स्केलिंग, बैटरी रंग और लाइव ⚡ चार्जिंग बैज के साथ सीधे Windows टास्कबार में।</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock सेटिंग्स विंडो v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock सेटिंग्स विंडो v0.1.12" width="340" /><br />
         <sub><b>स्टैंडअलोन सेटिंग्स</b>: अलर्ट सीमाएं, साउंड प्रीव्यू, पोजिशन मोड और कनेक्टेड डिवाइस सूची।</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 **[Releases पेज](https://github.com/jorjanion/BatteryDock/releases/latest)** से नवीनतम वर्ज़न डाउनलोड करें:
 
-1. **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) डाउनलोड करें, या पोर्टेबल उपयोग के लिए `BatteryDock-Windows-Portable.zip` चुनें।
+1. **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 MB) डाउनलोड करें, या पोर्टेबल उपयोग के लिए `BatteryDock-Windows-Portable.zip` चुनें।
 2. इंस्टॉलर चलाएँ और चाहें तो **"Start BatteryDock when Windows boots"** चुनें।
 3. टास्कबार में घड़ी के पास कैप्सूल दिखाई देगी।
 

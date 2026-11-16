@@ -56,7 +56,7 @@
         <sub><b>Görev Çubuğu Kapsülü</b>: Windows görev çubuğuna doğrudan gömülü, monitör başına DPI ölçekleme ve canlı ⚡ şarj simgesi ile.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Ayarlar penceresi v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock Ayarlar penceresi v0.1.12" width="340" /><br />
         <sub><b>Bağımsız Ayarlar</b>: Uyarı eşikleri, ses önizlemesi, konum modları ve bağlı cihaz listesi.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Kablosuz çevre birimlerinin çoğu pil yüzdesini arka planda onlarca servis ç
 
 **[Releases Sayfasından](https://github.com/jorjanion/BatteryDock/releases/latest)** son sürümü indirin:
 
-1. **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) dosyasını indirin, veya kurulumsuz kullanım için `BatteryDock-Windows-Portable.zip` seçin.
+1. **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB) dosyasını indirin, veya kurulumsuz kullanım için `BatteryDock-Windows-Portable.zip` seçin.
 2. Yükleyiciyi çalıştırın ve isterseniz **"Start BatteryDock when Windows boots"** kutusunu işaretleyin.
 3. Kapsül görev çubuğunda saatin yanında belirecektir.
 

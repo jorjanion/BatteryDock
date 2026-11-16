@@ -56,7 +56,7 @@
         <sub><b>Taskbar Capsule</b>: Embedded directly on the Windows taskbar with crisp Per-Monitor DPI scaling, color-coded battery levels, and live ⚡ charging badge.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="docs/screenshots/settings.png" alt="BatteryDock Settings window v0.1.11" width="340" /><br />
+        <img src="docs/screenshots/settings.png" alt="BatteryDock Settings window v0.1.12" width="340" /><br />
         <sub><b>Standalone Settings</b>: Threshold sliders, chime preview, placement modes, and connected device list.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Most wireless peripherals lock your battery percentage inside bloated manufactur
 
 Grab the latest release from the **[Releases Page](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB), or `BatteryDock-Windows-Portable.zip` if you prefer zero installation.
+1. Download **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 MB), or `BatteryDock-Windows-Portable.zip` if you prefer zero installation.
 2. Run the installer (English & Spanish supported) and optionally check **"Start BatteryDock when Windows boots"**.
 3. The pill will appear on your taskbar next to the clock tray.
 

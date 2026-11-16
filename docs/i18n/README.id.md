@@ -56,7 +56,7 @@
         <sub><b>Kapsul Taskbar</b>: Terintegrasi langsung di taskbar Windows dengan skalabilitas DPI per monitor dan lencana pengisian ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Jendela Pengaturan BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Jendela Pengaturan BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Pengaturan Mandiri</b>: Ambang peringatan, pratinjau suara, mode posisi, dan daftar perangkat terhubung.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Sebagian besar periferal nirkabel mengunci informasi baterai di dalam suite pabr
 
 Unduh rilis terbaru dari **[Halaman Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Unduh **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), atau `BatteryDock-Windows-Portable.zip` untuk versi portabel.
+1. Unduh **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), atau `BatteryDock-Windows-Portable.zip` untuk versi portabel.
 2. Jalankan installer dan centang **"Start BatteryDock when Windows boots"** jika diperlukan.
 3. Kapsul akan muncul di taskbar sebelah jam sistem.
 

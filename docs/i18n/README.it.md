@@ -56,7 +56,7 @@
         <sub><b>Capsula sulla barra delle applicazioni</b>: Integrata direttamente sulla taskbar di Windows con scaling DPI per monitor, colori di stato e badge di ricarica ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Finestra impostazioni di BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Finestra impostazioni di BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Impostazioni dedicate</b>: Soglie di avviso, anteprima suono, posizionamento e dispositivi connessi.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Quasi tutte le periferiche wireless nascondono la carica della batteria dentro s
 
 Scarica l'ultima versione dalla **[pagina Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Scarica **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), oppure `BatteryDock-Windows-Portable.zip` per la versione portatile.
+1. Scarica **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), oppure `BatteryDock-Windows-Portable.zip` per la versione portatile.
 2. Avvia l'installer e seleziona opzionalmente **"Start BatteryDock when Windows boots"**.
 3. La capsula apparirà accanto all'orologio nella barra delle applicazioni.
 

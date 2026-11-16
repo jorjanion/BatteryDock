@@ -56,7 +56,7 @@
         <sub><b>Cápsula en la barra de tareas</b>: Integrada directamente en la barra de Windows con escalado DPI por monitor, colores por nivel e indicador de carga ⚡ en vivo.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Ventana de configuración de BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Ventana de configuración de BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Ajustes independientes</b>: Umbrales de alerta, prueba de sonido, posición en barra y lista de dispositivos conectados.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ La mayoría de periféricos inalámbricos esconden el porcentaje de batería den
 
 Descarga la última versión desde la **[página de Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Descarga **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB), o `BatteryDock-Windows-Portable.zip` si prefieres la versión portable.
+1. Descarga **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 MB), o `BatteryDock-Windows-Portable.zip` si prefieres la versión portable.
 2. Ejecuta el instalador (disponible en español e inglés) y marca **"Start BatteryDock when Windows boots"** si quieres inicio automático.
 3. La píldora aparecerá integrada junto al reloj de la barra de tareas.
 

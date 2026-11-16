@@ -56,7 +56,7 @@
         <sub><b>Kapsle na hlavním panelu</b>: Přímo v hlavním panelu Windows s DPI škálováním pro každý monitor, barevnými úrovněmi a ikonou nabíjení ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Okno nastavení BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Okno nastavení BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Samostatné nastavení</b>: Prahy upozornění, ukázka zvuku, umístění a seznam připojených zařízení.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Většina bezdrátových periferií uzamyká stav baterie do objemných balíků
 
 Stáhněte nejnovější verzi ze **[stránky Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Stáhněte **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), nebo `BatteryDock-Windows-Portable.zip` pro přenosnou verzi.
+1. Stáhněte **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), nebo `BatteryDock-Windows-Portable.zip` pro přenosnou verzi.
 2. Spusťte instalátor a případně zaškrtněte **"Start BatteryDock when Windows boots"**.
 3. Kapsle se zobrazí vedle hodin na hlavním panelu.
 

@@ -56,7 +56,7 @@
         <sub><b>Aktivitetsfältskapsel</b>: Integrerad direkt i Windows aktivitetsfält med Per-Monitor DPI-skalning, statusfärger och ⚡ laddningsikon.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Inställningsfönster för BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Inställningsfönster för BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Fristående inställningar</b>: Varningsgränser, ljudtest, placering och anslutna enheter.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ De flesta trådlösa tillbehör låser batterinivån i tunga tillverkarprogram m
 
 Hämta senaste versionen från **[Releases-sidan](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Ladda ner **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), eller `BatteryDock-Windows-Portable.zip` för portabel användning.
+1. Ladda ner **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), eller `BatteryDock-Windows-Portable.zip` för portabel användning.
 2. Kör installationsprogrammet och bocka valfritt i **"Start BatteryDock when Windows boots"**.
 3. Kapseln dyker upp bredvid klockan i aktivitetsfältet.
 

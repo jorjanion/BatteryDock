@@ -56,7 +56,7 @@
         <sub><b>Thanh pin trên Taskbar</b>: Gắn trực tiếp vào thanh tác vụ Windows với DPI theo từng màn hình, màu trạng thái và biểu tượng sạc ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Cửa sổ Cài đặt BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Cửa sổ Cài đặt BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Cài đặt độc lập</b>: Ngưỡng cảnh báo, nghe thử âm thanh, chế độ vị trí và danh sách thiết bị đang kết nối.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Phần lớn thiết bị không dây giấu phần trăm pin trong các bộ ph
 
 Tải phiên bản mới nhất từ **[Trang Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Tải **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), hoặc `BatteryDock-Windows-Portable.zip` cho bản chạy ngay không cần cài.
+1. Tải **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), hoặc `BatteryDock-Windows-Portable.zip` cho bản chạy ngay không cần cài.
 2. Chạy bộ cài và chọn **"Start BatteryDock when Windows boots"** nếu muốn khởi động cùng Windows.
 3. Thanh pin sẽ xuất hiện ngay cạnh đồng hồ khay hệ thống.
 

@@ -56,7 +56,7 @@
         <sub><b>Capsule barre des tâches</b>: Intégrée directement à la barre Windows avec mise à l'échelle DPI par moniteur, couleurs par seuil et badge ⚡ en charge.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Fenêtre des paramètres BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Fenêtre des paramètres BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Paramètres dédiés</b>: Curseurs d'alerte, test audio, positionnement et liste des périphériques connectés.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ La plupart des périphériques sans fil enferment l'état de la batterie dans de
 
 Récupérez la dernière version sur la **[page Releases](https://github.com/jorjanion/BatteryDock/releases/latest)** :
 
-1. Téléchargez **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 Mo), ou `BatteryDock-Windows-Portable.zip` pour une utilisation portable.
+1. Téléchargez **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 Mo), ou `BatteryDock-Windows-Portable.zip` pour une utilisation portable.
 2. Lancez l'installateur et cochez éventuellement **"Start BatteryDock when Windows boots"**.
 3. La capsule s'affiche immédiatement à côté de l'horloge.
 

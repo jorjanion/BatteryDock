@@ -56,7 +56,7 @@
         <sub><b>Taakbalkcapsule</b>: Direct in de Windows-taakbalk geïntegreerd met DPI-schaling per monitor, kleurcodering en live ⚡ oplaadicoon.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Instellingenvenster v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock Instellingenvenster v0.1.12" width="340" /><br />
         <sub><b>Zelfstandige instellingen</b>: Waarschuwingsdrempels, geluids voorbeeld, posities en lijst met verbonden apparaten.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Veel draadloze randapparatuur verbergt het batterijpercentage in logge softwares
 
 Download de nieuwste release van de **[Releases-pagina](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Download **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), of `BatteryDock-Windows-Portable.zip` voor gebruik zonder installatie.
+1. Download **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), of `BatteryDock-Windows-Portable.zip` voor gebruik zonder installatie.
 2. Start de installer en vink optioneel **"Start BatteryDock when Windows boots"** aan.
 3. De capsule verschijnt direct naast het systeemvak en de klok.
 

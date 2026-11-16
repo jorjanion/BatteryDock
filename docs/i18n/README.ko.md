@@ -56,7 +56,7 @@
         <sub><b>작업 표시줄 캡슐</b>: 모니터별 DPI 스케일링, 배터리 상태 색상 및 실시간 ⚡ 충전 배지와 함께 Windows 작업 표시줄에 직접 통합.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 설정 창 v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock 설정 창 v0.1.12" width="340" /><br />
         <sub><b>독립 실행형 설정</b>: 경고 임계값, 알림음 미리 듣기, 위치 모드 및 연결된 장치 목록.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 **[Releases 페이지](https://github.com/jorjanion/BatteryDock/releases/latest)**에서 최신 버전을 다운로드하세요:
 
-1. **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 MB) 또는 무설치 포터블용 `BatteryDock-Windows-Portable.zip`을 다운로드합니다.
+1. **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 MB) 또는 무설치 포터블용 `BatteryDock-Windows-Portable.zip`을 다운로드합니다.
 2. 설치 프로그램을 실행하고 필요 시 **"Start BatteryDock when Windows boots"**를 선택합니다.
 3. 작업 표시줄 시계 옆에 캡슐이 나타납니다.
 

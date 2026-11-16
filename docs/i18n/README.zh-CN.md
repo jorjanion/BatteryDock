@@ -56,7 +56,7 @@
         <sub><b>任务栏胶囊</b>：直接嵌入 Windows 任务栏，支持每显示器 DPI 缩放、电量颜色分级与实时 ⚡ 充电图标。</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 设置窗口 v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock 设置窗口 v0.1.12" width="340" /><br />
         <sub><b>独立设置窗口</b>：警告阈值滑块、提示音试听、位置模式与已连接设备列表。</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 前往 **[Releases 页面](https://github.com/jorjanion/BatteryDock/releases/latest)** 获取最新版本：
 
-1. 下载 **`BatteryDock-Setup-v0.1.11.exe`**（约 4.4 MB），如需免安装绿色版可选择 `BatteryDock-Windows-Portable.zip`。
+1. 下载 **`BatteryDock-Setup-v0.1.12.exe`**（约 4.4 MB），如需免安装绿色版可选择 `BatteryDock-Windows-Portable.zip`。
 2. 运行安装程序，按需勾选 **"Start BatteryDock when Windows boots"**。
 3. 胶囊会出现在任务栏系统托盘时钟左侧。
 

@@ -56,7 +56,7 @@
         <sub><b>Taskleisten-Kapsel</b>: Direkt in die Windows-Taskleiste integriert, mit Per-Monitor-DPI-Skalierung, Farbstufen und live ⚡ Ladeanzeige.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Einstellungsfenster v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="BatteryDock Einstellungsfenster v0.1.12" width="340" /><br />
         <sub><b>Einstellungen</b>: Warnschwellen, Tonvorschau, Positionierung und Liste verbundener Geräte.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Die meisten kabellosen Peripheriegeräte verstecken ihren Akkustand in überlade
 
 Lade die neueste Version von der **[Releases-Seite](https://github.com/jorjanion/BatteryDock/releases/latest)** herunter:
 
-1. Lade **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB) herunter, oder `BatteryDock-Windows-Portable.zip` für die portable Nutzung.
+1. Lade **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB) herunter, oder `BatteryDock-Windows-Portable.zip` für die portable Nutzung.
 2. Starte den Installer und aktiviere optional **"Start BatteryDock when Windows boots"**.
 3. Die Kapsel erscheint neben dem System-Tray und der Uhr.
 

@@ -56,7 +56,7 @@
         <sub><b>Капсула в панели задач</b>: Встроена прямо в панель задач Windows, с DPI-масштабированием на каждый монитор и иконкой зарядки ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Окно настроек BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Окно настроек BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Отдельные настройки</b>: Пороги уведомлений, тест звука, выбор позиции и список подключённых устройств.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@
 
 Загрузите последнюю версию со **[страницы Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Скачайте **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 МБ), или `BatteryDock-Windows-Portable.zip` для портативного запуска.
+1. Скачайте **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 МБ), или `BatteryDock-Windows-Portable.zip` для портативного запуска.
 2. Запустите установщик и при желании отметьте **"Start BatteryDock when Windows boots"**.
 3. Капсула появится на панели задач слева от часов.
 

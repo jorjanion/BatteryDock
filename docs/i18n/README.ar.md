@@ -60,7 +60,7 @@
         <sub><b>كبسولة شريط المهام</b>: مدمجة مباشرة في شريط مهام Windows مع دعم DPI لكل شاشة وألوان الحالة وشارة الشحن ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="نافذة إعدادات BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="نافذة إعدادات BatteryDock v0.1.12" width="340" /><br />
         <sub><b>إعدادات مستقلة</b>: حدود التنبيه، معاينة الصوت، أوضاع التموضع وقائمة الأجهزة المتصلة.</sub>
       </td>
     </tr>
@@ -87,7 +87,7 @@
 
 حمّل أحدث إصدار من **[صفحة الإصدارات](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. حمّل **`BatteryDock-Setup-v0.1.11.exe`** (~4.4 ميجابايت), أو `BatteryDock-Windows-Portable.zip` للنسخة المحمولة.
+1. حمّل **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 ميجابايت), أو `BatteryDock-Windows-Portable.zip` للنسخة المحمولة.
 2. شغّل المثبّت وفعّل اختيارياً **"Start BatteryDock when Windows boots"**.
 3. ستظهر الكبسولة بجانب الساعة في شريط المهام.
 

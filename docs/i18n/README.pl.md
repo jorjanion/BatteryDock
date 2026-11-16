@@ -56,7 +56,7 @@
         <sub><b>Kapsułka na pasku zadań</b>: Osadzona w pasku Windows ze skalowaniem DPI dla każdego monitora, kolorami poziomów i ikoną ładowania ⚡.</sub>
       </td>
       <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Okno ustawień BatteryDock v0.1.11" width="340" /><br />
+        <img src="../screenshots/settings.png" alt="Okno ustawień BatteryDock v0.1.12" width="340" /><br />
         <sub><b>Osobne ustawienia</b>: Progi alertów, test dźwięku, tryby pozycjonowania i lista podłączonych urządzeń.</sub>
       </td>
     </tr>
@@ -81,7 +81,7 @@ Większość urządzeń bezprzewodowych ukrywa poziom baterii w ciężkich pakie
 
 Pobierz najnowszą wersję ze strony **[Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Pobierz **`BatteryDock-Setup-v0.1.11.exe`** (~4,4 MB), lub `BatteryDock-Windows-Portable.zip` w wersji przenośnej.
+1. Pobierz **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), lub `BatteryDock-Windows-Portable.zip` w wersji przenośnej.
 2. Uruchom instalator i opcjonalnie zaznacz **"Start BatteryDock when Windows boots"**.
 3. Kapsułka pojawi się na pasku zadań obok zegara.
 
