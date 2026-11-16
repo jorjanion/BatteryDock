@@ -231,6 +231,79 @@ impl SettingsWindow {
             config.save();
         }
 
+        ui.add_space(6.0);
+        ui.separator();
+        ui.add_space(6.0);
+
+        // Application Updates
+        ui.heading("🔄 Application Updates");
+        ui.add_space(4.0);
+
+        let mut auto_up = config.auto_update;
+        if ui
+            .checkbox(&mut auto_up, "Check for and install updates automatically")
+            .changed()
+        {
+            config.auto_update = auto_up;
+            config.save();
+        }
+
+        ui.horizontal(|ui| {
+            if ui.button("🔍 Check for Updates Now").clicked() {
+                crate::updater::check_for_updates_async(false);
+            }
+
+            match crate::updater::get_update_status() {
+                crate::updater::UpdateStatus::Idle => {}
+                crate::updater::UpdateStatus::Checking => {
+                    ui.label(egui::RichText::new("Checking GitHub...").weak());
+                }
+                crate::updater::UpdateStatus::UpToDate => {
+                    ui.label(
+                        egui::RichText::new("BatteryDock is up to date!")
+                            .color(egui::Color32::from_rgb(34, 197, 94)),
+                    );
+                }
+                crate::updater::UpdateStatus::UpdateAvailable {
+                    version,
+                    download_url,
+                } => {
+                    ui.label(
+                        egui::RichText::new(format!("New version {} available!", version))
+                            .color(egui::Color32::from_rgb(56, 189, 248))
+                            .strong(),
+                    );
+                    if ui.button("📥 Install Update").clicked() {
+                        let v = version.clone();
+                        let u = download_url.clone();
+                        std::thread::spawn(move || {
+                            let _ = crate::updater::download_and_run_installer(&u, &v);
+                        });
+                    }
+                }
+                crate::updater::UpdateStatus::Downloading { version } => {
+                    ui.label(
+                        egui::RichText::new(format!("Downloading {}...", version))
+                            .color(egui::Color32::from_rgb(56, 189, 248)),
+                    );
+                }
+                crate::updater::UpdateStatus::Installing { version } => {
+                    ui.label(
+                        egui::RichText::new(format!("Installing {}...", version))
+                            .color(egui::Color32::from_rgb(34, 197, 94))
+                            .strong(),
+                    );
+                }
+                crate::updater::UpdateStatus::Failed(err) => {
+                    ui.label(
+                        egui::RichText::new(format!("Update check failed: {}", err))
+                            .color(egui::Color32::from_rgb(239, 68, 68))
+                            .weak(),
+                    );
+                }
+            }
+        });
+
         ui.add_space(10.0);
         if ui.button("Close Settings").clicked() {
             *open = false;

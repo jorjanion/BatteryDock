@@ -32,6 +32,7 @@ pub struct AppConfig {
     pub poll_interval_secs: u64,
     pub show_percentage_text: bool,
     pub compact_mode: bool,
+    pub auto_update: bool,
 }
 
 impl Default for AppConfig {
@@ -49,6 +50,7 @@ impl Default for AppConfig {
             poll_interval_secs: 15,
             show_percentage_text: true,
             compact_mode: false,
+            auto_update: true,
         }
     }
 }

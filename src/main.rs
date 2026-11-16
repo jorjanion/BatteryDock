@@ -4,6 +4,7 @@ mod battery;
 mod config;
 mod notifications;
 mod ui;
+pub mod updater;
 
 use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
@@ -308,6 +309,11 @@ impl BatteryDockApp {
             Duration::from_secs(config.poll_interval_secs.max(1)),
             true,
         );
+
+        if config.auto_update {
+            updater::check_for_updates_async(true);
+        }
+
         let tray = SystemTray::new().ok();
 
         let reset_pos_flag = Arc::new(AtomicBool::new(false));
