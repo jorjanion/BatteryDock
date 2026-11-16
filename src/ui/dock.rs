@@ -43,8 +43,8 @@ impl DockOverlay {
         let mut w = 8.0_f32; // left padding
 
         if devices.is_empty() {
-            // icon (16) + gap (6) + text ("BatteryDock", ~70) + gap (4)
-            w += 16.0 + 6.0 + 70.0 + 4.0;
+            // icon (16) + gap (6) + text ("No devices connected", ~120) + gap (4)
+            w += 16.0 + 6.0 + 120.0 + 4.0;
         } else {
             for (idx, dev) in devices.iter().enumerate() {
                 if idx > 0 {
@@ -149,9 +149,9 @@ impl DockOverlay {
                         );
                         ui.add_space(6.0);
                         ui.add_sized(
-                            Vec2::new(70.0, 16.0),
+                            Vec2::new(120.0, 16.0),
                             egui::Label::new(
-                                egui::RichText::new("BatteryDock")
+                                egui::RichText::new("No devices connected")
                                     .size(11.5)
                                     .color(Color32::from_white_alpha(165)),
                             )
@@ -391,7 +391,7 @@ mod tests {
     fn test_required_width_accounts_for_charging_icon_and_percentage_toggle() {
         let mut cfg = AppConfig::default();
         let empty_w = DockOverlay::required_width(&[], &cfg);
-        assert_eq!(empty_w, 128.0);
+        assert_eq!(empty_w, 178.0);
 
         let one_normal = vec![sample_dev(27, false)];
         let one_charging = vec![sample_dev(27, true)];
