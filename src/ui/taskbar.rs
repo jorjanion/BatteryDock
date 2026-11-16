@@ -647,7 +647,21 @@ impl TaskbarGeometry {
                         && fg != GetShellWindow()
                         && MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST) == target_monitor
                     {
-                        quns_d3d_fullscreen = true;
+                        let mut fg_pid = 0u32;
+                        GetWindowThreadProcessId(fg, Some(&mut fg_pid));
+                        if fg_pid != 0 && fg_pid != our_pid {
+                            let fg_class = get_window_class_lower(fg);
+                            if !is_shell_desktop_or_overlay_class(&fg_class)
+                                && !is_shell_flyout_window(fg_pid, &fg_class)
+                                && !is_window_cloaked(fg)
+                            {
+                                if let Some(fg_rect) = get_effective_window_rect(fg) {
+                                    if rect_covers_monitor(fg_rect, monitor_rect) {
+                                        quns_d3d_fullscreen = true;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1113,6 +1127,17 @@ mod tests {
         let mut input2 = base_primary_input();
         input2.quns_d3d_fullscreen = true;
         assert!(!evaluate_dock_should_be_visible(&input2));
+    }
+
+    #[test]
+    fn test_visibility_persists_with_shell_flyouts() {
+        let mut input = base_primary_input();
+        // Start menu or Search flyout sits above taskbar or touches it, but does not cover monitor
+        input.windows_above_taskbar.push(CandidateWindowRect {
+            rect: rect(800, 400, 1760, 1392),
+            is_menu_or_tooltip: false,
+        });
+        assert!(evaluate_dock_should_be_visible(&input));
     }
 
     #[test]
