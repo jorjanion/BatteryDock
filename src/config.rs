@@ -49,7 +49,7 @@ impl Default for AppConfig {
             custom_pos_y: 0.0,
             snap_to_taskbar: true,
             start_with_windows: false,
-            poll_interval_secs: 15,
+            poll_interval_secs: 4,
             show_percentage_text: true,
             compact_mode: false,
             auto_update: true,
