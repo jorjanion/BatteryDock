@@ -301,6 +301,7 @@ unsafe fn is_shell_desktop_or_overlay_class(class_lower: &str) -> bool {
             | "dummydwmlistenerwindow"
             | "winit thread event target"
             | "tray_icon_app"
+            | "cef-osc-widget"
     )
 }
 
@@ -648,33 +649,79 @@ impl TaskbarGeometry {
                 }
             }
 
-            // Check Direct3D exclusive fullscreen only when foreground app is on target_monitor
-            let mut quns_d3d_fullscreen = false;
-            if let Ok(state) = SHQueryUserNotificationState() {
-                if state == QUNS_RUNNING_D3D_FULL_SCREEN {
-                    let fg = GetForegroundWindow();
-                    if !fg.0.is_null()
-                        && fg != GetDesktopWindow()
-                        && fg != GetShellWindow()
-                        && MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST) == target_monitor
+            // Check if an active fullscreen app (YouTube/video player, web browser, borderless game, or F11 window)
+            // is active on target_monitor. Web browsers and video players do NOT trigger QUNS_RUNNING_D3D_FULL_SCREEN.
+            let mut is_fullscreen_app_active = false;
+
+            let fg = GetForegroundWindow();
+            if !fg.0.is_null()
+                && fg != GetDesktopWindow()
+                && fg != GetShellWindow()
+                && MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST) == target_monitor
+            {
+                let mut fg_pid = 0u32;
+                GetWindowThreadProcessId(fg, Some(&mut fg_pid));
+                if fg_pid != 0 && fg_pid != our_pid {
+                    let fg_class = get_window_class_lower(fg);
+                    if !is_shell_desktop_or_overlay_class(&fg_class)
+                        && !is_shell_flyout_window(fg_pid, &fg_class)
+                        && !is_window_cloaked(fg)
                     {
-                        let mut fg_pid = 0u32;
-                        GetWindowThreadProcessId(fg, Some(&mut fg_pid));
-                        if fg_pid != 0 && fg_pid != our_pid {
-                            let fg_class = get_window_class_lower(fg);
-                            if !is_shell_desktop_or_overlay_class(&fg_class)
-                                && !is_shell_flyout_window(fg_pid, &fg_class)
-                                && !is_window_cloaked(fg)
-                            {
-                                if let Some(fg_rect) = get_effective_window_rect(fg) {
-                                    if rect_covers_monitor(fg_rect, monitor_rect) {
-                                        quns_d3d_fullscreen = true;
+                        if let Some(fg_rect) = get_effective_window_rect(fg) {
+                            if rect_covers_monitor(fg_rect, monitor_rect) {
+                                is_fullscreen_app_active = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !is_fullscreen_app_active {
+                if let Ok(state) = SHQueryUserNotificationState() {
+                    if state == QUNS_RUNNING_D3D_FULL_SCREEN {
+                        is_fullscreen_app_active = true;
+                    }
+                }
+            }
+
+            // Also check top-level windows for multi-monitor or background fullscreen videos/apps on target_monitor
+            if !is_fullscreen_app_active {
+                let mut cur = GetTopWindow(None).unwrap_or(HWND(std::ptr::null_mut()));
+                let mut steps = 0usize;
+                while !cur.0.is_null() && steps < 64 {
+                    steps += 1;
+                    let next = GetWindow(cur, GW_HWNDNEXT).unwrap_or(HWND(std::ptr::null_mut()));
+                    if IsWindowVisible(cur).as_bool() && !IsIconic(cur).as_bool() {
+                        let mut pid = 0u32;
+                        GetWindowThreadProcessId(cur, Some(&mut pid));
+                        if pid != 0 && pid != our_pid {
+                            let ex_style = GetWindowLongW(cur, GWL_EXSTYLE) as u32;
+                            let is_clickthrough = (ex_style & WS_EX_LAYERED.0 != 0)
+                                && (ex_style & WS_EX_TRANSPARENT.0 != 0);
+                            if !is_clickthrough && !is_window_zero_alpha(cur, ex_style) {
+                                let class = get_window_class_lower(cur);
+                                if !is_shell_desktop_or_overlay_class(&class)
+                                    && !is_shell_flyout_window(pid, &class)
+                                    && !is_window_cloaked(cur)
+                                    && MonitorFromWindow(cur, MONITOR_DEFAULTTONEAREST)
+                                        == target_monitor
+                                {
+                                    if let Some(rect) = get_effective_window_rect(cur) {
+                                        if rect_covers_monitor(rect, monitor_rect) {
+                                            is_fullscreen_app_active = true;
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+                    cur = next;
                 }
+            }
+
+            if is_fullscreen_app_active {
+                return false;
             }
 
             // Collect windows above the taskbar in Z-order
@@ -786,7 +833,7 @@ impl TaskbarGeometry {
                 taskbar_cloaked,
                 require_taskbar_window,
                 windows_above_taskbar: windows_above,
-                quns_d3d_fullscreen,
+                quns_d3d_fullscreen: is_fullscreen_app_active,
                 dock_rect: dock_phys_rect,
             };
 
@@ -1183,6 +1230,35 @@ mod tests {
         let mut input2 = base_primary_input();
         input2.quns_d3d_fullscreen = true;
         assert!(!evaluate_dock_should_be_visible(&input2));
+    }
+
+    #[test]
+    fn test_rect_covers_monitor_fullscreen_vs_maximized() {
+        let mon = rect(0, 0, 2560, 1440);
+        // Fullscreen exact
+        assert!(rect_covers_monitor(rect(0, 0, 2560, 1440), mon));
+        // Fullscreen slightly extended (-1, -1, 2561, 1441)
+        assert!(rect_covers_monitor(rect(-1, -1, 2561, 1441), mon));
+        // Fullscreen 1px margin inside
+        assert!(rect_covers_monitor(rect(1, 1, 2559, 1439), mon));
+
+        // Maximized with bottom taskbar (48px)
+        assert!(!rect_covers_monitor(rect(0, 0, 2560, 1392), mon));
+        // Maximized with left taskbar
+        assert!(!rect_covers_monitor(rect(60, 0, 2560, 1440), mon));
+        // Centered flyout / Search dialog
+        assert!(!rect_covers_monitor(rect(736, 120, 1824, 1392), mon));
+    }
+
+    #[test]
+    fn test_overlay_and_shell_classification_includes_nvidia() {
+        unsafe {
+            assert!(is_shell_desktop_or_overlay_class("cef-osc-widget"));
+            assert!(is_shell_desktop_or_overlay_class("shell_traywnd"));
+            assert!(is_shell_desktop_or_overlay_class("progman"));
+            assert!(!is_shell_desktop_or_overlay_class("chrome_widgetwin_1"));
+            assert!(!is_shell_desktop_or_overlay_class("mozillawindowclass"));
+        }
     }
 
     #[test]
