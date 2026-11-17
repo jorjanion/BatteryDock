@@ -117,6 +117,7 @@ pub enum BatterySource {
     SteelSeriesHid,
     CorsairHid,
     GenericHid,
+    NintendoHid,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -139,6 +140,7 @@ pub mod dualsense;
 pub mod engine;
 pub mod generic_hid;
 pub mod logitech_hidpp;
+pub mod nintendo;
 pub mod razer;
 pub mod xinput;
 

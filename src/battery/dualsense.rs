@@ -65,7 +65,7 @@ impl BatteryCollector for DualSenseCollector {
             if dev_info.vendor_id() == 0x054C {
                 let pid = dev_info.product_id();
                 let is_dualsense = pid == 0x0CE6 || pid == 0x0DF2;
-                let is_dualshock4 = pid == 0x05C4 || pid == 0x09CC;
+                let is_dualshock4 = pid == 0x05C4 || pid == 0x09CC || pid == 0x0BA0;
 
                 if !is_dualsense && !is_dualshock4 {
                     continue;
@@ -89,10 +89,11 @@ impl BatteryCollector for DualSenseCollector {
                         if let Some((percentage, is_charging)) =
                             parse_sony_battery_report(&buf[..bytes_read], is_dualsense)
                         {
-                            let name = if is_dualsense {
-                                "PlayStation DualSense Wireless Controller".to_string()
-                            } else {
-                                "PlayStation DualShock 4 Controller".to_string()
+                            let name = match pid {
+                                0x0DF2 => "PlayStation DualSense Edge Wireless Controller".to_string(),
+                                0x0CE6 => "PlayStation DualSense Wireless Controller".to_string(),
+                                0x0BA0 => "PlayStation DualShock 4 Wireless Adapter".to_string(),
+                                _ => "PlayStation DualShock 4 Controller".to_string(),
                             };
 
                             seen_ids.insert(id.clone());

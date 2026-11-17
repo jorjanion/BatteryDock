@@ -2,6 +2,7 @@ use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::generic_hid::GenericHidCollector;
 use super::logitech_hidpp::LogitechHidppCollector;
+use super::nintendo::NintendoCollector;
 use super::razer::RazerCollector;
 use super::xinput::XInputCollector;
 use super::{BatteryCollector, DeviceBattery};
@@ -42,6 +43,7 @@ impl BatteryEngine {
                 Box::new(GenericHidCollector::new()),
                 Box::new(XInputCollector::new()),
                 Box::new(DualSenseCollector::new()),
+                Box::new(NintendoCollector::new()),
                 Box::new(BluetoothBatteryCollector::new()),
             ];
             let mut notification_mgr = NotificationManager::new();

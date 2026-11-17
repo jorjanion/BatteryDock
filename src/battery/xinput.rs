@@ -1,4 +1,6 @@
 use super::{BatteryCollector, BatterySource, DeviceBattery, DeviceType};
+use windows::Gaming::Input::Gamepad;
+use windows::System::Power::BatteryStatus;
 use windows::Win32::UI::Input::XboxController::{
     XInputGetBatteryInformation, BATTERY_DEVTYPE_GAMEPAD, BATTERY_LEVEL_EMPTY, BATTERY_LEVEL_FULL,
     BATTERY_LEVEL_LOW, BATTERY_LEVEL_MEDIUM, BATTERY_TYPE_ALKALINE, BATTERY_TYPE_DISCONNECTED,
@@ -11,10 +13,77 @@ impl XInputCollector {
     pub fn new() -> Self {
         Self
     }
-}
 
-impl BatteryCollector for XInputCollector {
-    fn poll_devices(&self) -> Vec<DeviceBattery> {
+    /// Attempts to query Xbox gamepads via Windows.Gaming.Input (provides exact battery percentages
+    /// for Xbox One, Xbox Series X/S, and Xbox Elite controllers over Bluetooth & Xbox Wireless Adapter).
+    fn poll_winrt_gamepads(&self) -> Vec<DeviceBattery> {
+        let mut devices = Vec::new();
+
+        let Ok(gamepads) = Gamepad::Gamepads() else {
+            return devices;
+        };
+
+        for (idx, gamepad) in gamepads.into_iter().enumerate() {
+            let Ok(report) = gamepad.TryGetBatteryReport() else {
+                continue;
+            };
+
+            let Ok(status) = report.Status() else {
+                continue;
+            };
+
+            if status == BatteryStatus::NotPresent {
+                continue;
+            }
+
+            let is_charging = status == BatteryStatus::Charging;
+
+            let remaining = report
+                .RemainingCapacityInMilliwattHours()
+                .ok()
+                .and_then(|r| r.Value().ok());
+            let full = report
+                .FullChargeCapacityInMilliwattHours()
+                .ok()
+                .and_then(|f| f.Value().ok());
+
+            let percentage = if let (Some(rem), Some(f)) = (remaining, full) {
+                if f > 0 {
+                    ((rem as f32 / f as f32) * 100.0).clamp(0.0, 100.0).round() as u8
+                } else {
+                    100
+                }
+            } else {
+                // If mWh capacity is omitted by firmware, map default charge level
+                if is_charging {
+                    95
+                } else {
+                    75
+                }
+            };
+
+            let name = if idx == 0 {
+                "Xbox Wireless Controller".to_string()
+            } else {
+                format!("Xbox Wireless Controller #{}", idx + 1)
+            };
+
+            devices.push(DeviceBattery {
+                id: format!("xbox_winrt_{}", idx),
+                name,
+                device_type: DeviceType::Gamepad,
+                percentage,
+                is_charging,
+                is_connected: true,
+                source: BatterySource::XInput,
+            });
+        }
+
+        devices
+    }
+
+    /// Fallback query via legacy Win32 XInputGetBatteryInformation (4 discrete levels).
+    fn poll_legacy_xinput(&self) -> Vec<DeviceBattery> {
         let mut devices = Vec::new();
 
         for user_index in 0..4 {
@@ -24,7 +93,6 @@ impl BatteryCollector for XInputCollector {
             };
 
             if result == 0 {
-                // Succeeded
                 if info.BatteryType == BATTERY_TYPE_DISCONNECTED {
                     continue;
                 }
@@ -35,7 +103,6 @@ impl BatteryCollector for XInputCollector {
                 } else if info.BatteryType == BATTERY_TYPE_ALKALINE
                     || info.BatteryType == BATTERY_TYPE_NIMH
                     || info.BatteryType.0 == 0x04
-                // Standard wireless pack
                 {
                     match info.BatteryLevel {
                         x if x == BATTERY_LEVEL_EMPTY => (10, false),
@@ -67,6 +134,19 @@ impl BatteryCollector for XInputCollector {
         }
 
         devices
+    }
+}
+
+impl BatteryCollector for XInputCollector {
+    fn poll_devices(&self) -> Vec<DeviceBattery> {
+        // Prefer modern Windows.Gaming.Input reports with exact milliwatt-hour precision
+        let winrt_devs = self.poll_winrt_gamepads();
+        if !winrt_devs.is_empty() {
+            return winrt_devs;
+        }
+
+        // Fall back to legacy XInput for older controllers
+        self.poll_legacy_xinput()
     }
 }
 
