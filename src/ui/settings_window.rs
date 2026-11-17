@@ -27,7 +27,7 @@ impl SettingsWindow {
         // Sleek Windows 11 Fluent Header
         ui.add_space(4.0);
         ui.horizontal(|ui| {
-            ui.heading("🔋 BatteryDock");
+            ui.heading("BatteryDock");
             ui.add_space(4.0);
             let ver_label = egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION")))
                 .size(11.0)
@@ -48,12 +48,21 @@ impl SettingsWindow {
             });
         });
 
-        // Subtitle status badge
-        ui.label(
-            egui::RichText::new(lang.status_nominal(devices.len()))
-                .size(11.5)
-                .color(egui::Color32::from_rgb(34, 197, 94)),
-        );
+        // Subtitle status badge with painted vector dot
+        ui.horizontal(|ui| {
+            let (dot_rect, _) =
+                ui.allocate_exact_size(egui::Vec2::new(8.0, 8.0), egui::Sense::hover());
+            ui.painter().circle_filled(
+                dot_rect.center(),
+                3.5,
+                egui::Color32::from_rgb(34, 197, 94),
+            );
+            ui.label(
+                egui::RichText::new(lang.status_nominal(devices.len()))
+                    .size(11.5)
+                    .color(egui::Color32::from_rgb(34, 197, 94)),
+            );
+        });
 
         ui.add_space(8.0);
 
@@ -113,13 +122,18 @@ impl SettingsWindow {
                 if devices.is_empty() {
                     card_frame.show(ui, |ui| {
                         ui.vertical_centered(|ui| {
-                            ui.add_space(12.0);
-                            ui.label(
-                                egui::RichText::new("🔋")
-                                    .size(32.0)
-                                    .color(egui::Color32::from_white_alpha(120)),
+                            ui.add_space(16.0);
+                            let (icon_rect, _) = ui.allocate_exact_size(
+                                egui::Vec2::new(28.0, 28.0),
+                                egui::Sense::hover(),
                             );
-                            ui.add_space(4.0);
+                            crate::ui::icons::DevicePainter::paint_device_icon(
+                                ui.painter(),
+                                icon_rect,
+                                crate::battery::DeviceType::Unknown,
+                                egui::Color32::from_white_alpha(120),
+                            );
+                            ui.add_space(8.0);
                             ui.label(
                                 egui::RichText::new(lang.no_devices_detected_label())
                                     .size(13.0)
@@ -133,7 +147,7 @@ impl SettingsWindow {
                                 .size(11.5)
                                 .weak(),
                             );
-                            ui.add_space(12.0);
+                            ui.add_space(14.0);
                         });
                     });
                 } else {
@@ -141,18 +155,17 @@ impl SettingsWindow {
                     for dev in devices {
                         card_frame.show(ui, |ui| {
                             ui.horizontal(|ui| {
-                                let icon = match dev.device_type {
-                                    crate::battery::DeviceType::Headset => "🎧",
-                                    crate::battery::DeviceType::Mouse => "🖱️",
-                                    crate::battery::DeviceType::Keyboard => "⌨️",
-                                    crate::battery::DeviceType::Gamepad => "🎮",
-                                    crate::battery::DeviceType::VRHeadset => "🥽",
-                                    crate::battery::DeviceType::Wheel => "🏎️",
-                                    crate::battery::DeviceType::Camera => "📷",
-                                    crate::battery::DeviceType::Unknown => "🔋",
-                                };
-                                ui.label(egui::RichText::new(icon).size(18.0));
-                                ui.add_space(4.0);
+                                let (icon_rect, _) = ui.allocate_exact_size(
+                                    egui::Vec2::new(18.0, 18.0),
+                                    egui::Sense::hover(),
+                                );
+                                crate::ui::icons::DevicePainter::paint_device_icon(
+                                    ui.painter(),
+                                    icon_rect,
+                                    dev.device_type,
+                                    egui::Color32::from_white_alpha(225),
+                                );
+                                ui.add_space(6.0);
 
                                 let display_name = config.get_device_display_name(&dev.id, &dev.name);
                                 ui.vertical(|ui| {
@@ -408,7 +421,7 @@ impl SettingsWindow {
                 // Dock Appearance & Compact Mode
                 card_frame.show(ui, |ui| {
                     ui.label(
-                        egui::RichText::new("🎨 Dock Appearance & Layout")
+                        egui::RichText::new("Dock Appearance & Layout")
                             .strong()
                             .size(13.0),
                     );

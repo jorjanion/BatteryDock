@@ -60,8 +60,8 @@ impl Language {
 
     pub fn heading_alert_thresholds(&self) -> &'static str {
         match self {
-            Language::English => "⚡ Battery Alert Thresholds",
-            Language::Spanish => "⚡ Umbrales de alerta de batería",
+            Language::English => "Battery Alert Thresholds",
+            Language::Spanish => "Umbrales de alerta de batería",
         }
     }
 
@@ -81,8 +81,8 @@ impl Language {
 
     pub fn heading_notifications(&self) -> &'static str {
         match self {
-            Language::English => "🔔 Notifications & Sound",
-            Language::Spanish => "🔔 Notificaciones y sonido",
+            Language::English => "Notifications & Sound",
+            Language::Spanish => "Notificaciones y sonido",
         }
     }
 
@@ -95,8 +95,8 @@ impl Language {
 
     pub fn test_chime_button(&self) -> &'static str {
         match self {
-            Language::English => "▶ Test Chime Sound",
-            Language::Spanish => "▶ Probar sonido",
+            Language::English => "Test Chime Sound",
+            Language::Spanish => "Probar sonido",
         }
     }
 
@@ -109,8 +109,8 @@ impl Language {
 
     pub fn heading_dock_placement(&self) -> &'static str {
         match self {
-            Language::English => "📌 Dock Placement",
-            Language::Spanish => "📌 Posición de la pastilla",
+            Language::English => "Dock Placement",
+            Language::Spanish => "Posición de la pastilla",
         }
     }
 
@@ -144,22 +144,22 @@ impl Language {
 
     pub fn reset_position_button(&self) -> &'static str {
         match self {
-            Language::English => "📍 Reset Dock Position to Clock",
-            Language::Spanish => "📍 Restablecer posición al reloj",
+            Language::English => "Reset Dock Position to Clock",
+            Language::Spanish => "Restablecer posición al reloj",
         }
     }
 
     pub fn heading_connected_devices(&self, count: usize) -> String {
         match self {
-            Language::English => format!("🎧 Connected Devices ({count})"),
-            Language::Spanish => format!("🎧 Dispositivos conectados ({count})"),
+            Language::English => format!("Connected Devices ({count})"),
+            Language::Spanish => format!("Dispositivos conectados ({count})"),
         }
     }
 
     pub fn refresh_now_button(&self) -> &'static str {
         match self {
-            Language::English => "🔄 Refresh Now",
-            Language::Spanish => "🔄 Actualizar ahora",
+            Language::English => "Refresh Now",
+            Language::Spanish => "Actualizar ahora",
         }
     }
 
@@ -193,8 +193,8 @@ impl Language {
 
     pub fn heading_updates(&self) -> &'static str {
         match self {
-            Language::English => "🔄 Application Updates",
-            Language::Spanish => "🔄 Actualizaciones de la aplicación",
+            Language::English => "Application Updates",
+            Language::Spanish => "Actualizaciones de la aplicación",
         }
     }
 
@@ -207,8 +207,8 @@ impl Language {
 
     pub fn check_updates_now_button(&self) -> &'static str {
         match self {
-            Language::English => "🔍 Check for Updates Now",
-            Language::Spanish => "🔍 Buscar actualizaciones ahora",
+            Language::English => "Check for Updates Now",
+            Language::Spanish => "Buscar actualizaciones ahora",
         }
     }
 
@@ -235,8 +235,8 @@ impl Language {
 
     pub fn install_update_button(&self) -> &'static str {
         match self {
-            Language::English => "📥 Install Update",
-            Language::Spanish => "📥 Instalar actualización",
+            Language::English => "Install Update",
+            Language::Spanish => "Instalar actualización",
         }
     }
 
@@ -263,8 +263,8 @@ impl Language {
 
     pub fn heading_language(&self) -> &'static str {
         match self {
-            Language::English => "🌐 Interface Language",
-            Language::Spanish => "🌐 Idioma de la interfaz",
+            Language::English => "Interface Language",
+            Language::Spanish => "Idioma de la interfaz",
         }
     }
 
@@ -417,8 +417,8 @@ impl Language {
 
     pub fn heading_per_device_settings(&self) -> &'static str {
         match self {
-            Language::English => "🎛️ Per-Device Settings & Alerts",
-            Language::Spanish => "🎛️ Ajustes y alertas por dispositivo",
+            Language::English => "Device Settings",
+            Language::Spanish => "Ajustes del dispositivo",
         }
     }
 
@@ -452,22 +452,22 @@ impl Language {
 
     pub fn tab_devices(&self) -> &'static str {
         match self {
-            Language::English => "🎧 Peripherals",
-            Language::Spanish => "🎧 Periféricos",
+            Language::English => "Peripherals",
+            Language::Spanish => "Periféricos",
         }
     }
 
     pub fn tab_alerts(&self) -> &'static str {
         match self {
-            Language::English => "⚡ Alerts & Audio",
-            Language::Spanish => "⚡ Alertas y Audio",
+            Language::English => "Alerts & Audio",
+            Language::Spanish => "Alertas y Audio",
         }
     }
 
     pub fn tab_customization(&self) -> &'static str {
         match self {
-            Language::English => "🎨 Customization",
-            Language::Spanish => "🎨 Personalización",
+            Language::English => "Customization",
+            Language::Spanish => "Personalización",
         }
     }
 
@@ -480,8 +480,8 @@ impl Language {
 
     pub fn status_nominal(&self, count: usize) -> String {
         match self {
-            Language::English => format!("🟢 All systems nominal • {count} active peripheral(s)"),
-            Language::Spanish => format!("🟢 Estado óptimo • {count} periférico(s) activo(s)"),
+            Language::English => format!("All systems nominal • {count} active peripheral(s)"),
+            Language::Spanish => format!("Estado óptimo • {count} periférico(s) activo(s)"),
         }
     }
 }
@@ -504,10 +504,10 @@ mod tests {
         assert!(en.empty_dock_text_width() > 100.0);
         assert!(es.empty_dock_text_width() > en.empty_dock_text_width());
 
-        assert_eq!(en.heading_connected_devices(2), "🎧 Connected Devices (2)");
+        assert_eq!(en.heading_connected_devices(2), "Connected Devices (2)");
         assert_eq!(
             es.heading_connected_devices(2),
-            "🎧 Dispositivos conectados (2)"
+            "Dispositivos conectados (2)"
         );
     }
 }
