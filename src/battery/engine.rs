@@ -1,6 +1,7 @@
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::logitech_hidpp::LogitechHidppCollector;
+use super::razer::RazerCollector;
 use super::xinput::XInputCollector;
 use super::{BatteryCollector, DeviceBattery};
 use crate::config::AppConfig;
@@ -36,6 +37,7 @@ impl BatteryEngine {
         thread::spawn(move || {
             let collectors: Vec<Box<dyn BatteryCollector>> = vec![
                 Box::new(LogitechHidppCollector::new()),
+                Box::new(RazerCollector::new()),
                 Box::new(XInputCollector::new()),
                 Box::new(DualSenseCollector::new()),
                 Box::new(BluetoothBatteryCollector::new()),

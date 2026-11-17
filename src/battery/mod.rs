@@ -113,6 +113,7 @@ pub enum BatterySource {
     LogitechHidpp,
     XInput,
     DualSenseHid,
+    RazerHid,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -134,6 +135,7 @@ pub mod bluetooth;
 pub mod dualsense;
 pub mod engine;
 pub mod logitech_hidpp;
+pub mod razer;
 pub mod xinput;
 
 #[cfg(test)]
