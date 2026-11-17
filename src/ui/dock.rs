@@ -5,7 +5,7 @@ use crate::ui::taskbar::{
     get_cursor_physical_pos, get_window_physical_rect, is_primary_mouse_button_down,
     set_window_physical_pos, show_dock_context_menu, DockContextMenuAction,
 };
-use egui::{Color32, CornerRadius, Pos2, Rect, Stroke, StrokeKind, Vec2};
+use egui::{Color32, CornerRadius, Pos2, Stroke, StrokeKind, Vec2};
 use std::time::{Duration, Instant};
 
 pub struct DockOverlay {
@@ -212,8 +212,6 @@ impl DockOverlay {
                                 ui.add_space(1.0 + 6.0);
                             }
 
-                            let seg_start_x = ui.cursor().min.x;
-
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 0.0;
 
@@ -322,92 +320,6 @@ impl DockOverlay {
                                     );
                                 }
                             });
-
-                            let seg_end_x = ui.cursor().min.x;
-                            let seg_rect = Rect::from_min_max(
-                                Pos2::new(seg_start_x, avail_rect.min.y),
-                                Pos2::new(seg_end_x, avail_rect.max.y),
-                            );
-
-                            let dev_hover_resp = ui.interact(
-                                seg_rect,
-                                ui.id().with(format!("dev_seg_{}", dev.id)),
-                                egui::Sense::hover(),
-                            );
-
-                            // Subtle rounded hover glow over hovered peripheral
-                            if dev_hover_resp.hovered() && !self.is_actively_dragging {
-                                let highlight_rect = seg_rect.shrink2(Vec2::new(1.0, 3.0));
-                                let highlight_color = if is_light {
-                                    Color32::from_black_alpha(18)
-                                } else if is_liquid {
-                                    Color32::from_white_alpha(28)
-                                } else {
-                                    Color32::from_white_alpha(18)
-                                };
-                                ui.painter().rect_filled(
-                                    highlight_rect,
-                                    CornerRadius::same(7),
-                                    highlight_color,
-                                );
-                            }
-
-                            // Rich Telemetry Tooltip
-                            let display_name = config.get_device_display_name(&dev.id, &dev.name).to_string();
-                            let dev_copy = (*dev).clone();
-                            let lang = config.language;
-                            dev_hover_resp.on_hover_ui(|ui| {
-                                ui.set_max_width(260.0);
-                                ui.spacing_mut().item_spacing.y = 3.0;
-
-                                // Header: Icon + Device Name
-                                ui.horizontal(|ui| {
-                                    let (icon_rect, _) = ui.allocate_exact_size(
-                                        Vec2::new(14.0, 14.0),
-                                        egui::Sense::hover(),
-                                    );
-                                    DevicePainter::paint_device_icon(
-                                        ui.painter(),
-                                        icon_rect,
-                                        dev_copy.device_type,
-                                        Color32::WHITE,
-                                    );
-                                    ui.label(egui::RichText::new(display_name).strong().size(12.5));
-                                });
-
-                                ui.separator();
-
-                                // Protocol
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new(lang.label_protocol()).weak().size(11.0));
-                                    ui.label(egui::RichText::new(dev_copy.source.display_name()).size(11.0));
-                                });
-
-                                // Status
-                                ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new(lang.label_status()).weak().size(11.0));
-                                    let (status_text, status_color) = if dev_copy.is_charging {
-                                        (lang.status_charging(), Color32::from_rgb(56, 189, 248))
-                                    } else if dev_copy.is_asleep {
-                                        (lang.status_asleep(), Color32::from_rgb(192, 132, 252))
-                                    } else {
-                                        (lang.status_active(), Color32::from_rgb(74, 222, 128))
-                                    };
-                                    ui.label(egui::RichText::new(status_text).color(status_color).strong().size(11.0));
-                                });
-
-                                // Estimated Autonomy / Time to Full
-                                ui.horizontal(|ui| {
-                                    let time_label = lang.label_estimated_time(dev_copy.is_charging);
-                                    ui.label(egui::RichText::new(time_label).weak().size(11.0));
-                                    if let Some(mins) = dev_copy.estimated_minutes_left {
-                                        let time_str = lang.format_time_left(mins, dev_copy.is_charging);
-                                        ui.label(egui::RichText::new(time_str).strong().size(11.0));
-                                    } else {
-                                        ui.label(egui::RichText::new("—").weak().size(11.0));
-                                    }
-                                });
-                            });
                         }
                     }
 
@@ -507,6 +419,7 @@ mod tests {
     use super::*;
     use crate::battery::BatterySource;
     use crate::i18n::Language;
+    use egui::Rect;
 
     fn sample_dev(pct: u8, charging: bool) -> DeviceBattery {
         DeviceBattery::new(
