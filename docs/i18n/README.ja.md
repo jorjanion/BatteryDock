@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock ロゴ" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 タスクバーに直接溶け込む、Rust製の超軽量バッテリーインジケーター，メーカー製常駐ソフト不要。**
+**あらゆるワイヤレス周辺機器のバッテリー残量を Windows タスクバーに一つに集約。重いメーカー製ソフトは不要です。**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[最新インストーラーをダウンロード](https://github.com/jorjanion/BatteryDock/releases/latest) · [バグを報告](https://github.com/jorjanion/BatteryDock/issues) · [対応デバイスをリクエスト](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[v1.0.0 をダウンロード](https://github.com/jorjanion/BatteryDock/releases/latest) · [バグを報告](https://github.com/jorjanion/BatteryDock/issues/new) · [対応デバイスをリクエスト](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [変更履歴](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 プレビュー
+ワイヤレスマウス、ヘッドセット、Bluetooth コントローラーを別々のメーカーで揃えていると、バッテリー確認のためだけに複数の常駐ソフトを動かす羽目になりがちです。
+
+**BatteryDock** はそれらを約 4 MB の軽量なネイティブ Rust アプリ一つにまとめ、Windows 10/11 のタスクバーに静かに収めます。Electron 不使用、テレメトリなし、アカウント不要です。
+
+---
+
+## プレビュー
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="ヘッドセットのバッテリー92%を表示するBatteryDockカプセルの拡大図" /><br /><br />
-        <sub><b>タスクバーカプセル</b>：モニターごとのDPIスケーリング・残量カラー・⚡充電バッジ付きでタスクバーに直接表示。</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>単一デバイス</b>: 鮮明なベクターアイコン、色分けされたバッテリーバー、残量(%)をタスクバーに表示。</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 設定ウィンドウ v0.1.12" width="340" /><br />
-        <sub><b>設定ウィンドウ</b>：通知しきい値、サウンドテスト、表示位置、接続中デバイス一覧。</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>複数デバイス同時表示</b>: 並び替え、ニックネーム設定、不要なデバイスの非表示に対応。</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>デバイス</b>: 推定残り時間、24時間バッテリー推移グラフ、個別アラート設定。</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>通知と音声</b>: 残量低下・危機・100%満充電の通知とチャイム音テスト。</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>カスタマイズ</b>: Liquid Glass / ダーク / ライト / システムテーマ、ゲーム HUD、ホットキー、21言語。</sub>
       </td>
     </tr>
   </table>
@@ -65,113 +88,92 @@
 
 ---
 
-## ⚡ なぜ BatteryDock なのか？
+## 主な機能
 
-多くのワイヤレス周辺機器では、バッテリー残量を確認するためだけに多数のバックグラウンドサービスが動く重い純正ソフトが必要です。**BatteryDock** はすべてをタスクバー上の小さなピル型ウィジェットにまとめます：
+### ミニマルなタスクバーピル
+- **4種類のテーマ:** **Liquid Glass** (超透明)、**ダーク**、**ライト**、**システム** (Windows テーマに自動追従)。
+- **シンプルな操作:** 左クリックで設定を開き、右クリックでクイックメニュー、ドラッグで好きなモニターへ移動できます。
+- **スマートな表示制御:** スタートメニューや検索を開いてもタスクバー前面を維持し、フルスクリーン動画やゲーム時は自動で隠れます。
+- **自由なレイアウト:** ワンクリックでの並び替え、ニックネーム変更、個別非表示、パーセント表示のオン/オフが可能。
 
-- **肥大化ゼロ：** 約 **4 MB** の単一ネイティブ Rust バイナリ（Electron 不使用・テレメトリ無し、Windows 11 実測プライベートメモリ約 77 MB）。
-- **ハードウェア直接読み取り：** **Logitech HID++ 2.0**、**Windows Bluetooth / BLE GATT**、**XInput**、**Sony DualSense / DualShock 4 HID** を直接参照。Logitech デバイスは G HUB を開かなくても動作します（G HUB IPC にも対応）。
-- **賢いフルスクリーン制御：** 全画面ゲーム・全画面動画・自動非表示タスクバー時は自動で隠れ、`Win` キー押下・スタート/検索/ウィジェット・デスクトップクリックでは消えません。
-- **リアルタイム充電表示：** 充電中はデバイスを **シアン** + **⚡稲妻アイコン** で分かりやすく表示。
-- **バックグラウンド通知：** ゲーム中にピルが非表示になっていても、低バッテリー通知音とデスクトップ通知が確実に動作します。
+### オプションのゲーム・フルスクリーンオーバーレイ (HUD)
+- **初期設定ではオフ**のため、フルスクリーン動画や YouTube の邪魔をしません。
+- オンにすると、ボーダーレスフルスクリーンゲーム中に画面の角へバッテリーを自動表示します。
+- **自由な配置:** 余白調整できる4つの角、またはライブプレビュー付き自由配置 X/Y (0%〜100%) を選択可能。
+- **クリックスルー:** マウスクリックが HUD を貫通してそのままゲームに入力されます。
+- **グローバルホットキー:** 任意のショートカット (初期値 `Alt + B`) で Alt+Tab せずにゲーム中に表示を切り替えられます。
+
+### スマートテレメトリと通知
+- **24時間バッテリー推移:** 各デバイスカードに充放電の推移グラフを表示します。
+- **残り時間とスリープ検知:** 残り稼働時間や満充電までの時間を推定し、スリープ状態も検知します。
+- **低残量・危機・100%満充電アラート:** 全体またはデバイスごとのしきい値、個別ミュート、チャイム音、Windows 通知に対応。
+
+### 21言語を標準搭載
+- 初回起動時に Windows の表示言語を自動検出し、対応言語へ切り替えます (未対応の場合は英語)。
+- Windows 標準フォントを必要に応じて読み込み、日本語・中国語・韓国語・アラビア語・ヒンディー語などを鮮明に表示します。
 
 ---
 
-## 📥 ダウンロードとインストール
+## 対応ハードウェア
 
-**[Releases ページ](https://github.com/jorjanion/BatteryDock/releases/latest)** から最新版を入手してください：
+BatteryDock は HID / WinRT / Bluetooth 経由でハードウェアから直接読み取るため、メーカー製ソフトを常駐させる必要がありません。
 
-1. **`BatteryDock-Setup-v0.1.12.exe`**（約 4.4 MB）をダウンロード（インストール不要の `BatteryDock-Windows-Portable.zip` もあります）。
-2. インストーラーを実行し、必要に応じて **"Start BatteryDock when Windows boots"** にチェックを入れます。
-3. タスクバーの時計横にカプセルが表示されます。
-
-### 🛡️ Windows SmartScreen について
-BatteryDock は有料の EV コード署名証明書を持たない無料オープンソースアプリのため、初回起動時に *"Windows によって PC が保護されました"* と表示される場合があります（**詳細情報 → 実行**）。
-- 各リリースバイナリは [`.github/workflows/release.yml`](../../.github/workflows/release.yml) により GitHub Actions 上で公開ビルドされています。
-- Rust ソースコードをすべて確認し、1分未満で[ご自身でビルド](#build-from-source)することも可能です。
-
----
-
-## 🎧 対応ハードウェア
-
-| カテゴリ | プロトコル / 取得元 | 例・備考 |
+| カテゴリ | プロトコル / 方式 | 対応例 |
 | :--- | :--- | :--- |
-| **Logitech ワイヤレス** | 直接 HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed ヘッドセット (G733, G535, G935)、マウス (G PRO, Superlight, G502)、キーボード |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | ヘッドホン (Sony WH/WF, Bose, AirPods)、BT マウス・キーボード |
-| **Xbox コントローラー** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) 有線充電検知含む |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4（複数台接続＋充電状態対応） |
-
-**お使いのメーカーがありませんか（Razer、Corsair、SteelSeries、Keychron など）？**
-👉 **[デバイス対応リクエストを開く](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**，Pull Request も大歓迎です！
-
----
-
-## 🎯 操作と表示
-
-### ステータスカラー
-- **緑：** 十分な残量（低バッテリーしきい値超）
-- **アンバー：** 低バッテリー（既定 `20%`）
-- **赤（点滅）：** 危険残量（既定 `10%`）
-- **シアン + ⚡：** 充電中
-
-### 操作方法
-- カプセル・**`⚙`** またはトレイアイコンを **左クリック**：**BatteryDock Settings**（`BatteryDock.exe --settings`）を開きます。
-- カプセル・トレイアイコンを **右クリック**：ネイティブメニュー（**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**）を表示。
-- **ドラッグ（> 5px）：** サブモニターを含め自由に移動。右クリック → **Reset to Taskbar Clock** で時計横に戻ります。
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ 設定ファイル
+## ダウンロードとインストール
 
-設定は `%APPDATA%\jorjanion\BatteryDock\config\config.toml` に自動保存されます：
+**[Releases ページ](https://github.com/jorjanion/BatteryDock/releases/latest)** から最新版を取得してください。
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. **`BatteryDock-Setup-v1.0.0.exe`** (インストーラー) または **`BatteryDock-Windows-Portable.zip`** (ポータブル版) をダウンロードします。
+2. 起動後、必要に応じて設定で Windows 起動時の自動起動を有効にします。
+3. タスクバーの時計の隣に表示されます。GitHub 自動アップデート機能付きです。
+
+### Windows SmartScreen について
+無料のオープンソースアプリのため初回起動時に SmartScreen の警告が出ることがあります。**詳細情報** から **実行** を選んでください。すべてのバイナリは [`.github/workflows/release.yml`](../../.github/workflows/release.yml) で公開ビルドされています。
 
 ---
 
-<a id="build-from-source"></a>
+## 設定ファイル
 
-## 🛠️ ソースからビルド
+設定は `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (履歴は `history.toml`) に保存され、再起動なしで即反映されます。
 
-### 必要環境
-- [Rust ツールチェーン](https://rustup.rs/)（stable）
-- Windows 10 または Windows 11（MSVC）
+---
 
-### コマンド
+## ソースからビルド
+
+必要環境: Windows 10/11 および [Rust](https://rustup.rs/) (stable MSVC)。
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-生成される実行ファイル：`target\release\battery-dock.exe`（`--settings` / `-s` で設定画面を直接開けます）。
 
 ---
 
-## 📄 ライセンス
+## コントリビュート・Issue・PR
 
-**MIT ライセンス**の下で公開されています。詳細は [LICENSE](../../LICENSE) をご覧ください。
+BatteryDock はコミュニティ主導のオープンソースプロジェクトです。バグ報告、翻訳、対応デバイス要望、Pull Request を歓迎します。
 
-<div align="center">
+- **デバイスが表示されない場合:** **[対応デバイスリクエスト](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** を作成してください。**設定 > カスタマイズ > ハードウェア診断情報をコピー** で匿名レポートをそのまま貼り付けられます。
+- **バグやアイデアがある場合:** Windows のバージョンと再現手順を添えて **[Issue](https://github.com/jorjanion/BatteryDock/issues)** を作成してください。
+- **コードで貢献したい場合:** Pull Request 大歓迎です。送信前に `cargo test --locked` と `cargo clippy --locked` を実行してください。
 
-**BatteryDock が気に入ったら、ぜひリポジトリに ⭐ スターをお願いします！**
+---
 
-</div>
+## ライセンス
+
+MIT ライセンス。詳細は [LICENSE](../../LICENSE) をご覧ください。

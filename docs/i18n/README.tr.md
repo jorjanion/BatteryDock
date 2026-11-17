@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock Logosu" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 görev çubuğuna doğrudan gömülü, Rust ile yazılmış sade bir pil göstergesi, üretici yazılımlarının ağırlığı olmadan.**
+**Tüm kablosuz çevre birimlerinin pil seviyesi Windows görev çubuğunda tek ve hafif bir göstergede. Üretici yazılımı yok.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[Son Yükleyiciyi İndir](https://github.com/jorjanion/BatteryDock/releases/latest) · [Hata Bildir](https://github.com/jorjanion/BatteryDock/issues) · [Cihaz Desteği İste](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[v1.0.0 İndir](https://github.com/jorjanion/BatteryDock/releases/latest) · [Hata Bildir](https://github.com/jorjanion/BatteryDock/issues/new) · [Cihaz Desteği İste](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [Değişiklikler](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 Önizleme
+Farklı markalardan kablosuz fare, kulaklık ve Bluetooth cihazlar kullanıyorsanız Windows'ta pil görmek için arka planda birkaç ağır yazılım çalıştırmak zorunda kalabilirsiniz.
+
+**BatteryDock** bunların hepsini Windows 10/11 görev çubuğuna yerleşen ~4 MB boyutunda tek bir yerel Rust uygulamasıyla değiştirir. Electron yok, telemetri yok, hesap yok.
+
+---
+
+## Önizleme
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="Kulaklık pilini %92 gösteren BatteryDock kapsülü yakından" /><br /><br />
-        <sub><b>Görev Çubuğu Kapsülü</b>: Windows görev çubuğuna doğrudan gömülü, monitör başına DPI ölçekleme ve canlı ⚡ şarj simgesi ile.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>Tek cihaz</b>: Net vektör simgesi, renkli pil çubuğu ve görev çubuğunda doğrudan yüzde.</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Ayarlar penceresi v0.1.12" width="340" /><br />
-        <sub><b>Bağımsız Ayarlar</b>: Uyarı eşikleri, ses önizlemesi, konum modları ve bağlı cihaz listesi.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>Birden fazla cihaz</b>: Cihazları yeniden sıralayın, adlandırın veya istemediklerinizi gizleyin.</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>Cihazlar</b>: Tahmini pil ömrü, 24 saatlik pil grafiği, özel adlar ve cihaz bazlı uyarılar.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>Uyarılar ve Ses</b>: Düşük, kritik ve %100 tam şarj bildirimleri ve ses önizlemesi.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>Özelleştirme</b>: Liquid Glass / Koyu / Açık / Sistem temaları, oyun HUD katmanı, kısayol ve 21 dil.</sub>
       </td>
     </tr>
   </table>
@@ -65,116 +88,92 @@
 
 ---
 
-## ⚡ Neden BatteryDock?
+## Özellikler
 
-Kablosuz çevre birimlerinin çoğu pil yüzdesini arka planda onlarca servis çalıştıran hantal üretici yazılımlarının içine hapseder. **BatteryDock** tüm cihazlarınızı tek bir şık kapsülde toplar:
+### Minimalist görev çubuğu göstergesi
+- **4 görsel tema:** **Liquid Glass** (şeffaf), **Koyu**, **Açık** veya **Sistem** (Windows temasını otomatik izler).
+- **Sade kullanım:** Sol tık Ayarları açar, sağ tık hızlı menüyü gösterir, sürükleyerek istediğiniz ekrana koyabilirsiniz.
+- **Akıllı görev çubuğu uyumu:** Başlat veya Arama açıkken bile görünür kalır, tam ekran video ve oyunlarda otomatik gizlenir.
+- **Esnek düzen:** Tek tıkla cihaz sırasını değiştirin, takma ad verin, cihaz gizleyin veya yüzde yazısını açıp kapatın.
 
-- **Sıfır Bloatware:** Tek bir **~4 MB** yerel Rust ikili dosyası (Electron yok, telemetri yok, Windows 11'de canlı ~77 MB özel bellek).
-- **Doğrudan Donanım Okuma:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** ve **Sony DualSense / DualShock 4 HID**'yi doğrudan sorgular, Logitech cihazlar G HUB açılmadan bile rapor verebilir (açıksa G HUB IPC de desteklenir).
-- **Akıllı Tam Ekran Kuralları:** Tam ekran oyunlar, videolar veya otomatik gizlenen görev çubuklarında kendini gizler; `Win` tuşuna basıldığında, Başlat/Widget açıldığında veya masaüstüne tıklandığında görünür kalır.
-- **Canlı Şarj Göstergesi:** Şarj olan cihazları **camgöbeği** renkte ve **⚡ şimşek simgesiyle** vurgular.
-- **Her Zaman Çalışan Arka Plan Uyarıları:** Kapsül oyunda gizliyken bile düşük ve kritik pil bildirimleri ile sesli uyarılar arka plandan tetiklenir.
+### İsteğe bağlı Oyun ve Tam Ekran Katmanı (HUD)
+- **Varsayılan olarak kapalıdır**, böylece tam ekran filmler ve YouTube kesintisiz kalır.
+- Açıldığında çerçevesiz tam ekran oyunlarda ekranın bir köşesinde pil durumunu gösterir.
+- **İstediğiniz yere yerleştirin:** Ayarlanabilir kenar boşluklu 4 köşe veya canlı önizlemeli serbest X/Y (%0 - %100).
+- **Click-through modu:** Fare tıklamaları katmandan geçerek doğrudan oyuna ulaşır.
+- **Yapılandırılabilir genel kısayol:** Alt+Tab yapmadan katmanı açıp kapatmak için herhangi bir tuş atayın (varsayılan `Alt + B`).
+
+### Akıllı telemetri ve uyarılar
+- **24 saatlik pil geçmişi:** Her cihaz kartı şarj ve deşarj eğrisini yerel olarak çizer.
+- **Süre tahmini ve uyku algılama:** Kalan kullanım veya dolum süresini tahmin eder ve uyku modunu algılar.
+- **Düşük, kritik ve %100 şarj uyarıları:** Genel veya cihaza özel eşikler, cihaz bazlı sessize alma, hafif ses ve Windows bildirimleri.
+
+### Dahili 21 dil
+- İlk açılışta Windows dilinizi otomatik algılar ve destekleniyorsa uygular (aksi halde İngilizce).
+- Tüm alfabelerin net görünmesi için Windows sistem yazı tiplerini gerektiğinde otomatik yükler.
 
 ---
 
-## 📥 İndirme ve Kurulum
+## Desteklenen Donanım
 
-**[Releases Sayfasından](https://github.com/jorjanion/BatteryDock/releases/latest)** son sürümü indirin:
+BatteryDock üretici yazılımına gerek kalmadan HID, WinRT ve Bluetooth üzerinden doğrudan donanımla konuşur.
 
-1. **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB) dosyasını indirin, veya kurulumsuz kullanım için `BatteryDock-Windows-Portable.zip` seçin.
-2. Yükleyiciyi çalıştırın ve isterseniz **"Start BatteryDock when Windows boots"** kutusunu işaretleyin.
-3. Kapsül görev çubuğunda saatin yanında belirecektir.
-
-### 🛡️ Windows SmartScreen Notu
-BatteryDock ücretli EV imza sertifikasına sahip olmayan ücretsiz bir açık kaynak uygulaması olduğu için ilk çalıştırmada *"Windows kişisel bilgisayarınızı korudu"* uyarısı çıkabilir (**Ek bilgi → Yine de çalıştır**).
-- Her sürüm [`.github/workflows/release.yml`](../../.github/workflows/release.yml) üzerinden temiz GitHub Actions sunucularında herkese açık derlenir.
-- Tüm Rust kodunu inceleyip bir dakikadan kısa sürede [kendiniz derleyebilirsiniz](#build-from-source).
-
----
-
-## 🎧 Desteklenen Donanımlar
-
-| Kategori | Protokol / Kaynak | Örnekler ve Notlar |
+| Kategori | Protokol / Yöntem | Desteklenen Örnekler |
 | :--- | :--- | :--- |
-| **Logitech Kablosuz** | Doğrudan HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed kulaklıklar (G733, G535, G935), fareler (G PRO, Superlight, G502), klavyeler |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | Kulaklıklar (Sony WH/WF, Bose, AirPods), BT fare ve klavyeler |
-| **Xbox Kontrolcüleri** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) kablolu şarj algılama dahil |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (çoklu kontrolcü + şarj durumu) |
-
-**Markanız eksik mi (Razer, Corsair, SteelSeries, Keychron vb.)?**
-👉 **[Cihaz Desteği Talebi Açın](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Request katkıları da memnuniyetle karşılanır!
-
----
-
-## 🎯 Kontroller ve Göstergeler
-
-### Durum Renkleri
-- **Yeşil:** Sağlıklı pil (düşük eşiğin üzerinde)
-- **Kehribar:** Düşük pil (varsayılan `20%`)
-- **Kırmızı (yanıp sönen):** Kritik seviye (varsayılan `10%`)
-- **Camgöbeği + ⚡:** Cihaz şu anda şarj oluyor
-
-### Etkileşim
-- Kapsüle veya **`⚙`** simgesine **sol tık** (veya sistem tepsisi simgesi): **BatteryDock Settings** penceresini açar (`BatteryDock.exe --settings`).
-- Kapsül veya sistem tepsisine **sağ tık**: Yerel menüyü açar (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**).
-- **Tıkla ve sürükle (> 5px):** İstediğiniz yere taşıyın (ikinci monitörler dahil); sağ tık → **Reset to Taskbar Clock** ile saate geri döndürün.
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ Yapılandırma
+## İndirme ve Kurulum
 
-Ayarlar `%APPDATA%\jorjanion\BatteryDock\config\config.toml` konumuna kaydedilir:
+En son sürümü **[Releases sayfasından](https://github.com/jorjanion/BatteryDock/releases/latest)** indirin:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. **`BatteryDock-Setup-v1.0.0.exe`** (kurulum) veya **`BatteryDock-Windows-Portable.zip`** (taşınabilir) dosyasını indirin.
+2. Çalıştırın ve isterseniz Ayarlar'dan Windows ile başlatmayı etkinleştirin.
+3. Gösterge saatin yanında belirir ve dahili GitHub güncelleyici sizi güncel tutar.
+
+### Windows SmartScreen Notu
+Ücretsiz ve açık kaynaklı bir proje olduğundan SmartScreen ilk açılışta uyarı gösterebilir. **Ek bilgi** ve ardından **Yine de çalıştır** seçeneğine tıklayın. Tüm sürümler [`.github/workflows/release.yml`](../../.github/workflows/release.yml) üzerinden açıkça derlenir.
 
 ---
 
-<a id="build-from-source"></a>
+## Yapılandırma
 
-## 🛠️ Kaynak Koddan Derleme
+Ayarlar `%APPDATA%\jorjanion\BatteryDock\config\config.toml` dosyasında (geçmiş `history.toml`) saklanır ve anında uygulanır.
 
-### Gereksinimler
-- [Rust araç zinciri](https://rustup.rs/) (stable)
-- Windows 10 veya Windows 11 (MSVC)
+---
 
-### Komutlar
+## Kaynaktan Derleme
+
+Gereksinimler: Windows 10/11 ve [Rust](https://rustup.rs/) (kararlı MSVC).
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-# Biçimlendirme, clippy ve testleri doğrulayın
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
-
-# Optimize edilmiş release sürümünü derleyin
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-Çıktı dosyası: `target\release\battery-dock.exe` (doğrudan ayarları açmak için `--settings` / `-s` kullanın).
 
 ---
 
-## 📄 Lisans
+## Katkı, Issue ve Pull Request
 
-**MIT Lisansı** altında dağıtılır. Ayrıntılar için [LICENSE](../../LICENSE).
+BatteryDock açık kaynaklı ve topluluk odaklıdır. Hata bildirimleri, çeviriler, cihaz istekleri ve PR'lar her zaman açıktır.
 
-<div align="center">
+- **Cihazınız görünmüyor mu?** Bir **[cihaz desteği isteği](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** açın. **Ayarlar > Özelleştirme > Donanım Tanılamasını Kopyala** ile anonim raporu tek tıkla kopyalayıp yapıştırabilirsiniz.
+- **Hata veya fikir mi var?** Windows sürümünüzle birlikte bir **[Issue](https://github.com/jorjanion/BatteryDock/issues)** açın.
+- **Kod katkısı mı yapmak istiyorsunuz?** Pull Request'ler memnuniyetle karşılanır. Göndermeden önce `cargo test --locked` ve `cargo clippy --locked` çalıştırın.
 
-**BatteryDock işinize yaradıysa depoya bir ⭐ bırakmayı düşünebilirsiniz!**
+---
 
-</div>
+## Lisans
+
+MIT Lisansı. Detaylar için [LICENSE](../../LICENSE).

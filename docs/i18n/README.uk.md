@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="Логотип BatteryDock" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Мінімалістичний нативний індикатор батареї на Rust прямо на панелі завдань Windows 10/11, без важкого ПЗ виробників.**
+**Заряд усіх бездротових пристроїв в одній легкій нативній панелі на панелі завдань Windows. Без зайвого софту виробників.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[Завантажити інсталятор](https://github.com/jorjanion/BatteryDock/releases/latest) · [Повідомити про помилку](https://github.com/jorjanion/BatteryDock/issues) · [Запросити підтримку пристрою](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[Завантажити v1.0.0](https://github.com/jorjanion/BatteryDock/releases/latest) · [Повідомити про помилку](https://github.com/jorjanion/BatteryDock/issues/new) · [Запросити пристрій](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [Зміни](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 Попередній перегляд
+Якщо ви користуєтеся бездротовою мишею одного бренду, гарнітурою іншого та Bluetooth-навушниками або геймпадом, перевірка заряду у Windows зазвичай вимагає тримати у фоні кілька важких програм.
+
+**BatteryDock** замінює все це одним нативним додатком на Rust (~4 МБ) прямо на панелі завдань Windows 10/11. Без Electron, телеметрії та акаунтів.
+
+---
+
+## Скріншоти
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="Капсула BatteryDock із зарядом гарнітури 92%" /><br /><br />
-        <sub><b>Капсула на панелі завдань</b>: Вбудована безпосередньо в панель завдань Windows із Per-Monitor DPI-масштабуванням, кольорами рівнів та іконкою зарядки ⚡.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>Один пристрій</b>: Чітка векторна іконка, кольоровий індикатор і відсоток на панелі завдань.</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Вікно налаштувань BatteryDock v0.1.12" width="340" /><br />
-        <sub><b>Окремі налаштування</b>: Пороги сповіщень, перевірка звуку, режими позиції та список підключених пристроїв.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>Кілька пристроїв</b>: Змінюйте порядок, перейменовуйте або приховуйте зайві пристрої.</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>Пристрої</b>: Оцінка автономності, графік заряду за 24 години, власні назви та окремі сповіщення.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>Сповіщення та звук</b>: Попередження про низький, критичний і 100% заряд із перевіркою звуку.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>Персоналізація</b>: Теми Liquid Glass / Темна / Світла / Системна, ігровий HUD, гаряча клавіша та 21 мова.</sub>
       </td>
     </tr>
   </table>
@@ -65,116 +88,92 @@
 
 ---
 
-## ⚡ Чому BatteryDock?
+## Можливості
 
-Більшість бездротових пристроїв ховають відсоток батареї у важких фірмових пакетах із десятками фонових сервісів. **BatteryDock** показує все в акуратній капсулі на панелі завдань:
+### Мінімалістична панель на панелі завдань
+- **4 теми оформлення:** **Liquid Glass** (прозора), **Темна**, **Світла** або **Системна** (повторює тему Windows).
+- **Нічого зайвого:** Лівий клік відкриває налаштування, правий викликає швидке меню, а перетягуванням панель можна розмістити на будь-якому моніторі.
+- **Розумна поведінка:** Залишається поверх панелі завдань навіть при відкритому «Пуску» чи «Пошуку» і автоматично ховається в повноекранному відео та іграх.
+- **Гнучкий макет:** Змінюйте порядок в один клік, давайте власні назви, приховуйте пристрої або вимикайте показ відсотків.
 
-- **Жодного bloatware:** Єдиний нативний файл на Rust розміром **~4 МБ** (без Electron і телеметрії, ~77 МБ приватної пам'яті у Windows 11).
-- **Пряме читання обладнання:** Опитує **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** та **Sony DualSense / DualShock 4 HID** напряму, пристрої Logitech працюють навіть без відкритого G HUB (G HUB IPC також підтримується).
-- **Розумний повноекранний режим:** Автоматично ховається у повноекранних іграх, відео або при автоприховуванні панелі, але не зникає при натисканні `Win`, відкритті Пуску/Віджетів чи кліку по робочому столу.
-- **Індикатор заряджання наживо:** Підсвічує пристрій **блакитним** із **блискавкою ⚡**.
-- **Надійні фонові сповіщення:** Звук та сповіщення Windows спрацьовують із фонового рушія навіть коли капсула прихована у грі.
+### Ігровий та повноекранний оверлей (HUD)
+- **Вимкнений за замовчуванням**, щоб не заважати під час перегляду фільмів і YouTube.
+- Після увімкнення автоматично з'являється у куті екрана в іграх у повноекранному режимі без рамки.
+- **Будь-яке місце екрана:** 4 кути з регульованим відступом або вільна позиція X/Y (0% - 100%) з живим переглядом.
+- **Режим Click-through:** Кліки миші проходять крізь оверлей прямо в гру.
+- **Глобальна гаряча клавіша:** Призначте будь-яку комбінацію (за замовчуванням `Alt + B`), щоб перемикати HUD без Alt+Tab.
+
+### Розумна телеметрія та сповіщення
+- **Історія за 24 години:** На картці кожного пристрою відображається легкий локальний графік.
+- **Автономність і режим сну:** Оцінює залишок роботи або зарядки та розпізнає сплячий режим.
+- **Сповіщення про низький, критичний і 100% заряд:** Загальні чи індивідуальні пороги, вимкнення для окремих пристроїв, м'який звук і сповіщення Windows.
+
+### 21 вбудована мова
+- Автоматично визначає мову Windows при першому запуску (англійська за замовчуванням для непідтримуваних).
+- Завантажує системні шрифти Windows за потреби для чіткого відображення всіх алфавітів.
 
 ---
 
-## 📥 Завантаження та встановлення
+## Підтримуване обладнання
+
+BatteryDock читає заряд напряму через HID, WinRT та Bluetooth без софту виробників.
+
+| Категорія | Протокол / Метод | Підтримувані приклади |
+| :--- | :--- | :--- |
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
+
+---
+
+## Завантаження та встановлення
 
 Завантажте останню версію зі **[сторінки Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-1. Завантажте **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 МБ), або `BatteryDock-Windows-Portable.zip` для портативної версії.
-2. Запустіть інсталятор і за бажанням увімкніть **"Start BatteryDock when Windows boots"**.
-3. Капсула з'явиться на панелі завдань біля годинника.
+1. Завантажте **`BatteryDock-Setup-v1.0.0.exe`** (інсталятор) або **`BatteryDock-Windows-Portable.zip`** (портативна версія).
+2. Запустіть і за бажанням увімкніть автозапуск із Windows у налаштуваннях.
+3. Панель з'явиться біля годинника разом із вбудованими оновленнями з GitHub.
 
-### 🛡️ Примітка щодо Windows SmartScreen
-Оскільки BatteryDock, безкоштовний open-source проєкт без платного EV-сертифіката підпису, SmartScreen може показати *"Windows захистила ваш ПК"* (**Докладніше → Виконати в будь-якому разі**).
-- Кожен реліз відкрито збирається на серверах GitHub Actions у [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
-- Ви можете переглянути код на Rust і [зібрати програму самостійно](#build-from-source) менше ніж за хвилину.
+### Примітка про Windows SmartScreen
+Оскільки BatteryDock є безкоштовним open-source проєктом без платного сертифіката, SmartScreen може показати попередження. Натисніть **Додатково** і **Виконати все одно**. Усі релізи збираються публічно в [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 
 ---
 
-## 🎧 Підтримувані пристрої
+## Конфігурація
 
-| Категорія | Протокол / Джерело | Приклади та примітки |
-| :--- | :--- | :--- |
-| **Logitech бездротові** | Прямий HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Гарнітури Lightspeed (G733, G535, G935), миші (G PRO, Superlight, G502), клавіатури |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | Навушники (Sony WH/WF, Bose, AirPods), BT-миші й клавіатури |
-| **Геймпади Xbox** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) включно із зарядкою по кабелю |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense та DualShock 4 (кілька геймпадів + статус зарядки) |
-
-**Немає вашого бренду (Razer, Corsair, SteelSeries, Keychron тощо)?**
-👉 **[Відкрити запит на підтримку пристрою](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Request-и також вітаються!
+Налаштування зберігаються у `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (історія у `history.toml`) і застосовуються миттєво.
 
 ---
 
-## 🎯 Керування та індикатори
+## Збірка з вихідного коду
 
-### Кольори стану
-- **Зелений:** Достатній заряд (вище низького порогу)
-- **Бурштиновий:** Низький заряд (за замовчуванням `20%`)
-- **Червоний (пульсуючий):** Критичний заряд (за замовчуванням `10%`)
-- **Блакитний + ⚡:** Заряджається зараз
-
-### Взаємодія
-- **Лівий клік** по капсулі або **`⚙`** (чи іконці в треї): Відкриває **BatteryDock Settings** (`BatteryDock.exe --settings`).
-- **Правий клік** по капсулі чи трею: Нативне меню (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**).
-- **Перетягування (> 5px):** Переміщуйте куди завгодно (навіть на інший монітор); правий клік → **Reset to Taskbar Clock** повертає до годинника.
-
----
-
-## ⚙️ Конфігурація
-
-Налаштування зберігаються у `%APPDATA%\jorjanion\BatteryDock\config\config.toml`:
-
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
-
----
-
-<a id="build-from-source"></a>
-
-## 🛠️ Збірка з вихідного коду
-
-### Вимоги
-- [Rust toolchain](https://rustup.rs/) (stable)
-- Windows 10 або Windows 11 (MSVC)
-
-### Команди
+Вимоги: Windows 10/11 і [Rust](https://rustup.rs/) (стабільний MSVC).
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-# Перевірка форматування, clippy та тестів
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
-
-# Збірка оптимізованого release-бінарника
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-Вихідний файл: `target\release\battery-dock.exe` (передайте `--settings` / `-s`, щоб одразу відкрити налаштування).
 
 ---
 
-## 📄 Ліцензія
+## Участь, Issues та Pull Requests
 
-Поширюється за **ліцензією MIT**. Деталі в [LICENSE](../../LICENSE).
+BatteryDock розвивається відкрито зі спільнотою. Повідомлення про баги, переклади, запити пристроїв і PR завжди вітаються.
 
-<div align="center">
+- **Пристрій не видно?** Створіть **[запит підтримки пристрою](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**. Відкрийте **Налаштування > Персоналізація > Копіювати діагностику обладнання** і вставте анонімний звіт в issue.
+- **Помилка чи ідея?** Створіть **[Issue](https://github.com/jorjanion/BatteryDock/issues)** із версією Windows і описом.
+- **Хочете додати код?** Pull Requests вітаються. Запустіть `cargo test --locked` і `cargo clippy --locked` перед надсиланням.
 
-**Якщо BatteryDock став у пригоді, поставте ⭐ репозиторію!**
+---
 
-</div>
+## Ліцензія
+
+Ліцензія MIT. Детальніше в [LICENSE](../../LICENSE).

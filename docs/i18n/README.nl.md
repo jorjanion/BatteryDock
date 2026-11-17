@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock Logo" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Een strakke, native Rust-batterijindicator rechtstreeks in de Windows 10/11-taakbalk, zonder zware fabrikantensoftware.**
+**Alle batterijniveaus van je draadloze randapparatuur in één strakke native Windows-taakbalkpil. Zonder bloatware.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[Nieuwste installer downloaden](https://github.com/jorjanion/BatteryDock/releases/latest) · [Bug melden](https://github.com/jorjanion/BatteryDock/issues) · [Apparaat aanvragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[Download v1.0.0](https://github.com/jorjanion/BatteryDock/releases/latest) · [Bug melden](https://github.com/jorjanion/BatteryDock/issues/new) · [Apparaat aanvragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [Changelog](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 Voorbeeld
+Als je een draadloze muis, headset en Bluetooth-controller van verschillende merken gebruikt, heb je op Windows vaak meerdere zware achtergrondapps nodig om de batterij te zien.
+
+**BatteryDock** vervangt dat door één ~4 MB native Rust-app op je Windows 10/11 taakbalk. Geen Electron, geen telemetrie, geen accounts.
+
+---
+
+## Voorbeeld
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="Close-up van BatteryDock-capsule met koptelefoon op 92%" /><br /><br />
-        <sub><b>Taakbalkcapsule</b>: Direct in de Windows-taakbalk geïntegreerd met DPI-schaling per monitor, kleurcodering en live ⚡ oplaadicoon.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>Eén apparaat</b>: Scherp vectoricoon, gekleurde batterijbalk en percentage direct op de taakbalk.</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Instellingenvenster v0.1.12" width="340" /><br />
-        <sub><b>Zelfstandige instellingen</b>: Waarschuwingsdrempels, geluids voorbeeld, posities en lijst met verbonden apparaten.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>Meerdere apparaten</b>: Verander de volgorde, geef namen of verberg apparaten.</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>Apparaten</b>: Geschatte batterijduur, 24-uurs grafiek, bijnamen en meldingen per apparaat.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>Meldingen & Geluid</b>: Meldingen bij laag, kritiek en 100% vol niveau met geluidstest.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>Aanpassing</b>: Liquid Glass / Donker / Licht / Systeem thema, Game HUD, sneltoets en 21 talen.</sub>
       </td>
     </tr>
   </table>
@@ -65,116 +88,92 @@
 
 ---
 
-## ⚡ Waarom BatteryDock?
+## Functies
 
-Veel draadloze randapparatuur verbergt het batterijpercentage in logge softwaresuites met tientallen achtergrondservices. **BatteryDock** zet al je apparaten in één strakke taakbalkcapsule:
+### Minimalistische taakbalkpil
+- **4 thema's:** Kies **Liquid Glass** (ultratransparant), **Donker**, **Licht** of **Systeem** (volgt Windows).
+- **Geen rommel:** Linksklik opent Instellingen, rechtsklik opent het snelmenu, of sleep naar elke monitor.
+- **Slim taakbalkgedrag:** Blijft zichtbaar boven Start en Zoeken en verbergt automatisch bij volledig scherm.
+- **Eigen indeling:** Verander de volgorde met één klik, hernoem of verberg apparaten en schakel het percentage in of uit.
 
-- **Geen bloatware:** Eén enkel **~4 MB** native Rust-bestand (geen Electron, geen telemetrie, ~77 MB privé-geheugen live gemeten op Windows 11).
-- **Directe hardware-uitlezing:** Leest rechtstreeks **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** en **Sony DualSense / DualShock 4 HID** uit, Logitech-apparaten werken ook zonder G HUB (G HUB IPC wordt ondersteund als het draait).
-- **Slimme fullscreen-regels:** Verbergt automatisch bij games of video's op volledig scherm en automatisch verbergende taakbalken, en blijft stabiel zichtbaar bij de `Win`-toets, Start, Zoeken, Widgets of bureaubladkliks.
-- **Live oplaadindicator:** Kleurt apparaten **cyaan** met een **⚡ bliksem-icoon** zodra ze opladen.
-- **Achtergrondmeldingen werken altijd:** Geluidssignalen en bureaubladmeldingen blijven werken vanuit de achtergrondthread, zelfs tijdens fullscreen-games.
+### Optionele Game- & Volledig scherm-overlay (HUD)
+- **Standaard uitgeschakeld** zodat films en YouTube ongestoord blijven.
+- Ingeschakeld verschijnt het batterijniveau in een hoek tijdens randloze games op volledig scherm.
+- **Overal te plaatsen:** 4 hoeken met instelbare marge of vrije X/Y-positie (0% tot 100%) met live voorbeeld.
+- **Click-through modus:** Muiskliks gaan rechtstreeks door de HUD naar je game.
+- **Globale sneltoets:** Stel elke toetscombinatie in (standaard `Alt + B`) om de HUD direct te schakelen.
+
+### Slimme telemetrie & meldingen
+- **24-uurs batterijgeschiedenis:** Elke kaart toont een lokale grafiek van laden en ontladen.
+- **Batterijduur & slaapstand:** Schat de resterende tijd en herkent apparaten in slaapstand.
+- **Laag, kritiek en 100% vol meldingen:** Drempels per apparaat, dempen, zacht geluid en Windows-meldingen.
+
+### 21 talen ingebouwd
+- Herkent automatisch je Windows-taal bij eerste start (met Engels als standaard fallback).
+- Laadt native Windows-lettertypen op aanvraag voor scherpe weergave van elk schrift.
 
 ---
 
-## 📥 Downloaden en installeren
+## Ondersteunde hardware
 
-Download de nieuwste release van de **[Releases-pagina](https://github.com/jorjanion/BatteryDock/releases/latest)**:
+BatteryDock praat direct met je hardware via HID, WinRT en Bluetooth zonder fabrikantsoftware.
 
-1. Download **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), of `BatteryDock-Windows-Portable.zip` voor gebruik zonder installatie.
-2. Start de installer en vink optioneel **"Start BatteryDock when Windows boots"** aan.
-3. De capsule verschijnt direct naast het systeemvak en de klok.
-
-### 🛡️ Windows SmartScreen-melding
-Omdat BatteryDock gratis open-source is zonder betaald EV-certificaat, kan Windows SmartScreen *"Windows heeft uw pc beschermd"* tonen (**Meer informatie → Toch uitvoeren**).
-- Elke release wordt openbaar gecompileerd op GitHub Actions-runners in [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
-- Je kunt ook alle code inzien en binnen een minuut [zelf compileren](#build-from-source).
-
----
-
-## 🎧 Ondersteunde hardware
-
-| Categorie | Protocol / Bron | Voorbeelden en opmerkingen |
+| Categorie | Protocol / Methode | Ondersteunde voorbeelden |
 | :--- | :--- | :--- |
-| **Logitech Draadloos** | Direct HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed-headsets (G733, G535, G935), muizen (G PRO, Superlight, G502), toetsenborden |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | Koptelefoons (Sony WH/WF, Bose, AirPods), BT-muizen & -toetsenborden |
-| **Xbox-controllers** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) incl. bedraad opladen |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (meerdere controllers + oplaadstatus) |
-
-**Mist jouw merk (Razer, Corsair, SteelSeries, Keychron, enz.)?**
-👉 **[Vraag apparaatondersteuning aan](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requests zijn ook welkom!
-
----
-
-## 🎯 Bediening en indicatoren
-
-### Statuskleuren
-- **Groen:** Gezond batterijniveau (boven lage drempel)
-- **Amber:** Lage batterij (instelbaar, standaard `20%`)
-- **Rood (pulserend):** Kritiek niveau (standaard `10%`)
-- **Cyaan + ⚡:** Apparaat laadt op
-
-### Interactie
-- **Linkermuisklik** op capsule of **`⚙`** (of tray-icoon): Opent **BatteryDock Settings** (`BatteryDock.exe --settings`).
-- **Rechtermuisklik** op capsule of tray-icoon: Opent native menu (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**).
-- **Slepen (> 5px):** Verplaats overal (ook op andere schermen); rechtermuisklik → **Reset to Taskbar Clock** zet hem terug.
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ Configuratie
+## Download & Installatie
 
-Instellingen worden opgeslagen in `%APPDATA%\jorjanion\BatteryDock\config\config.toml`:
+Download de nieuwste versie op de **[Releases-pagina](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. Download **`BatteryDock-Setup-v1.0.0.exe`** (installer) of **`BatteryDock-Windows-Portable.zip`** (portable).
+2. Start de app en schakel optioneel **BatteryDock starten met Windows** in.
+3. De pil verschijnt naast de klok met automatische GitHub-updates.
+
+### Windows SmartScreen-melding
+Omdat BatteryDock gratis en open source is zonder betaald certificaat, kan SmartScreen een melding tonen. Klik op **Meer informatie** en **Toch uitvoeren**. Alle builds worden openbaar gemaakt via [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 
 ---
 
-<a id="build-from-source"></a>
+## Configuratie
 
-## 🛠️ Bouwen vanuit broncode
+Instellingen staan in `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (geschiedenis in `history.toml`) en worden direct toegepast.
 
-### Vereisten
-- [Rust-toolchain](https://rustup.rs/) (stable)
-- Windows 10 of Windows 11 (MSVC-target)
+---
 
-### Commando's
+## Zelf bouwen
+
+Vereisten: Windows 10/11 en [Rust](https://rustup.rs/) (stabiele MSVC-toolchain).
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-# Opmaak, clippy en tests controleren
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
-
-# Geoptimaliseerde release bouwen
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-Uitvoerbestand: `target\release\battery-dock.exe` (gebruik `--settings` / `-s` om direct instellingen te openen).
 
 ---
 
-## 📄 Licentie
+## Bijdragen, Issues & Pull Requests
 
-Uitgebracht onder de **MIT-licentie**. Zie [LICENSE](../../LICENSE).
+BatteryDock is open source en community-gedreven. Bugmeldingen, vertalingen, apparaataanvragen en PR's zijn altijd welkom.
 
-<div align="center">
+- **Apparaat niet zichtbaar?** Open een **[apparaataanvraag](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**. Gebruik **Instellingen > Aanpassing > Hardware-diagnose kopiëren** en plak het geanonimiseerde rapport in je issue.
+- **Bug of idee?** Open een **[Issue](https://github.com/jorjanion/BatteryDock/issues)** met je Windows-versie en stappen.
+- **Code bijdragen?** Pull Requests zijn welkom. Draai `cargo test --locked` en `cargo clippy --locked` voordat je een PR opent.
 
-**Helpt BatteryDock je? Geef de repository gerust een ⭐!**
+---
 
-</div>
+## Licentie
+
+MIT-licentie. Zie [LICENSE](../../LICENSE).

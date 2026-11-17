@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="Logo BatteryDock" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Trình hiển thị pin gọn nhẹ bằng Rust nhúng trực tiếp vào thanh tác vụ Windows 10/11, không cần phần mềm nặng nề của hãng.**
+**Xem pin mọi thiết bị không dây trong một thanh nhỏ gọn ngay trên thanh tác vụ Windows. Không phần mềm hãng nặng nề.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[Tải bộ cài đặt mới nhất](https://github.com/jorjanion/BatteryDock/releases/latest) · [Báo lỗi](https://github.com/jorjanion/BatteryDock/issues) · [Yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[Tải v1.0.0](https://github.com/jorjanion/BatteryDock/releases/latest) · [Báo lỗi](https://github.com/jorjanion/BatteryDock/issues/new) · [Yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [Lịch sử thay đổi](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 Xem trước
+Nếu bạn dùng chuột không dây của một hãng, tai nghe hãng khác và tay cầm Bluetooth, việc xem pin trên Windows thường buộc phải mở nhiều phần mềm nền nặng nề.
+
+**BatteryDock** thay thế tất cả bằng một ứng dụng Rust thuần ~4 MB gọn nhẹ ngay trên thanh tác vụ Windows 10/11. Không Electron, không thu thập dữ liệu, không cần tài khoản.
+
+---
+
+## Xem trước
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="Cận cảnh thanh BatteryDock hiển thị pin tai nghe 92%" /><br /><br />
-        <sub><b>Thanh pin trên Taskbar</b>: Gắn trực tiếp vào thanh tác vụ Windows với DPI theo từng màn hình, màu trạng thái và biểu tượng sạc ⚡.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>Một thiết bị</b>: Biểu tượng vector sắc nét, thanh pin đổi màu và phần trăm ngay trên thanh tác vụ.</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="Cửa sổ Cài đặt BatteryDock v0.1.12" width="340" /><br />
-        <sub><b>Cài đặt độc lập</b>: Ngưỡng cảnh báo, nghe thử âm thanh, chế độ vị trí và danh sách thiết bị đang kết nối.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>Nhiều thiết bị cùng lúc</b>: Sắp xếp thứ tự, đổi tên hoặc ẩn thiết bị không cần xem.</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>Thiết bị</b>: Ước tính thời lượng pin, biểu đồ 24 giờ, tên gợi nhớ và cảnh báo riêng.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>Cảnh báo & Âm thanh</b>: Thông báo pin yếu, nguy kịch và sạc đầy 100% kèm nghe thử âm báo.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>Tùy chỉnh</b>: Giao diện Liquid Glass / Tối / Sáng / Hệ thống, lớp phủ HUD chơi game, phím tắt và 21 ngôn ngữ.</sub>
       </td>
     </tr>
   </table>
@@ -65,113 +88,92 @@
 
 ---
 
-## ⚡ Tại sao chọn BatteryDock?
+## Tính năng
 
-Phần lớn thiết bị không dây giấu phần trăm pin trong các bộ phần mềm cồng kềnh chạy hàng chục dịch vụ nền. **BatteryDock** gom tất cả vào một thanh nhỏ gọn trên taskbar:
+### Thanh pin tối giản trên thanh tác vụ
+- **4 giao diện:** **Liquid Glass** (trong suốt), **Tối**, **Sáng**, hoặc **Hệ thống** (tự động khớp giao diện Windows).
+- **Gọn gàng:** Nhấp trái mở Cài đặt, nhấp phải mở menu nhanh, hoặc kéo thả sang bất kỳ màn hình nào.
+- **Tự động thông minh:** Luôn nổi trên thanh tác vụ kể cả khi mở Start hay Tìm kiếm, và tự ẩn khi xem video hoặc chơi game toàn màn hình.
+- **Bố cục linh hoạt:** Đổi thứ tự thiết bị chỉ với một cú nhấp, đặt tên riêng, ẩn thiết bị hoặc bật/tắt số phần trăm.
 
-- **Không bloatware:** Chỉ một file thực thi Rust thuần **~4 MB** (không Electron, không thu thập dữ liệu, ~77 MB bộ nhớ riêng trên Windows 11).
-- **Đọc phần cứng trực tiếp:** Truy vấn **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** và **Sony DualSense / DualShock 4 HID**, thiết bị Logitech vẫn hiển thị ngay cả khi chưa mở G HUB.
-- **Quy tắc toàn màn hình thông minh:** Tự động ẩn khi chơi game, xem video toàn màn hình hoặc ẩn taskbar, và luôn ổn định khi bấm phím `Win`, mở Start/Widget hay nhấp desktop.
-- **Báo sạc trực tiếp:** Tô màu **xanh lơ** cùng biểu tượng **tia sét ⚡** khi thiết bị đang cắm sạc.
-- **Cảnh báo nền đáng tin cậy:** Âm báo và thông báo desktop vẫn hoạt động từ tiến trình nền kể cả khi thanh bị ẩn trong game.
+### Lớp phủ Chơi game & Toàn màn hình tùy chọn (HUD)
+- **Tắt theo mặc định** để không che khuất phim hay YouTube toàn màn hình.
+- Khi bật, thanh pin tự động hiện ở góc màn hình khi chơi game toàn màn hình không viền.
+- **Đặt ở bất cứ đâu:** 4 góc với lề tùy chỉnh hoặc vị trí tự do X/Y (0% đến 100%) có xem trước trực tiếp.
+- **Xuyên chuột (Click-through):** Nhấp chuột đi thẳng vào game mà không bị vướng.
+- **Phím tắt toàn cục:** Gán bất kỳ tổ hợp phím nào (mặc định `Alt + B`) để bật/tắt HUD ngay trong game.
+
+### Thống kê thông minh & Cảnh báo
+- **Lịch sử pin 24 giờ:** Mỗi thẻ thiết bị hiển thị biểu đồ cục bộ quá trình sạc và xả.
+- **Ước tính thời gian & chế độ ngủ:** Tính thời gian còn lại hoặc thời gian sạc đầy và nhận diện thiết bị đang ngủ.
+- **Cảnh báo pin yếu, nguy kịch và đầy 100%:** Ngưỡng chung hoặc riêng từng thiết bị, tắt tiếng riêng, âm báo nhẹ và thông báo Windows.
+
+### Tích hợp 21 ngôn ngữ
+- Tự động nhận diện ngôn ngữ Windows ở lần chạy đầu tiên (mặc định tiếng Anh nếu chưa hỗ trợ).
+- Tự động nạp phông chữ gốc của Windows khi cần để hiển thị sắc nét mọi bộ chữ.
 
 ---
 
-## 📥 Tải về và Cài đặt
+## Phần cứng hỗ trợ
 
-Tải phiên bản mới nhất từ **[Trang Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
+BatteryDock đọc trực tiếp qua HID, WinRT và Bluetooth mà không cần phần mềm hãng chạy nền.
 
-1. Tải **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB), hoặc `BatteryDock-Windows-Portable.zip` cho bản chạy ngay không cần cài.
-2. Chạy bộ cài và chọn **"Start BatteryDock when Windows boots"** nếu muốn khởi động cùng Windows.
-3. Thanh pin sẽ xuất hiện ngay cạnh đồng hồ khay hệ thống.
-
-### 🛡️ Lưu ý về Windows SmartScreen
-Do BatteryDock là ứng dụng mã nguồn mở miễn phí chưa có chứng chỉ ký số EV trả phí, Windows SmartScreen có thể hiện *"Windows protected your PC"* ở lần chạy đầu (**More info → Run anyway**).
-- Mọi bản phát hành đều được biên dịch công khai trên GitHub Actions tại [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
-- Bạn có thể kiểm tra toàn bộ mã nguồn Rust và [tự biên dịch](#build-from-source) chưa tới một phút.
-
----
-
-## 🎧 Phần cứng hỗ trợ
-
-| Danh mục | Giao thức / Nguồn | Ví dụ & Ghi chú |
+| Danh mục | Giao thức / Phương thức | Ví dụ hỗ trợ |
 | :--- | :--- | :--- |
-| **Logitech Không dây** | HID++ 2.0 trực tiếp (`0x1004` / `0x1000`) & G HUB IPC | Tai nghe Lightspeed (G733, G535, G935), chuột (G PRO, Superlight, G502), bàn phím |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | Tai nghe (Sony WH/WF, Bose, AirPods), chuột & bàn phím BT |
-| **Tay cầm Xbox** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) gồm cả phát hiện sạc qua dây |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (hỗ trợ nhiều tay cầm + trạng thái sạc) |
-
-**Chưa có thương hiệu của bạn (Razer, Corsair, SteelSeries, Keychron...)?**
-👉 **[Mở yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, rất hoan nghênh các đóng góp Pull Request!
-
----
-
-## 🎯 Điều khiển & Chỉ báo
-
-### Màu trạng thái
-- **Xanh lá:** Pin khỏe (trên ngưỡng thấp)
-- **Hổ phách:** Pin yếu (mặc định `20%`)
-- **Đỏ (nhấp nháy):** Pin rất yếu (mặc định `10%`)
-- **Xanh lơ + ⚡:** Thiết bị đang sạc
-
-### Thao tác
-- **Nhấp chuột trái** vào thanh hoặc **`⚙`** (hay biểu tượng khay hệ thống): Mở **BatteryDock Settings** (`BatteryDock.exe --settings`).
-- **Nhấp chuột phải** vào thanh hoặc biểu tượng khay: Menu (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**).
-- **Kéo thả (> 5px):** Di chuyển tự do (kể cả màn hình phụ); chuột phải → **Reset to Taskbar Clock** để gắn lại cạnh đồng hồ.
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ Cấu hình
+## Tải xuống & Cài đặt
 
-Cài đặt tự động lưu tại `%APPDATA%\jorjanion\BatteryDock\config\config.toml`:
+Tải bản mới nhất tại **[trang Releases](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. Tải **`BatteryDock-Setup-v1.0.0.exe`** (bộ cài) hoặc **`BatteryDock-Windows-Portable.zip`** (bản chạy ngay).
+2. Mở ứng dụng và tùy chọn bật khởi động cùng Windows trong Cài đặt.
+3. Thanh pin sẽ hiện cạnh đồng hồ cùng tính năng tự cập nhật từ GitHub.
+
+### Lưu ý Windows SmartScreen
+Vì BatteryDock là dự án mã nguồn mở miễn phí không có chứng chỉ ký trả phí, SmartScreen có thể cảnh báo lần đầu. Chọn **More info** rồi **Run anyway**. Mọi bản phát hành được biên dịch công khai tại [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 
 ---
 
-<a id="build-from-source"></a>
+## Cấu hình
 
-## 🛠️ Biên dịch từ mã nguồn
+Cài đặt lưu tại `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (lịch sử ở `history.toml`) và áp dụng ngay lập tức.
 
-### Yêu cầu
-- [Rust toolchain](https://rustup.rs/) (stable)
-- Windows 10 hoặc Windows 11 (MSVC)
+---
 
-### Câu lệnh
+## Tự biên dịch từ mã nguồn
+
+Yêu cầu: Windows 10/11 và [Rust](https://rustup.rs/) (bản MSVC ổn định).
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-File đầu ra nằm tại `target\release\battery-dock.exe` (dùng `--settings` / `-s` để mở thẳng cài đặt).
 
 ---
 
-## 📄 Giấy phép
+## Đóng góp, Issues & Pull Requests
 
-Phân phối theo **Giấy phép MIT**. Xem chi tiết tại [LICENSE](../../LICENSE).
+BatteryDock là mã nguồn mở do cộng đồng cùng phát triển. Mọi báo lỗi, bản dịch, yêu cầu thiết bị và PR luôn được hoan nghênh.
 
-<div align="center">
+- **Thiết bị chưa hiển thị?** Mở **[yêu cầu hỗ trợ thiết bị](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**. Vào **Cài đặt > Tùy chỉnh > Sao chép chẩn đoán phần cứng** rồi dán báo cáo ẩn danh vào issue.
+- **Phát hiện lỗi hoặc có ý tưởng?** Mở **[Issue](https://github.com/jorjanion/BatteryDock/issues)** kèm phiên bản Windows của bạn.
+- **Muốn đóng góp mã nguồn?** Pull Request luôn được chào đón. Hãy chạy `cargo test --locked` và `cargo clippy --locked` trước khi gửi.
 
-**Nếu BatteryDock hữu ích với bạn, hãy tặng repo một ⭐ nhé!**
+---
 
-</div>
+## Giấy phép
+
+Giấy phép MIT. Xem [LICENSE](../../LICENSE).

@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock Logo" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Eine schlanke, native Rust-Batterieanzeige direkt in der Windows 10/11-Taskleiste, ganz ohne Hersteller-Bloatware.**
+**Alle Akkustände deiner kabellosen Geräte in einer nativen Windows-Taskleisten-Leiste. Ohne Hersteller-Bloatware.**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[Neuesten Installer herunterladen](https://github.com/jorjanion/BatteryDock/releases/latest) · [Fehler melden](https://github.com/jorjanion/BatteryDock/issues) · [Gerät anfragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[v1.0.0 herunterladen](https://github.com/jorjanion/BatteryDock/releases/latest) · [Fehler melden](https://github.com/jorjanion/BatteryDock/issues/new) · [Gerät anfragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [Changelog](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 Vorschau
+Wer eine kabellose Maus einer Marke, ein Headset einer anderen und einen Bluetooth-Controller nutzt, braucht unter Windows oft mehrere schwere Hintergrundprogramme, nur um den Akkustand zu sehen.
+
+**BatteryDock** ersetzt all das durch eine einzige ~4 MB große native Rust-App direkt in deiner Windows 10/11 Taskleiste. Kein Electron, keine Telemetrie, kein Konto.
+
+---
+
+## Vorschau
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="Nahaufnahme der BatteryDock-Kapsel mit 92 % Akkustand" /><br /><br />
-        <sub><b>Taskleisten-Kapsel</b>: Direkt in die Windows-Taskleiste integriert, mit Per-Monitor-DPI-Skalierung, Farbstufen und live ⚡ Ladeanzeige.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>Einzelnes Gerät</b>: Scharfes Vektor-Icon, farbiger Akkubalken und Prozentzahl in der Taskleiste.</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock Einstellungsfenster v0.1.12" width="340" /><br />
-        <sub><b>Einstellungen</b>: Warnschwellen, Tonvorschau, Positionierung und Liste verbundener Geräte.</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>Mehrere Geräte</b>: Reihenfolge ändern, umbenennen oder einzelne Geräte ausblenden.</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>Geräte</b>: Geschätzte Laufzeit, 24h-Akkuverlauf, eigene Namen und gerätespezifische Warnungen.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>Warnungen & Ton</b>: Warnungen bei niedrigem, kritischem und 100% vollem Akku samt Tonvorschau.</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>Anpassung</b>: Liquid Glass / Dunkel / Hell / System-Design, Gaming-HUD, Hotkey und 21 Sprachen.</sub>
       </td>
     </tr>
   </table>
@@ -65,116 +88,92 @@
 
 ---
 
-## ⚡ Warum BatteryDock?
+## Funktionen
 
-Die meisten kabellosen Peripheriegeräte verstecken ihren Akkustand in überladenen Hersteller-Suiten mit Dutzenden Hintergrunddiensten. **BatteryDock** zeigt alles sauber in einer kompakten Taskleisten-Kapsel an:
+### Minimalistische Taskleisten-Leiste
+- **4 Designs:** Wähle zwischen **Liquid Glass** (ultratransparent), **Dunkel**, **Hell** oder **System** (folgt deinem Windows-Design).
+- **Aufgeräumt:** Linksklick öffnet die Einstellungen, Rechtsklick das Schnellmenü, oder per Drag-and-Drop auf jedem Monitor platzieren.
+- **Cleveres Taskleisten-Verhalten:** Bleibt auch über Start, Suche und Widgets sichtbar und blendet sich bei Vollbildvideos und Spielen automatisch aus.
+- **Flexibles Layout:** Geräte per Klick neu anordnen, umbenennen, ausblenden oder Prozentzahl ein-/ausschalten.
 
-- **Keine Bloatware:** Eine einzelne **~4 MB** große native Rust-Datei (kein Electron, keine Telemetrie, ~77 MB privater Speicher live unter Windows 11).
-- **Direkte Hardware-Abfrage:** Liest **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** und **Sony DualSense / DualShock 4 HID** direkt aus, Logitech-Geräte funktionieren auch ohne gestartetes G HUB (G HUB IPC wird zusätzlich unterstützt).
-- **Intelligente Vollbild-Regeln:** Blendet automatisch aus, sobald Vollbildspiele, Vollbildvideos oder eine ausgeblendete Taskleiste aktiv sind, und bleibt bei `Win`-Taste, Startmenü, Suche, Widgets oder Desktop-Klicks zuverlässig sichtbar.
-- **Live-Ladesymbol:** Markiert ladende Geräte in **Cyan** mit einem **⚡ Blitz-Symbol**.
-- **Zuverlässige Hintergrund-Warnungen:** Töne und Windows-Benachrichtigungen werden auch dann ausgelöst, wenn die Kapsel im Vollbild ausgeblendet ist.
+### Optionales Gaming- & Vollbild-Overlay (HUD)
+- **Standardmäßig deaktiviert**, damit Vollbildvideos komplett ungestört bleiben.
+- Aktiviert springt BatteryDock bei randlosen Vollbildspielen automatisch in eine Bildschirmecke.
+- **Überall platzierbar:** 4 Ecken mit einstellbarem Randabstand oder freie X/Y-Position (0% bis 100%) mit Live-Vorschau.
+- **Click-Through:** Mausklicks gehen direkt durch das HUD ins Spiel.
+- **Globaler Hotkey:** Lege eine beliebige Tastenkombination fest (Standard `Alt + B`), um das Overlay im Spiel umzuschalten.
+
+### Intelligente Telemetrie & Warnungen
+- **24-Stunden-Akkuverlauf:** Jede Gerätekarte zeigt eine kompakte lokale Verlaufskurve.
+- **Laufzeit & Ruhezustand:** Schätzt verbleibende Laufzeit oder Ladezeit und erkennt inaktive Geräte.
+- **Niedrig-, Kritisch- & 100%-Warnung:** Globale oder gerätespezifische Schwellenwerte, Stummschaltung, sanfter Ton und Windows-Benachrichtigungen.
+
+### 21 Sprachen integriert
+- Erkennt beim ersten Start automatisch deine Windows-Sprache (mit Englisch als Standard-Fallback).
+- Lädt bei Bedarf native Windows-Systemschriften für alle Schriftsysteme.
 
 ---
 
-## 📥 Download & Installation
+## Unterstützte Hardware
 
-Lade die neueste Version von der **[Releases-Seite](https://github.com/jorjanion/BatteryDock/releases/latest)** herunter:
+BatteryDock liest Geräte direkt über HID, WinRT und Bluetooth aus, ganz ohne Hersteller-Software.
 
-1. Lade **`BatteryDock-Setup-v0.1.12.exe`** (~4,4 MB) herunter, oder `BatteryDock-Windows-Portable.zip` für die portable Nutzung.
-2. Starte den Installer und aktiviere optional **"Start BatteryDock when Windows boots"**.
-3. Die Kapsel erscheint neben dem System-Tray und der Uhr.
-
-### 🛡️ Hinweis zu Windows SmartScreen
-Da BatteryDock eine kostenlose Open-Source-App ohne teures EV-Code-Signing-Zertifikat ist, kann beim ersten Start die Meldung *"Der Computer wurde durch Windows geschützt"* erscheinen (**Weitere Informationen → Trotzdem ausführen**).
-- Alle Releases werden öffentlich auf sauberen GitHub-Actions-Runnern in [`.github/workflows/release.yml`](../../.github/workflows/release.yml) gebaut.
-- Du kannst den gesamten Rust-Code prüfen und das Programm in unter einer Minute [selbst kompilieren](#build-from-source).
-
----
-
-## 🎧 Unterstützte Hardware
-
-| Kategorie | Protokoll / Quelle | Beispiele & Hinweise |
+| Kategorie | Protokoll / Methode | Unterstützte Beispiele |
 | :--- | :--- | :--- |
-| **Logitech Wireless** | Direktes HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed-Headsets (G733, G535, G935), Mäuse (G PRO, Superlight, G502), Tastaturen |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | Kopfhörer (Sony WH/WF, Bose, AirPods), BT-Mäuse & -Tastaturen |
-| **Xbox-Controller** | Windows `XInput` | Xbox Wireless Controller (Series X\|S, One, 360) inkl. Kabel-Ladeerkennung |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4 (Multi-Controller-Support + Ladestatus) |
-
-**Deine Marke fehlt (Razer, Corsair, SteelSeries, Keychron usw.)?**
-👉 **[Geräte-Unterstützung anfragen](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requests für weitere HID-/Bluetooth-Profile sind ebenfalls willkommen!
-
----
-
-## 🎯 Bedienung & Statusfarben
-
-### Statusfarben
-- **Grün:** Ausreichender Akkustand (über dem niedrigen Schwellenwert)
-- **Gelb/Amber:** Niedriger Akkustand (konfigurierbar, Standard `20%`)
-- **Rot (pulsierend):** Kritischer Akkustand (Standard `10%`)
-- **Cyan + ⚡:** Gerät lädt gerade
-
-### Interaktion
-- **Linksklick** auf Kapsel oder **`⚙`** (bzw. Tray-Icon): Öffnet **BatteryDock Settings** (`BatteryDock.exe --settings`).
-- **Rechtsklick** auf Kapsel oder Tray-Icon: Natives Kontextmenü (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**).
-- **Klicken & Ziehen (> 5px):** Kapsel frei platzieren (auch auf Zweitmonitoren); Rechtsklick → **Reset to Taskbar Clock** setzt sie zurück.
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ Konfiguration
+## Download & Installation
 
-Einstellungen werden unter `%APPDATA%\jorjanion\BatteryDock\config\config.toml` gespeichert:
+Hol dir die neueste Version auf der **[Releases-Seite](https://github.com/jorjanion/BatteryDock/releases/latest)**:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. Lade **`BatteryDock-Setup-v1.0.0.exe`** (Installer) oder **`BatteryDock-Windows-Portable.zip`** (portabel) herunter.
+2. Starte die App und aktiviere optional den Windows-Autostart in den Einstellungen.
+3. BatteryDock erscheint neben der Uhr. Integrierte GitHub-Auto-Updates halten dich aktuell.
+
+### Hinweis zu Windows SmartScreen
+Da BatteryDock ein kostenloses Open-Source-Projekt ohne kostenpflichtiges Zertifikat ist, zeigt SmartScreen beim ersten Start eventuell eine Warnung. Klicke auf **Weitere Informationen** und **Trotzdem ausführen**. Alle Builds entstehen öffentlich in [`.github/workflows/release.yml`](../../.github/workflows/release.yml).
 
 ---
 
-<a id="build-from-source"></a>
+## Konfiguration
 
-## 🛠️ Aus dem Quellcode kompilieren
+Einstellungen liegen als TOML-Datei unter `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (Verlauf in `history.toml`). Änderungen wirken sofort ohne Neustart.
 
-### Voraussetzungen
-- [Rust Toolchain](https://rustup.rs/) (stable)
-- Windows 10 oder Windows 11 (MSVC-Target)
+---
 
-### Befehle
+## Aus dem Quellcode bauen
+
+Voraussetzungen: Windows 10/11 und [Rust](https://rustup.rs/) (stabile MSVC-Toolchain).
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-# Formatierung, Clippy & Tests prüfen
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
-
-# Optimiertes Release-Binary bauen
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-Erzeugte EXE: `target\release\battery-dock.exe` (mit `--settings` / `-s` für das Einstellungsfenster).
 
 ---
 
-## 📄 Lizenz
+## Mitwirken, Issues & Pull Requests
 
-Veröffentlicht unter der **MIT-Lizenz**. Details siehe [LICENSE](../../LICENSE).
+BatteryDock ist Open Source und lebt von der Community. Fehlerberichte, Übersetzungen, Gerätewünsche und PRs sind herzlich willkommen.
 
-<div align="center">
+- **Gerät fehlt?** Öffne eine **[Geräteanfrage](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**. Klicke in **Einstellungen > Anpassung > Hardware-Diagnose kopieren** und füge den anonymisierten Bericht direkt ein.
+- **Bug oder Idee?** Öffne ein **[Issue](https://github.com/jorjanion/BatteryDock/issues)** mit Windows-Version und Beschreibung.
+- **Code beitragen?** Pull Requests sind sehr willkommen. Führe `cargo test --locked` und `cargo clippy --locked` aus, bevor du deinen PR erstellst.
 
-**Wenn dir BatteryDock gefällt, lass dem Repository gerne einen ⭐ da!**
+---
 
-</div>
+## Lizenz
+
+MIT-Lizenz. Details in [LICENSE](../../LICENSE).

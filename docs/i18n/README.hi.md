@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock लोगो" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**Windows 10/11 टास्कबार में सीधे एम्बेड किया गया Rust में बना हल्का बैटरी इंडिकेटर, बिना भारी कंपनी सॉफ्टवेयर के।**
+**आपके सभी वायरलेस डिवाइस की बैटरी एक साफ, नेटिव Windows टास्कबार पिल में। बिना भारी वेंडर सॉफ्टवेयर के।**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[नवीनतम इंस्टॉलर डाउनलोड करें](https://github.com/jorjanion/BatteryDock/releases/latest) · [बग रिपोर्ट करें](https://github.com/jorjanion/BatteryDock/issues) · [डिवाइस सपोर्ट का अनुरोध करें](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[v1.0.0 डाउनलोड करें](https://github.com/jorjanion/BatteryDock/releases/latest) · [बग रिपोर्ट करें](https://github.com/jorjanion/BatteryDock/issues/new) · [डिवाइस सपोर्ट मांगें](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [चेंजलॉग](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 झलक
+यदि आप अलग-अलग ब्रांड के वायरलेस माउस, हेडसेट और ब्लूटूथ कंट्रोलर इस्तेमाल करते हैं, तो Windows पर बैटरी देखने के लिए अक्सर कई भारी बैकग्राउंड ऐप चलाने पड़ते हैं।
+
+**BatteryDock** उन सभी को एक ~4 MB नेटिव Rust ऐप से बदल देता है जो आपके Windows 10/11 टास्कबार पर चुपचाप रहता है। न Electron, न टेलीमेट्री, न कोई अकाउंट।
+
+---
+
+## प्रीव्यू
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="BatteryDock कैप्सूल का क्लोज़-अप जिसमें हेडसेट की बैटरी 92% दिख रही है" /><br /><br />
-        <sub><b>टास्कबार कैप्सूल</b>: Per-Monitor DPI स्केलिंग, बैटरी रंग और लाइव ⚡ चार्जिंग बैज के साथ सीधे Windows टास्कबार में।</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>एक डिवाइस</b>: साफ वेक्टर आइकन, रंगीन बैटरी बार और प्रतिशत सीधे टास्कबार पर।</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock सेटिंग्स विंडो v0.1.12" width="340" /><br />
-        <sub><b>स्टैंडअलोन सेटिंग्स</b>: अलर्ट सीमाएं, साउंड प्रीव्यू, पोजिशन मोड और कनेक्टेड डिवाइस सूची।</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>एक साथ कई डिवाइस</b>: डिवाइस का क्रम बदलें, नाम बदलें या अनावश्यक डिवाइस छिपाएं।</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>डिवाइस</b>: अनुमानित बैटरी समय, 24 घंटे का ग्राफ, कस्टम नाम और प्रति-डिवाइस अलर्ट।</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>अलर्ट और ऑडियो</b>: कम, गंभीर और 100% फुल चार्ज सूचनाएं और ध्वनि परीक्षण।</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>कस्टमाइज़ेशन</b>: Liquid Glass / डार्क / लाइट / सिस्टम थीम, गेमिंग HUD, शॉर्टकट और 21 भाषाएं।</sub>
       </td>
     </tr>
   </table>
@@ -65,113 +88,92 @@
 
 ---
 
-## ⚡ BatteryDock क्यों?
+## विशेषताएं
 
-ज़्यादातर वायरलेस डिवाइस बैटरी प्रतिशत को भारी-भरकम निर्माता सॉफ़्टवेयर में छिपा देते हैं जो बैकग्राउंड में दर्जनों सर्विस चलाते हैं। **BatteryDock** सब कुछ टास्कबार की एक साफ़ कैप्सूल में दिखाता है:
+### मिनिमलिस्ट टास्कबार पिल
+- **4 थीम:** **Liquid Glass** (पारदर्शी), **डार्क**, **लाइट**, या **सिस्टम** (Windows थीम अपने आप अपनाता है)।
+- **सरल नियंत्रण:** लेफ्ट क्लिक से सेटिंग्स खुलती हैं, राइट क्लिक से क्विक मेनू, या इसे किसी भी मॉनिटर पर खींचें।
+- **स्मार्ट व्यवहार:** Start या Search खोलने पर भी दिखाई देता है और फुलस्क्रीन वीडियो व गेम्स में अपने आप छिप जाता है।
+- **कस्टम लेआउट:** एक क्लिक में डिवाइस क्रम बदलें, उपनाम दें, डिवाइस छिपाएं या प्रतिशत टेक्स्ट टॉगल करें।
 
-- **कोई ब्लोटवेयर नहीं:** केवल **~4 MB** की एक नेटिव Rust बाइनरी (बिना Electron, बिना टेलीमेट्री, Windows 11 पर लाइव ~77 MB प्राइवेट मेमोरी)।
-- **सीधा हार्डवेयर रीडिंग:** **Logitech HID++ 2.0**, **Windows Bluetooth / BLE GATT**, **XInput** और **Sony DualSense / DualShock 4 HID** से सीधे पढ़ता है, Logitech डिवाइस बिना G HUB खोले भी काम करते हैं।
-- **स्मार्ट फ़ुलस्क्रीन नियम:** फ़ुलस्क्रीन गेम, वीडियो या ऑटो-हाइड टास्कबार होने पर अपने-आप छिप जाता है, और `Win` कुंजी दबाने, Start/Widgets खोलने या डेस्कटॉप क्लिक करने पर दिखता रहता है।
-- **लाइव चार्जिंग इंडिकेटर:** चार्ज होते समय डिवाइस को **सियान** रंग और **⚡ बिजली आइकन** से दिखाता है।
-- **बैकग्राउंड अलर्ट:** गेम के दौरान कैप्सूल छिपी होने पर भी लो-बैटरी साउंड और डेस्कटॉप नोटिफिकेशन चलते रहते हैं।
+### वैकल्पिक गेमिंग और फुलस्क्रीन ओवरले (HUD)
+- **डिफ़ॉल्ट रूप से बंद** ताकि फुलस्क्रीन वीडियो और YouTube बिना रुकावट चलें।
+- चालू करने पर बॉर्डरलेस फुलस्क्रीन गेम्स के दौरान स्क्रीन के कोने में बैटरी दिखती है।
+- **कहीं भी रखें:** एडजस्टेबल मार्जिन वाले 4 कोने या लाइव प्रीव्यू के साथ X/Y (0% से 100%) कस्टम स्थिति।
+- **Click-through मोड:** माउस क्लिक सीधे गेम में जाते हैं।
+- **ग्लोबल शॉर्टकट:** Alt+Tab किए बिना ओवरले दिखाने/छिपाने के लिए कोई भी कुंजी सेट करें (डिफ़ॉल्ट `Alt + B`)।
+
+### स्मार्ट टेलीमेट्री और अलर्ट
+- **24 घंटे का बैटरी ट्रेंड:** हर डिवाइस कार्ड पर चार्ज और डिस्चार्ज का हल्का लोकल ग्राफ दिखता है।
+- **बैकअप समय और स्लीप मोड:** शेष समय या फुल चार्ज समय का अनुमान लगाता है और स्लीप डिवाइस पहचानता है।
+- **कम, गंभीर और 100% चार्ज अलर्ट:** ग्लोबल या प्रति-डिवाइस सीमा, म्यूट विकल्प, हल्की ध्वनि और Windows नोटिफिकेशन।
+
+### 21 भाषाएं बिल्ट-इन
+- पहली बार चलने पर Windows भाषा अपने आप पहचानता है (असमर्थित होने पर English)।
+- सभी लिपियों को स्पष्ट दिखाने के लिए जरूरत पर Windows के नेटिव फॉन्ट लोड करता है।
 
 ---
 
-## 📥 डाउनलोड और इंस्टॉलेशन
+## समर्थित हार्डवेयर
 
-**[Releases पेज](https://github.com/jorjanion/BatteryDock/releases/latest)** से नवीनतम वर्ज़न डाउनलोड करें:
+BatteryDock बिना वेंडर सॉफ्टवेयर के HID, WinRT और Bluetooth से सीधे हार्डवेयर पढ़ता है।
 
-1. **`BatteryDock-Setup-v0.1.12.exe`** (~4.4 MB) डाउनलोड करें, या पोर्टेबल उपयोग के लिए `BatteryDock-Windows-Portable.zip` चुनें।
-2. इंस्टॉलर चलाएँ और चाहें तो **"Start BatteryDock when Windows boots"** चुनें।
-3. टास्कबार में घड़ी के पास कैप्सूल दिखाई देगी।
-
-### 🛡️ Windows SmartScreen सूचना
-चूँकि BatteryDock बिना महंगे EV कोड-साइनिंग सर्टिफिकेट के एक मुफ़्त ओपन-सोर्स ऐप है, पहली बार चलाने पर SmartScreen *"Windows protected your PC"* दिखा सकता है (**More info → Run anyway** चुनें)।
-- हर रिलीज़ [`.github/workflows/release.yml`](../../.github/workflows/release.yml) में GitHub Actions द्वारा सार्वजनिक रूप से बिल्ड होती है।
-- आप पूरा Rust कोड देख सकते हैं और एक मिनट से कम में [स्वयं बिल्ड](#build-from-source) कर सकते हैं।
-
----
-
-## 🎧 समर्थित हार्डवेयर
-
-| श्रेणी | प्रोटोकॉल / स्रोत | उदाहरण व नोट्स |
+| श्रेणी | प्रोटोकॉल / तरीका | समर्थित उदाहरण |
 | :--- | :--- | :--- |
-| **Logitech वायरलेस** | डायरेक्ट HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed हेडसेट (G733, G535, G935), माउस (G PRO, Superlight, G502), कीबोर्ड |
-| **Bluetooth & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | हेडफ़ोन (Sony WH/WF, Bose, AirPods), BT माउस और कीबोर्ड |
-| **Xbox कंट्रोलर** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) वायर्ड चार्जिंग सपोर्ट सहित |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB और Bluetooth | DualSense व DualShock 4 (मल्टी-कंट्रोलर + चार्जिंग स्थिति) |
-
-**आपका ब्रांड मौजूद नहीं है (Razer, Corsair, SteelSeries, Keychron आदि)?**
-👉 **[डिवाइस सपोर्ट अनुरोध खोलें](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**, Pull Requests का भी स्वागत है!
-
----
-
-## 🎯 नियंत्रण और संकेतक
-
-### स्थिति रंग
-- **हरा:** स्वस्थ बैटरी (कम सीमा से ऊपर)
-- **एम्बर:** कम बैटरी (डिफ़ॉल्ट `20%`)
-- **लाल (पल्सिंग):** गंभीर स्तर (डिफ़ॉल्ट `10%`)
-- **सियान + ⚡:** डिवाइस अभी चार्ज हो रहा है
-
-### उपयोग
-- कैप्सूल या **`⚙`** (या ट्रे आइकन) पर **बायाँ क्लिक:** **BatteryDock Settings** खोलता है (`BatteryDock.exe --settings`)।
-- कैप्सूल या ट्रे आइकन पर **दायाँ क्लिक:** नेटिव मेनू (**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**)।
-- **क्लिक करके खींचें (> 5px):** कहीं भी ले जाएँ (दूसरे मॉनिटर पर भी); दायाँ क्लिक → **Reset to Taskbar Clock** से वापस घड़ी के पास लाएँ।
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ कॉन्फ़िगरेशन
+## डाउनलोड और इंस्टॉलेशन
 
-सेटिंग्स `%APPDATA%\jorjanion\BatteryDock\config\config.toml` में सहेजी जाती हैं:
+**[Releases पेज](https://github.com/jorjanion/BatteryDock/releases/latest)** से नवीनतम संस्करण लें:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. **`BatteryDock-Setup-v1.0.0.exe`** (इंस्टॉलर) या **`BatteryDock-Windows-Portable.zip`** (पोर्टेबल) डाउनलोड करें।
+2. इसे चलाएं और चाहें तो सेटिंग्स में Windows स्टार्टअप चालू करें।
+3. यह घड़ी के पास दिखाई देगा और GitHub से ऑटो-अपडेट सपोर्ट करता है।
+
+### Windows SmartScreen नोट
+यह एक मुफ्त ओपन-सोर्स ऐप है जिसमें पेड सर्टिफिकेट नहीं है, इसलिए पहली बार SmartScreen चेतावनी दिख सकती है। **More info** और फिर **Run anyway** पर क्लिक करें। सभी बिल्ड [`.github/workflows/release.yml`](../../.github/workflows/release.yml) में सार्वजनिक रूप से बनते हैं।
 
 ---
 
-<a id="build-from-source"></a>
+## कॉन्फ़िगरेशन
 
-## 🛠️ सोर्स कोड से बिल्ड करें
+सेटिंग्स `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (और इतिहास `history.toml`) में सेव होती हैं और तुरंत लागू होती हैं।
 
-### आवश्यकताएँ
-- [Rust toolchain](https://rustup.rs/) (stable)
-- Windows 10 या Windows 11 (MSVC)
+---
 
-### कमांड
+## सोर्स से बिल्ड करें
+
+आवश्यकताएं: Windows 10/11 और [Rust](https://rustup.rs/) (स्थिर MSVC)।
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-निर्मित फ़ाइल: `target\release\battery-dock.exe` (`--settings` / `-s` से सीधे सेटिंग्स खुलती हैं)।
 
 ---
 
-## 📄 लाइसेंस
+## योगदान, Issues और Pull Requests
 
-**MIT लाइसेंस** के अंतर्गत वितरित। विवरण के लिए [LICENSE](../../LICENSE) देखें।
+BatteryDock ओपन सोर्स है। बग रिपोर्ट, अनुवाद, नए डिवाइस अनुरोध और PR का हमेशा स्वागत है।
 
-<div align="center">
+- **डिवाइस नहीं दिख रहा?** **[डिवाइस सपोर्ट अनुरोध](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)** खोलें। **सेटिंग्स > कस्टमाइज़ेशन > हार्डवेयर डायग्नोस्टिक्स कॉपी करें** पर क्लिक करें और रिपोर्ट पेस्ट करें।
+- **कोई बग या सुझाव?** अपने Windows संस्करण के साथ **[Issue](https://github.com/jorjanion/BatteryDock/issues)** खोलें।
+- **कोड जोड़ना चाहते हैं?** Pull Requests का स्वागत है। PR से पहले `cargo test --locked` और `cargo clippy --locked` चलाएं।
 
-**यदि BatteryDock आपके काम आया हो, तो रिपॉज़िटरी को ⭐ ज़रूर दें!**
+---
 
-</div>
+## लाइसेंस
+
+MIT लाइसेंस। विवरण के लिए [LICENSE](../../LICENSE) देखें।

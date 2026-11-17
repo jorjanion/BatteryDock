@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="../../assets/logo.png" alt="BatteryDock 標誌" width="160" style="border-radius: 24px;" />
+<img src="../../assets/logo.png" alt="BatteryDock Logo" width="148" style="border-radius: 24px;" />
 
 # BatteryDock
 
-**以 Rust 打造的原生 Windows 10/11 工作列週邊電量指示膠囊，無需臃腫的原廠軟體。**
+**將所有無線周邊電量集中到 Windows 工作列的一個輕量原生膠囊中，告別臃腫的廠商軟體。**
 
 [![GitHub stars](https://img.shields.io/github/stars/jorjanion/BatteryDock?style=flat-square&logo=github)](https://github.com/jorjanion/BatteryDock/stargazers)
 [![Latest Release](https://img.shields.io/github/v/release/jorjanion/BatteryDock?style=flat-square&color=22c55e)](https://github.com/jorjanion/BatteryDock/releases/latest)
@@ -14,7 +14,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011-0078D6?style=flat-square&logo=windows)](https://github.com/jorjanion/BatteryDock)
 [![Rust](https://img.shields.io/badge/Built%20with-Rust-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 
-[下載最新安裝檔](https://github.com/jorjanion/BatteryDock/releases/latest) · [回報錯誤](https://github.com/jorjanion/BatteryDock/issues) · [請求支援裝置](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)
+[下載 v1.0.0](https://github.com/jorjanion/BatteryDock/releases/latest) · [回報問題](https://github.com/jorjanion/BatteryDock/issues/new) · [請求裝置支援](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md) · [更新日誌](../../CHANGELOG.md)
 
 <br />
 
@@ -46,18 +46,41 @@
 
 ---
 
-## 📸 畫面預覽
+如果你同時使用不同品牌的無線滑鼠、耳機與藍牙手把，在 Windows 上查看電量通常得在背景開著好幾個沉重的廠商套件。
+
+**BatteryDock** 用一個僅約 4 MB 的原生 Rust 應用程式取代它們，安靜地停靠在 Windows 10/11 工作列上。無 Electron、無遙測、免帳號。
+
+---
+
+## 介面預覽
 
 <div align="center">
   <table>
     <tr>
-      <td align="center" valign="middle" width="42%">
-        <img src="../screenshots/dock-closeup.png" alt="顯示耳機電量 92% 的 BatteryDock 膠囊特寫" /><br /><br />
-        <sub><b>工作列膠囊</b>：直接嵌入 Windows 工作列，支援各螢幕獨立 DPI 縮放、電量分級色彩與即時 ⚡ 充電圖示。</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-single.png" alt="BatteryDock single peripheral pill" /><br /><br />
+        <sub><b>單一裝置</b>: 清晰向量圖示、彩色電量條與百分比直接顯示在工作列上。</sub>
       </td>
-      <td align="center" valign="middle" width="58%">
-        <img src="../screenshots/settings.png" alt="BatteryDock 設定視窗 v0.1.12" width="340" /><br />
-        <sub><b>獨立設定視窗</b>：電量警示門檻、提示音試聽、顯示位置模式與已連線裝置列表。</sub>
+      <td align="center" valign="middle" width="50%">
+        <img src="../screenshots/dock-multi.png" alt="BatteryDock multiple peripherals pill" /><br /><br />
+        <sub><b>多裝置並排</b>: 自由排序、自訂別名或隱藏不想看到的裝置。</sub>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <table>
+    <tr>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-peripherals.jpg" alt="BatteryDock Peripherals dashboard v1.0.0" /><br />
+        <sub><b>周邊裝置</b>: 即時續航預估、24 小時電量趨勢圖、別名與個別警示。</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-alerts.jpg" alt="BatteryDock Alerts and Audio settings v1.0.0" /><br />
+        <sub><b>警示與音效</b>: 低電量、極低電量與 100% 充滿提醒，支援提示音試聽。</sub>
+      </td>
+      <td align="center" valign="top" width="33%">
+        <img src="../screenshots/settings-customization.jpg" alt="BatteryDock Customization settings v1.0.0" /><br />
+        <sub><b>個人化</b>: Liquid Glass / 深色 / 淺色 / 跟隨系統主題、遊戲 HUD 懸浮窗、快捷鍵與 21 種語言。</sub>
       </td>
     </tr>
   </table>
@@ -65,113 +88,92 @@
 
 ---
 
-## ⚡ 為什麼選擇 BatteryDock？
+## 核心功能
 
-多數無線週邊將電量百分比鎖在背景執行大量服務的臃腫原廠軟體裡。**BatteryDock** 將一切收進工作列的一顆俐落膠囊中：
+### 極簡工作列電量條
+- **4 種視覺主題:** 可選 **Liquid Glass** (超透明玻璃)、**深色**、**淺色** 或 **跟隨系統** (自動符合 Windows 主題)。
+- **簡潔操作:** 左鍵點擊電量條開啟設定、右鍵開啟快捷選單，也可拖曳至任意螢幕。
+- **智慧工作列相容:** 開啟開始選單、搜尋或小工具時依然保持在最上層，全螢幕看影片或玩遊戲時自動隱藏。
+- **自訂配置:** 一鍵調整裝置順序、設定別名、隱藏個別裝置，或切換百分比顯示。
 
-- **零臃腫軟體：** 單一 **約 4 MB** 原生 Rust 執行檔（無 Electron、無遙測，Windows 11 實測私人記憶體約 77 MB）。
-- **硬體直接讀取：** 直接查詢 **Logitech HID++ 2.0**、**Windows Bluetooth / BLE GATT**、**XInput** 與 **Sony DualSense / DualShock 4 HID**，羅技裝置免開 G HUB 也能回報（執行時亦支援 G HUB IPC）。
-- **智慧全螢幕規則：** 全螢幕遊戲、影片或自動隱藏工作列時會自動隱藏；按下 `Win` 鍵、開啟開始/搜尋/小工具或點擊桌面時保持穩定顯示。
-- **即時充電顯示：** 充電中的裝置會以**青色**顯示並附上 **⚡ 閃電圖示**。
-- **可靠的背景通知：** 即使在遊戲中膠囊處於隱藏狀態，低電量音效與系統通知仍會正常觸發。
+### 可選遊戲與全螢幕懸浮窗 (HUD)
+- **預設關閉**，讓全螢幕影片與 YouTube 完全不受干擾。
+- 啟用後，在無邊框全螢幕遊戲中會自動顯示於螢幕角落，避免遊戲中途沒電。
+- **任意位置:** 4 個角落預設 (可調邊距) 或自由位置 X/Y (0% 至 100%) 並支援即時預覽。
+- **滑鼠穿透 (Click-through):** 點擊直接穿透至遊戲畫面，不干擾操作。
+- **全域快捷鍵:** 自訂任意按鍵組合 (預設 `Alt + B`)，免 Alt+Tab 即可在遊戲內快速開關。
+
+### 智慧遙測與提醒
+- **24 小時電量趨勢:** 每張裝置卡片皆繪製輕量本地充放電曲線。
+- **續航與休眠偵測:** 估算剩餘時間或充滿所需時間，並偵測裝置休眠狀態。
+- **低電量、極低電量與 100% 充滿提醒:** 支援全域或個別門檻、單獨靜音、柔和提示音與 Windows 桌面通知。
+
+### 內建 21 種語言
+- 首次啟動自動偵測 Windows 系統語言並套用 (尚未支援的語言預設英文)。
+- 依需求載入 Windows 原生字型，讓各國文字皆清晰顯示。
 
 ---
 
-## 📥 下載與安裝
+## 支援硬體
 
-前往 **[Releases 頁面](https://github.com/jorjanion/BatteryDock/releases/latest)** 下載最新版本：
+BatteryDock 透過 HID、WinRT 與藍牙直接讀取硬體電量，不需常駐廠商軟體。
 
-1. 下載 **`BatteryDock-Setup-v0.1.12.exe`**（約 4.4 MB），或選擇免安裝的 `BatteryDock-Windows-Portable.zip`。
-2. 執行安裝程式並依需求勾選 **"Start BatteryDock when Windows boots"**。
-3. 膠囊會顯示於工作列系統匣時鐘左側。
-
-### 🛡️ Windows SmartScreen 說明
-因 BatteryDock 為免費開源專案且尚未購買付費 EV 程式碼簽章憑證，首次執行可能跳出 *"Windows 已保護您的電腦"*（點擊**其他資訊 → 仍要執行**）。
-- 所有 Release 檔案皆透過 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) 於 GitHub Actions 公開編譯產出。
-- 您也可以檢視完整 Rust 原始碼並在 1 分鐘內[自行編譯](#build-from-source)。
-
----
-
-## 🎧 支援硬體
-
-| 類別 | 協定 / 來源 | 範例與說明 |
+| 類別 | 協定 / 方式 | 支援範例 |
 | :--- | :--- | :--- |
-| **Logitech 無線** | 直接 HID++ 2.0 (`0x1004` / `0x1000`) & G HUB IPC | Lightspeed 耳機 (G733, G535, G935)、滑鼠 (G PRO, Superlight, G502)、鍵盤 |
-| **藍牙 & BLE** | Windows WinRT PnP + BLE GATT (`0x180F` / `0x2A19`) | 耳機 (Sony WH/WF, Bose, AirPods)、藍牙滑鼠與鍵盤 |
-| **Xbox 控制器** | Windows `XInput` | Xbox Wireless Controllers (Series X\|S, One, 360) 含插線充電偵測 |
-| **PlayStation** | Sony HID (`VID 0x054C`) USB & Bluetooth | DualSense & DualShock 4（支援多手把 + 充電狀態） |
-
-**找不到您的品牌（Razer、Corsair、SteelSeries、Keychron 等）？**
-👉 **[提交裝置支援請求](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**，也歡迎提交 PR！
-
----
-
-## 🎯 操作與狀態指示
-
-### 狀態色彩
-- **綠色：** 電量充足（高於低電量門檻）
-- **琥珀色：** 電量偏低（預設 `20%`）
-- **紅色（閃爍）：** 嚴重低電量（預設 `10%`）
-- **青色 + ⚡：** 充電中
-
-### 互動方式
-- **左鍵點擊**膠囊或 **`⚙`** 圖示（或系統匣圖示）：開啟 **BatteryDock Settings**（`BatteryDock.exe --settings`）。
-- **右鍵點擊**膠囊或系統匣圖示：開啟原生選單（**Settings**, **Refresh Devices**, **Reset to Taskbar Clock**, **Restart BatteryDock**, **Exit BatteryDock**）。
-- **點擊拖曳 (> 5px)：** 可移至螢幕任意位置（含副螢幕）；右鍵 → **Reset to Taskbar Clock** 即可恢復至時鐘旁。
+| **Logitech Wireless** | Direct HID++ 2.0 & G HUB IPC | Lightspeed headsets (G733, G535, G935, G435), mice (G PRO, Superlight, G502, MX Master), keyboards (G915) |
+| **Razer Wireless** | Native Razer HyperSpeed HID | Viper, DeathAdder, Basilisk, Naga, Cobra, BlackWidow, Barracuda, BlackShark |
+| **SteelSeries, Corsair & Glorious** | Native USB-HID | Arctis / Aerox / Rival, Corsair wireless mice & headsets, Glorious Model O / D |
+| **HyperX & Astro Gaming** | Native Wireless Audio HID | HyperX Cloud II / III / Alpha / Flight / Stinger Wireless, Astro A50 / A30 |
+| **Bluetooth Classic & BLE** | Windows PnP (`DEVPKEY_Bluetooth_Battery`) & BLE GATT | Sony WH/WF series (WH-1000XM4/XM5, WH-CH720N), JBL (Tune 770NC, Live), Bose, Sennheiser, AirPods, BT mice & keyboards |
+| **Xbox Controllers** | XInput & Windows Gaming Input (WinRT) | Xbox Series X/S, Xbox One, Xbox Elite Series 2 |
+| **PlayStation Controllers** | Direct Sony USB & Bluetooth HID | DualSense, DualSense Edge, DualShock 4 (USB, BT, & Wireless Adapter) |
+| **Nintendo Controllers** | Direct Nintendo HID | Switch Pro Controller, Joy-Con L/R |
 
 ---
 
-## ⚙️ 設定檔
+## 下載與安裝
 
-設定自動儲存於 `%APPDATA%\jorjanion\BatteryDock\config\config.toml`：
+前往 **[Releases 頁面](https://github.com/jorjanion/BatteryDock/releases/latest)** 下載最新版:
 
-```toml
-low_battery_threshold = 20
-critical_battery_threshold = 10
-audio_alert_enabled = true
-visual_alert_enabled = true
-position_mode = "TaskbarLeftOfTray" # TaskbarLeftOfTray | TaskbarRight | TaskbarLeft | Custom
-custom_pos_x = 0.0
-custom_pos_y = 0.0
-snap_to_taskbar = true
-start_with_windows = false
-poll_interval_secs = 4
-show_percentage_text = true
-compact_mode = false
-```
+1. 下載 **`BatteryDock-Setup-v1.0.0.exe`** (安裝版) 或 **`BatteryDock-Windows-Portable.zip`** (免安裝可攜版)。
+2. 執行後可在設定中選擇開機自動啟動。
+3. 電量條會出現在時鐘旁，並內建 GitHub 自動更新檢查。
+
+### Windows SmartScreen 說明
+因 BatteryDock 為免費開源專案且未購買付費憑證，首次執行可能出現 SmartScreen 提示。請點擊 **其他資訊** 再選 **仍要執行**。所有發行檔皆於 [`.github/workflows/release.yml`](../../.github/workflows/release.yml) 公開建置。
 
 ---
 
-<a id="build-from-source"></a>
+## 設定說明
 
-## 🛠️ 從原始碼編譯
+設定檔儲存於 `%APPDATA%\jorjanion\BatteryDock\config\config.toml` (趨勢紀錄於 `history.toml`)，變更會立即生效無需重啟。
 
-### 系統需求
-- [Rust 工具鏈](https://rustup.rs/)（stable）
-- Windows 10 或 Windows 11（MSVC）
+---
 
-### 指令
+## 從原始碼建置
+
+需求: Windows 10/11 與 [Rust](https://rustup.rs/) (穩定版 MSVC)。
 
 ```powershell
 git clone https://github.com/jorjanion/BatteryDock.git
 cd BatteryDock
-
-cargo fmt --check
-cargo clippy --all-targets -- -D warnings
 cargo test --locked
 cargo build --release --locked
+.\target\release\battery-dock.exe
 ```
-
-編譯完成後的執行檔位於 `target\release\battery-dock.exe`（傳入 `--settings` / `-s` 可直接開啟設定視窗）。
 
 ---
 
-## 📄 授權條款
+## 參與貢獻、Issue 與 Pull Request
 
-採用 **MIT 授權條款**。詳情請參閱 [LICENSE](../../LICENSE)。
+BatteryDock 是社群驅動的開源專案，歡迎提交錯誤回報、翻譯、新裝置支援請求與 PR。
 
-<div align="center">
+- **沒偵測到你的裝置？** 開啟 **[裝置支援請求](https://github.com/jorjanion/BatteryDock/issues/new?template=device-support.md)**。在 **設定 > 個人化 > 複製硬體診斷資訊** 一鍵複製匿名報告貼上即可。
+- **發現 Bug 或有建議？** 歡迎提交 **[Issue](https://github.com/jorjanion/BatteryDock/issues)** 並附上 Windows 版本與重現步驟。
+- **想貢獻程式碼？** 歡迎提交 Pull Request。送出前請執行 `cargo test --locked` 與 `cargo clippy --locked`。
 
-**若 BatteryDock 對您有所幫助，歡迎幫這個專案按一顆 ⭐ Star！**
+---
 
-</div>
+## 授權條款
+
+MIT 授權條款，詳見 [LICENSE](../../LICENSE)。
