@@ -116,9 +116,29 @@ impl DockOverlay {
             .show(ctx, |ui| {
                 let avail_rect = ui.available_rect_before_wrap();
 
-                // Frosted dark acrylic pill background with Windows 11 Fluent style
-                let bg_color = Color32::from_rgba_premultiplied(16, 18, 22, 226);
-                let border_stroke = Stroke::new(1.0_f32, Color32::from_white_alpha(32));
+                let is_light = config.is_effective_light_theme();
+                let is_liquid = config.theme_mode == crate::config::ThemeMode::LiquidGlass;
+
+                let (bg_color, border_stroke, divider_stroke) = if is_liquid {
+                    (
+                        Color32::from_rgba_premultiplied(12, 14, 18, 45),
+                        Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(255, 255, 255, 38)),
+                        Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(255, 255, 255, 22)),
+                    )
+                } else if is_light {
+                    (
+                        Color32::from_rgba_premultiplied(242, 244, 247, 228),
+                        Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(0, 0, 0, 38)),
+                        Stroke::new(1.0_f32, Color32::from_rgba_premultiplied(0, 0, 0, 32)),
+                    )
+                } else {
+                    (
+                        Color32::from_rgba_premultiplied(16, 18, 22, 226),
+                        Stroke::new(1.0_f32, Color32::from_white_alpha(32)),
+                        Stroke::new(1.0_f32, Color32::from_white_alpha(28)),
+                    )
+                };
+
                 ui.painter()
                     .rect_filled(avail_rect, CornerRadius::same(14), bg_color);
                 ui.painter().rect_stroke(
@@ -148,20 +168,30 @@ impl DockOverlay {
                     if visible_devices.is_empty() {
                         let (icon_rect, _) =
                             ui.allocate_exact_size(Vec2::new(16.0, 16.0), egui::Sense::hover());
+                        let empty_icon_color = if is_light {
+                            Color32::from_black_alpha(150)
+                        } else {
+                            Color32::from_white_alpha(150)
+                        };
                         DevicePainter::paint_device_icon(
                             ui.painter(),
                             icon_rect,
                             DeviceType::Unknown,
-                            Color32::from_white_alpha(150),
+                            empty_icon_color,
                         );
                         ui.add_space(6.0);
                         let label_w = config.language.empty_dock_text_width();
+                        let empty_text_color = if is_light {
+                            Color32::from_black_alpha(175)
+                        } else {
+                            Color32::from_white_alpha(165)
+                        };
                         ui.add_sized(
                             Vec2::new(label_w, 16.0),
                             egui::Label::new(
                                 egui::RichText::new(config.language.no_devices_connected())
                                     .size(11.5)
-                                    .color(Color32::from_white_alpha(165)),
+                                    .color(empty_text_color),
                             )
                             .wrap_mode(egui::TextWrapMode::Extend)
                             .selectable(false),
@@ -177,7 +207,7 @@ impl DockOverlay {
                                         Pos2::new(div_x + 0.5, avail_rect.center().y - 8.0),
                                         Pos2::new(div_x + 0.5, avail_rect.center().y + 8.0),
                                     ],
-                                    Stroke::new(1.0_f32, Color32::from_white_alpha(28)),
+                                    divider_stroke,
                                 );
                                 ui.add_space(1.0 + 6.0);
                             }
@@ -192,7 +222,17 @@ impl DockOverlay {
                                     Vec2::new(16.0, 16.0),
                                     egui::Sense::hover(),
                                 );
-                                let icon_color = if dev.is_asleep {
+                                let icon_color = if is_light {
+                                    if dev.is_asleep {
+                                        Color32::from_black_alpha(110)
+                                    } else if dev.is_charging {
+                                        Color32::from_rgb(2, 132, 199)
+                                    } else if dev.percentage <= config.critical_battery_threshold {
+                                        Color32::from_rgb(220, 38, 38)
+                                    } else {
+                                        Color32::from_black_alpha(215)
+                                    }
+                                } else if dev.is_asleep {
                                     Color32::from_white_alpha(115)
                                 } else if dev.is_charging {
                                     Color32::from_rgb(125, 211, 252)
@@ -215,7 +255,7 @@ impl DockOverlay {
                                     Vec2::new(23.0, 10.5),
                                     egui::Sense::hover(),
                                 );
-                                DevicePainter::paint_battery_meter(
+                                DevicePainter::paint_battery_meter_themed(
                                     ui.painter(),
                                     meter_rect,
                                     dev.percentage,
@@ -223,6 +263,7 @@ impl DockOverlay {
                                     config.low_battery_threshold,
                                     config.critical_battery_threshold,
                                     if dev.is_asleep { 0.5 } else { pulse_alpha },
+                                    is_light,
                                 );
 
                                 // Dedicated crisp charging badge when peripheral is charging
@@ -243,7 +284,19 @@ impl DockOverlay {
                                 let show_pct = config.show_percentage_text && !config.compact_mode;
                                 if show_pct {
                                     ui.add_space(3.0);
-                                    let text_color = if dev.is_asleep {
+                                    let text_color = if is_light {
+                                        if dev.is_asleep {
+                                            Color32::from_black_alpha(120)
+                                        } else if dev.is_charging {
+                                            Color32::from_rgb(2, 132, 199)
+                                        } else if dev.percentage <= config.critical_battery_threshold {
+                                            Color32::from_rgb(220, 38, 38)
+                                        } else if dev.percentage <= config.low_battery_threshold {
+                                            Color32::from_rgb(217, 119, 6)
+                                        } else {
+                                            Color32::from_black_alpha(225)
+                                        }
+                                    } else if dev.is_asleep {
                                         Color32::from_white_alpha(120)
                                     } else if dev.is_charging {
                                         Color32::from_rgb(56, 189, 248)
@@ -285,10 +338,17 @@ impl DockOverlay {
                             // Subtle rounded hover glow over hovered peripheral
                             if dev_hover_resp.hovered() && !self.is_actively_dragging {
                                 let highlight_rect = seg_rect.shrink2(Vec2::new(1.0, 3.0));
+                                let highlight_color = if is_light {
+                                    Color32::from_black_alpha(18)
+                                } else if is_liquid {
+                                    Color32::from_white_alpha(28)
+                                } else {
+                                    Color32::from_white_alpha(18)
+                                };
                                 ui.painter().rect_filled(
                                     highlight_rect,
                                     CornerRadius::same(7),
-                                    Color32::from_white_alpha(18),
+                                    highlight_color,
                                 );
                             }
 
@@ -768,5 +828,34 @@ mod tests {
             }],
         );
         assert!(open_settings);
+    }
+
+    #[test]
+    fn test_dock_renders_all_theme_modes() {
+        let themes = [
+            crate::config::ThemeMode::LiquidGlass,
+            crate::config::ThemeMode::Dark,
+            crate::config::ThemeMode::Light,
+            crate::config::ThemeMode::System,
+        ];
+        let devs = vec![sample_dev(85, false), sample_dev(15, true)];
+        let ctx = egui::Context::default();
+        let mut dock = DockOverlay::new();
+
+        for theme in themes {
+            let mut cfg = AppConfig {
+                theme_mode: theme,
+                ..AppConfig::default()
+            };
+            let w = DockOverlay::required_width(&devs, &cfg);
+            let raw = egui::RawInput {
+                screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+                ..Default::default()
+            };
+            let mut open_settings = false;
+            let _ = ctx.run(raw, |ctx| {
+                dock.render(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
+            });
+        }
     }
 }

@@ -18,6 +18,15 @@ pub enum DockPositionMode {
     Custom,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum ThemeMode {
+    #[default]
+    System,
+    LiquidGlass,
+    Dark,
+    Light,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct DeviceAlertConfig {
     #[serde(default)]
@@ -50,6 +59,8 @@ pub struct AppConfig {
     pub auto_update: bool,
     pub language: Language,
     #[serde(default)]
+    pub theme_mode: ThemeMode,
+    #[serde(default)]
     pub device_configs: std::collections::HashMap<String, DeviceAlertConfig>,
 }
 
@@ -70,6 +81,7 @@ impl Default for AppConfig {
             compact_mode: false,
             auto_update: true,
             language: Language::default(),
+            theme_mode: ThemeMode::default(),
             device_configs: std::collections::HashMap::new(),
         }
     }
@@ -169,6 +181,68 @@ impl AppConfig {
         }
         fallback_name
     }
+
+    pub fn is_effective_light_theme(&self) -> bool {
+        match self.theme_mode {
+            ThemeMode::Light => true,
+            ThemeMode::Dark | ThemeMode::LiquidGlass => false,
+            ThemeMode::System => detect_windows_system_is_light(),
+        }
+    }
+}
+
+#[cfg(windows)]
+pub fn detect_windows_system_is_light() -> bool {
+    use std::os::windows::ffi::OsStrExt;
+    use windows::core::PCWSTR;
+    use windows::Win32::System::Registry::{
+        RegCloseKey, RegOpenKeyExW, RegQueryValueExW, HKEY_CURRENT_USER, KEY_READ, REG_DWORD,
+    };
+
+    let subkey: Vec<u16> =
+        std::ffi::OsStr::new("Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize")
+            .encode_wide()
+            .chain(Some(0))
+            .collect();
+    let val_name: Vec<u16> = std::ffi::OsStr::new("SystemUsesLightTheme")
+        .encode_wide()
+        .chain(Some(0))
+        .collect();
+
+    unsafe {
+        let mut hkey = windows::Win32::System::Registry::HKEY::default();
+        if RegOpenKeyExW(
+            HKEY_CURRENT_USER,
+            PCWSTR(subkey.as_ptr()),
+            0,
+            KEY_READ,
+            &mut hkey,
+        )
+        .is_ok()
+        {
+            let mut data: u32 = 0;
+            let mut data_len = std::mem::size_of::<u32>() as u32;
+            let mut val_type = REG_DWORD;
+            let res = RegQueryValueExW(
+                hkey,
+                PCWSTR(val_name.as_ptr()),
+                None,
+                Some(&mut val_type),
+                Some(&mut data as *mut u32 as *mut u8),
+                Some(&mut data_len),
+            );
+            let _ = RegCloseKey(hkey);
+            if res.is_ok() && val_type == REG_DWORD {
+                return data != 0;
+            }
+        }
+    }
+    false
+}
+
+#[cfg(not(windows))]
+pub fn detect_windows_system_is_light() -> bool {
+    false
 }
 
 #[cfg(test)]
@@ -221,5 +295,26 @@ mod tests {
         assert_eq!(fs::read_to_string(&path).unwrap(), "invalid = [unclosed");
 
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_theme_mode_serialization_and_effective_theme() {
+        let mut cfg = AppConfig::default();
+        assert_eq!(cfg.theme_mode, ThemeMode::System);
+
+        cfg.theme_mode = ThemeMode::LiquidGlass;
+        assert!(!cfg.is_effective_light_theme());
+
+        cfg.theme_mode = ThemeMode::Light;
+        assert!(cfg.is_effective_light_theme());
+
+        cfg.theme_mode = ThemeMode::Dark;
+        assert!(!cfg.is_effective_light_theme());
+
+        let toml_str = toml::to_string(&cfg).expect("serialize");
+        assert!(toml_str.contains("theme_mode = \"Dark\""));
+
+        let deserialized: AppConfig = toml::from_str(&toml_str).expect("deserialize");
+        assert_eq!(deserialized.theme_mode, ThemeMode::Dark);
     }
 }

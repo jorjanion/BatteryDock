@@ -122,6 +122,7 @@ impl DevicePainter {
     }
 
     /// Draws a modern, rounded battery bar with percentage fill and charging icon
+    #[allow(dead_code)]
     pub fn paint_battery_meter(
         painter: &egui::Painter,
         rect: Rect,
@@ -131,11 +132,38 @@ impl DevicePainter {
         crit_threshold: u8,
         pulse_alpha: f32,
     ) {
+        Self::paint_battery_meter_themed(
+            painter,
+            rect,
+            percentage,
+            is_charging,
+            low_threshold,
+            crit_threshold,
+            pulse_alpha,
+            false,
+        );
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn paint_battery_meter_themed(
+        painter: &egui::Painter,
+        rect: Rect,
+        percentage: u8,
+        is_charging: bool,
+        low_threshold: u8,
+        crit_threshold: u8,
+        pulse_alpha: f32,
+        is_light: bool,
+    ) {
         let pct = percentage.min(100);
 
         // Determine battery fill color
         let fill_color = if is_charging {
-            Color32::from_rgb(56, 189, 248) // Electric Sky Blue
+            if is_light {
+                Color32::from_rgb(2, 132, 199)
+            } else {
+                Color32::from_rgb(56, 189, 248)
+            }
         } else if pct <= crit_threshold {
             let alpha = (200.0 + 55.0 * pulse_alpha) as u8;
             Color32::from_rgba_premultiplied(239, 68, 68, alpha) // Red pulse
@@ -150,8 +178,16 @@ impl DevicePainter {
         // Battery outer shell
         let shell_rect =
             Rect::from_min_size(rect.min, Vec2::new(rect.width() - 2.5, rect.height()));
-        let border_stroke = Stroke::new(1.0_f32, Color32::from_white_alpha(70));
-        let bg_fill = Color32::from_black_alpha(100);
+        let border_stroke = if is_light {
+            Stroke::new(1.0_f32, Color32::from_black_alpha(110))
+        } else {
+            Stroke::new(1.0_f32, Color32::from_white_alpha(70))
+        };
+        let bg_fill = if is_light {
+            Color32::from_black_alpha(18)
+        } else {
+            Color32::from_black_alpha(100)
+        };
         painter.rect_filled(shell_rect, 2.5, bg_fill);
         painter.rect_stroke(shell_rect, 2.5, border_stroke, StrokeKind::Inside);
 
@@ -160,7 +196,12 @@ impl DevicePainter {
             Pos2::new(shell_rect.max.x + 0.5, shell_rect.center().y - 2.5),
             Vec2::new(1.5, 5.0),
         );
-        painter.rect_filled(tip_rect, 0.8, Color32::from_white_alpha(90));
+        let tip_fill = if is_light {
+            Color32::from_black_alpha(110)
+        } else {
+            Color32::from_white_alpha(90)
+        };
+        painter.rect_filled(tip_rect, 0.8, tip_fill);
 
         // Inner battery level fill
         let padding = 1.5;

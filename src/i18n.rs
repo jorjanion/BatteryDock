@@ -484,6 +484,48 @@ impl Language {
             Language::Spanish => format!("Estado óptimo • {count} periférico(s) activo(s)"),
         }
     }
+
+    pub fn heading_theme(&self) -> &'static str {
+        match self {
+            Language::English => "Pill Aesthetic Theme",
+            Language::Spanish => "Estética y tema de la pastilla",
+        }
+    }
+
+    pub fn heading_dock_appearance(&self) -> &'static str {
+        match self {
+            Language::English => "Dock Appearance & Layout",
+            Language::Spanish => "Apariencia y diseño de la pastilla",
+        }
+    }
+
+    pub fn theme_system(&self) -> &'static str {
+        match self {
+            Language::English => "System (Follow Windows Dark/Light)",
+            Language::Spanish => "Sistema (Seguir tema de Windows)",
+        }
+    }
+
+    pub fn theme_liquid_glass(&self) -> &'static str {
+        match self {
+            Language::English => "Liquid Glass (Ultra-transparent)",
+            Language::Spanish => "Liquid Glass (Transparente)",
+        }
+    }
+
+    pub fn theme_dark(&self) -> &'static str {
+        match self {
+            Language::English => "Dark (Frosted Acrylic)",
+            Language::Spanish => "Oscura (Acrílico oscuro)",
+        }
+    }
+
+    pub fn theme_light(&self) -> &'static str {
+        match self {
+            Language::English => "Light (Frosted White Acrylic)",
+            Language::Spanish => "Clara (Acrílico claro)",
+        }
+    }
 }
 
 #[cfg(test)]

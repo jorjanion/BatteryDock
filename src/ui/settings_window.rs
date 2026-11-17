@@ -418,10 +418,48 @@ impl SettingsWindow {
                 });
             }
             SettingsTab::Customization => {
+                // Theme Selection
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_theme())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let current_theme = config.theme_mode;
+                    ui.radio_value(
+                        &mut config.theme_mode,
+                        crate::config::ThemeMode::LiquidGlass,
+                        lang.theme_liquid_glass(),
+                    );
+                    ui.radio_value(
+                        &mut config.theme_mode,
+                        crate::config::ThemeMode::Dark,
+                        lang.theme_dark(),
+                    );
+                    ui.radio_value(
+                        &mut config.theme_mode,
+                        crate::config::ThemeMode::Light,
+                        lang.theme_light(),
+                    );
+                    ui.radio_value(
+                        &mut config.theme_mode,
+                        crate::config::ThemeMode::System,
+                        lang.theme_system(),
+                    );
+
+                    if config.theme_mode != current_theme {
+                        config.save();
+                    }
+                });
+
+                ui.add_space(8.0);
+
                 // Dock Appearance & Compact Mode
                 card_frame.show(ui, |ui| {
                     ui.label(
-                        egui::RichText::new("Dock Appearance & Layout")
+                        egui::RichText::new(lang.heading_dock_appearance())
                             .strong()
                             .size(13.0),
                     );
