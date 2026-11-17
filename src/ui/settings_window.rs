@@ -325,11 +325,9 @@ impl SettingsWindow {
                             );
                             ui.add_space(4.0);
                             ui.label(
-                                egui::RichText::new(
-                                    "Connect wireless peripherals via Bluetooth or 2.4GHz USB receiver.",
-                                )
-                                .size(11.5)
-                                .weak(),
+                                egui::RichText::new(lang.no_devices_connect_hint())
+                                    .size(11.5)
+                                    .weak(),
                             );
                             ui.add_space(14.0);
                         });
@@ -492,7 +490,7 @@ impl SettingsWindow {
                                 ui.add_space(2.0);
                                 // Nickname edit
                                 ui.horizontal(|ui| {
-                                    ui.label(egui::RichText::new("Nickname:").size(11.5));
+                                    ui.label(egui::RichText::new(lang.nickname_label()).size(11.5));
                                     let mut name_buf =
                                         dev_cfg.custom_name.clone().unwrap_or_default();
                                     if ui.text_edit_singleline(&mut name_buf).changed() {
@@ -1033,23 +1031,38 @@ impl SettingsWindow {
 
                     let mut cur_lang = config.language;
                     egui::ComboBox::from_id_salt("settings_language_combobox")
+                        .width(260.0)
                         .selected_text(cur_lang.display_name())
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(
-                                &mut cur_lang,
-                                crate::i18n::Language::English,
-                                crate::i18n::Language::English.display_name(),
-                            );
-                            ui.selectable_value(
-                                &mut cur_lang,
-                                crate::i18n::Language::Spanish,
-                                crate::i18n::Language::Spanish.display_name(),
-                            );
+                            for &option_lang in crate::i18n::Language::ALL {
+                                ui.selectable_value(
+                                    &mut cur_lang,
+                                    option_lang,
+                                    option_lang.display_name(),
+                                );
+                            }
                         });
                     if cur_lang != config.language {
                         config.language = cur_lang;
                         config.save();
                     }
+
+                    ui.add_space(6.0);
+                    let (detected_opt, _) = crate::i18n::Language::detect_system_language_status();
+                    let target_sys_lang = detected_opt.unwrap_or(crate::i18n::Language::English);
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            egui::RichText::new(lang.detected_system_language_label(detected_opt))
+                                .size(11.0)
+                                .weak(),
+                        );
+                        if config.language != target_sys_lang
+                            && ui.button(lang.use_system_language_button()).clicked()
+                        {
+                            config.language = target_sys_lang;
+                            config.save();
+                        }
+                    });
                 });
 
                 ui.add_space(8.0);
@@ -1304,8 +1317,9 @@ pub struct SettingsApp {
 }
 
 impl SettingsApp {
-    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let config = AppConfig::load();
+        crate::i18n::configure_egui_fonts(&cc.egui_ctx, config.language, true);
         let engine = crate::battery::engine::BatteryEngine::start(std::time::Duration::from_secs(
             config.poll_interval_secs,
         ));

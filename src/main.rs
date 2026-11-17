@@ -72,6 +72,7 @@ struct BatteryDockApp {
     sync: Arc<DockSyncState>,
     last_dock_width: f32,
     last_position_mode: DockPositionMode,
+    last_language: i18n::Language,
     last_mouse_passthrough: bool,
     last_config_reload: Instant,
 }
@@ -369,9 +370,11 @@ impl BatteryDockApp {
             .unwrap_or(0);
 
         let config = AppConfig::load();
+        i18n::configure_egui_fonts(&cc.egui_ctx, config.language, false);
         let initial_devices: Vec<DeviceBattery> = Vec::new();
         let initial_w = DockOverlay::required_width(&initial_devices, &config);
         let initial_mode = config.position_mode;
+        let initial_lang = config.language;
 
         let sync = Arc::new(DockSyncState {
             our_hwnd: AtomicIsize::new(our_hwnd),
@@ -519,6 +522,7 @@ impl BatteryDockApp {
             sync,
             last_dock_width: initial_w,
             last_position_mode: initial_mode,
+            last_language: initial_lang,
             last_mouse_passthrough: false,
             last_config_reload: Instant::now(),
         }
@@ -567,6 +571,10 @@ impl eframe::App for BatteryDockApp {
                 if loaded != self.config {
                     self.config = loaded;
                     self.last_position_mode = self.config.position_mode;
+                    if self.config.language != self.last_language {
+                        self.last_language = self.config.language;
+                        i18n::configure_egui_fonts(ctx, self.config.language, false);
+                    }
                 }
             }
         }
