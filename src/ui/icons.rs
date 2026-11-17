@@ -223,6 +223,7 @@ impl DevicePainter {
     }
 
     /// Draws a clean vector settings gear button icon
+    #[allow(dead_code)]
     pub fn paint_settings_gear(painter: &egui::Painter, rect: Rect, color: Color32) {
         let center = rect.center();
         let outer_r = (rect.width().min(rect.height()) * 0.42).max(3.5);

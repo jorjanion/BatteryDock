@@ -68,9 +68,9 @@ impl DockOverlay {
             }
         }
 
-        // space(4) + settings gear hit target (14) + right padding (6)
-        w += 4.0 + 14.0 + 6.0;
-        w.max(96.0)
+        // Symmetrical right padding (8.0)
+        w += 8.0;
+        w.max(48.0)
     }
 
     pub fn render(
@@ -128,27 +128,12 @@ impl DockOverlay {
                     StrokeKind::Inside,
                 );
 
-                // Subtle top-edge 1px specular reflection
-                if avail_rect.width() > 30.0 {
-                    ui.painter().line_segment(
-                        [
-                            Pos2::new(avail_rect.min.x + 12.0, avail_rect.min.y + 0.5),
-                            Pos2::new(avail_rect.max.x - 12.0, avail_rect.min.y + 0.5),
-                        ],
-                        Stroke::new(1.0_f32, Color32::from_white_alpha(45)),
-                    );
-                }
-
                 // Base click/drag area across pill (children added after still receive hover/clicks)
                 let dock_response = ui.interact(
                     avail_rect,
                     ui.id().with("dock_drag_area"),
                     egui::Sense::click_and_drag(),
                 );
-
-                let mut settings_clicked = false;
-                let mut settings_secondary_clicked = false;
-                let mut settings_pressed = false;
 
                 // Content inside the pill with zero implicit egui item spacing so layout == required_width()
                 ui.horizontal_centered(|ui| {
@@ -366,40 +351,11 @@ impl DockOverlay {
                         }
                     }
 
-                    // Crisp vector Settings gear icon button at right end
-                    ui.add_space(4.0);
-                    let (gear_rect, settings_btn) =
-                        ui.allocate_exact_size(Vec2::new(14.0, 20.0), egui::Sense::click());
-                    if settings_btn.hovered() {
-                        ui.painter().circle_filled(
-                            gear_rect.center(),
-                            8.5,
-                            Color32::from_white_alpha(22),
-                        );
-                    }
-                    let gear_color = if settings_btn.hovered() {
-                        Color32::from_white_alpha(245)
-                    } else {
-                        Color32::from_white_alpha(130)
-                    };
-                    DevicePainter::paint_settings_gear(
-                        ui.painter(),
-                        Rect::from_center_size(gear_rect.center(), Vec2::new(11.0, 11.0)),
-                        gear_color,
-                    );
-                    if settings_btn.clicked() {
-                        settings_clicked = true;
-                    }
-                    if settings_btn.secondary_clicked() {
-                        settings_secondary_clicked = true;
-                    }
-                    settings_pressed =
-                        settings_btn.is_pointer_button_down_on() || settings_btn.hovered();
-
-                    ui.add_space(6.0);
+                    // Symmetrical right padding
+                    ui.add_space(8.0);
                 });
 
-                if dock_response.secondary_clicked() || settings_secondary_clicked {
+                if dock_response.secondary_clicked() {
                     if let Some(action) = context_menu_fn(our_hwnd) {
                         match action {
                             DockContextMenuAction::Settings => *open_settings = true,
@@ -421,7 +377,7 @@ impl DockOverlay {
                     let primary_pressed = ui.input(|i| i.pointer.primary_pressed());
                     let pointer_in_pill = ui.rect_contains_pointer(avail_rect);
 
-                    if primary_pressed && !settings_pressed && pointer_in_pill {
+                    if primary_pressed && pointer_in_pill {
                         if let (Some((cx, cy)), Some(win_r)) = (
                             get_cursor_physical_pos(),
                             get_window_physical_rect(our_hwnd),
@@ -461,7 +417,7 @@ impl DockOverlay {
                     }
                 }
 
-                if settings_clicked || (dock_response.clicked() && !was_dragging_on_release) {
+                if dock_response.clicked() && !was_dragging_on_release {
                     *open_settings = true;
                 }
             });
@@ -511,11 +467,11 @@ mod tests {
             ..Default::default()
         };
         let empty_w = DockOverlay::required_width(&[], &cfg);
-        assert_eq!(empty_w, 178.0);
+        assert_eq!(empty_w, 162.0);
 
         cfg.language = Language::Spanish;
         let empty_es_w = DockOverlay::required_width(&[], &cfg);
-        assert_eq!(empty_es_w, 210.0);
+        assert_eq!(empty_es_w, 194.0);
         cfg.language = Language::English;
 
         let one_normal = vec![sample_dev(27, false)];
@@ -701,11 +657,11 @@ mod tests {
 
         assert_eq!(
             menu_opened_count, 1,
-            "Right-clicking directly on the settings gear icon must invoke the context menu"
+            "Right-clicking the dock pill must invoke the context menu"
         );
         assert!(
             !open_settings,
-            "Right-clicking the gear icon must not trigger left-click Settings open unless selected in menu"
+            "Right-clicking must not trigger left-click Settings open unless selected in menu"
         );
     }
 
