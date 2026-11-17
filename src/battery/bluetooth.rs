@@ -12,8 +12,6 @@ use windows::Foundation::IPropertyValue;
 use windows::Storage::Streams::DataReader;
 use windows::Win32::Foundation::E_BOUNDS;
 
-const DEVPKEY_DEVICE_IS_CONNECTED: &str = "{83DA6326-97A6-4088-9453-A1923F573B29} 15";
-
 #[implement(IIterable<HSTRING>)]
 struct HstringIterable {
     values: Vec<HSTRING>,
@@ -190,7 +188,6 @@ fn build_pnp_additional_props() -> IIterable<HSTRING> {
         "System.Devices.DeviceInstanceId",
         "System.Devices.ContainerId",
         "System.Devices.Present",
-        DEVPKEY_DEVICE_IS_CONNECTED,
     ])
 }
 
@@ -317,9 +314,6 @@ fn collect_bluetooth_pnp_nodes_inner(
         if read_bool_prop(&props, "System.Devices.Present") == Some(false) {
             continue;
         }
-        if read_bool_prop(&props, DEVPKEY_DEVICE_IS_CONNECTED) == Some(false) {
-            continue;
-        }
 
         let Some(instance_id) = read_string_prop(&props, "System.Devices.DeviceInstanceId") else {
             continue;
@@ -331,9 +325,6 @@ fn collect_bluetooth_pnp_nodes_inner(
         let dedup_key = read_guid_prop(&props, "System.Devices.ContainerId")
             .unwrap_or_else(|| raw_name.to_ascii_lowercase());
         let meta = aep_meta.get(&dedup_key);
-        if meta.and_then(|m| m.is_connected) == Some(false) {
-            continue;
-        }
 
         if let Some(percentage) = read_u8_prop(&props, "System.Devices.BatteryLife") {
             let is_charging =
@@ -493,6 +484,9 @@ mod tests {
             "BTHENUM\\{0000111e-0000-1000-8000-00805f9b34fb}_LOCALMFG&0002\\8&12345"
         ));
         assert!(is_bluetooth_pnp_instance_id(
+            "BTHENUM\\{0000111E-0000-1000-8000-00805F9B34FB}_VID&0002054C_PID&0EAF\\A&31DAB596&0&00A41C94297E_C00000000"
+        ));
+        assert!(is_bluetooth_pnp_instance_id(
             "BTHLE\\Dev_AABBCCDDEEFF\\7&123456&0&AABBCCDDEEFF"
         ));
         assert!(is_bluetooth_pnp_instance_id(
@@ -518,6 +512,10 @@ mod tests {
         assert_eq!(
             resolve_bluetooth_pnp_display_name("Hands-Free AG Audio", Some("Sony WH-1000XM5")),
             "Sony WH-1000XM5"
+        );
+        assert_eq!(
+            resolve_bluetooth_pnp_display_name("WH-CH720N Hands-Free AG", Some("WH-CH720N")),
+            "WH-CH720N"
         );
         assert_eq!(
             resolve_bluetooth_pnp_display_name("Sony WH-1000XM5 Hands-Free", None),

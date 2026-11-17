@@ -32,9 +32,15 @@ impl DeviceType {
             || lower.contains("headphone")
             || lower.contains("earbud")
             || lower.contains("airpod")
-            || lower.contains("wh-1000")
-            || lower.contains("wf-1000")
+            || lower.contains("wh-")
+            || lower.contains("wf-")
+            || lower.contains("wi-")
             || lower.contains("bose")
+            || lower.contains("quietcomfort")
+            || lower.contains("sennheiser")
+            || lower.contains("momentum")
+            || lower.contains("hands-free")
+            || lower.contains("jbl")
             || lower.contains("g733")
             || lower.contains("g935")
             || lower.contains("g533")
@@ -217,6 +223,14 @@ mod tests {
         );
         assert_eq!(
             DeviceType::guess_from_name("Sony WH-1000XM5"),
+            DeviceType::Headset
+        );
+        assert_eq!(
+            DeviceType::guess_from_name("Sony WH-CH720N"),
+            DeviceType::Headset
+        );
+        assert_eq!(
+            DeviceType::guess_from_name("WH-CH720N Hands-Free AG"),
             DeviceType::Headset
         );
         assert_eq!(
