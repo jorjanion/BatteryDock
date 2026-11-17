@@ -182,8 +182,9 @@ impl SettingsWindow {
                     .weak(),
             );
         } else {
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                for dev in devices {
+            let mut cfg_changed = false;
+            for dev in devices {
+                egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.horizontal(|ui| {
                         let icon = match dev.device_type {
                             crate::battery::DeviceType::Headset => "🎧",
@@ -197,7 +198,9 @@ impl SettingsWindow {
                         };
                         ui.label(icon)
                             .on_hover_text(lang.device_type_name(&dev.device_type));
-                        ui.label(egui::RichText::new(&dev.name).strong());
+
+                        let display_name = config.get_device_display_name(&dev.id, &dev.name);
+                        ui.label(egui::RichText::new(display_name).strong());
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             let color = if dev.is_charging {
@@ -228,8 +231,96 @@ impl SettingsWindow {
                             }
                         });
                     });
-                }
-            });
+
+                    // Telemetry sub-row: Protocol + Status + Autonomy
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            egui::RichText::new(format!("{} • ", dev.source.display_name()))
+                                .weak()
+                                .size(11.0),
+                        );
+                        let (st_txt, st_col) = if dev.is_charging {
+                            (lang.status_charging(), egui::Color32::from_rgb(56, 189, 248))
+                        } else if dev.is_asleep {
+                            (lang.status_asleep(), egui::Color32::from_rgb(192, 132, 252))
+                        } else {
+                            (lang.status_active(), egui::Color32::from_rgb(74, 222, 128))
+                        };
+                        ui.label(egui::RichText::new(st_txt).color(st_col).size(11.0));
+
+                        if let Some(mins) = dev.estimated_minutes_left {
+                            let time_str = lang.format_time_left(mins, dev.is_charging);
+                            ui.label(
+                                egui::RichText::new(format!(" ({time_str})"))
+                                    .weak()
+                                    .size(11.0),
+                            );
+                        }
+                    });
+
+                    // Collapsible Per-Device Options
+                    let dev_cfg = config.device_configs.entry(dev.id.clone()).or_default();
+                    ui.collapsing(lang.heading_per_device_settings(), |ui| {
+                        // Custom Nickname
+                        ui.horizontal(|ui| {
+                            ui.label(egui::RichText::new("Nickname:").size(11.0));
+                            let mut name_buf = dev_cfg.custom_name.clone().unwrap_or_default();
+                            if ui.text_edit_singleline(&mut name_buf).changed() {
+                                dev_cfg.custom_name = if name_buf.trim().is_empty() {
+                                    None
+                                } else {
+                                    Some(name_buf)
+                                };
+                                cfg_changed = true;
+                            }
+                        });
+
+                        // Custom Low Battery Alert Threshold
+                        ui.horizontal(|ui| {
+                            let mut use_custom = dev_cfg.low_threshold.is_some();
+                            if ui
+                                .checkbox(&mut use_custom, lang.label_custom_low_alert())
+                                .changed()
+                            {
+                                if use_custom {
+                                    dev_cfg.low_threshold = Some(config.low_battery_threshold);
+                                } else {
+                                    dev_cfg.low_threshold = None;
+                                }
+                                cfg_changed = true;
+                            }
+                            if let Some(ref mut low_thresh) = dev_cfg.low_threshold {
+                                if ui
+                                    .add(egui::Slider::new(low_thresh, 5..=50).suffix("%"))
+                                    .changed()
+                                {
+                                    cfg_changed = true;
+                                }
+                            }
+                        });
+
+                        // Mute & Hide Toggles
+                        ui.horizontal(|ui| {
+                            if ui
+                                .checkbox(&mut dev_cfg.mute_alerts, lang.label_mute_alerts())
+                                .changed()
+                            {
+                                cfg_changed = true;
+                            }
+                            if ui
+                                .checkbox(&mut dev_cfg.hidden, lang.label_hide_from_dock())
+                                .changed()
+                            {
+                                cfg_changed = true;
+                            }
+                        });
+                    });
+                });
+                ui.add_space(4.0);
+            }
+            if cfg_changed {
+                config.save();
+            }
         }
 
         ui.add_space(6.0);

@@ -121,6 +121,24 @@ pub enum BatterySource {
     AudioHeadsetHid,
 }
 
+impl BatterySource {
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            BatterySource::BluetoothGatt => "Bluetooth GATT",
+            BatterySource::WindowsPnp => "Windows PNP",
+            BatterySource::LogitechHidpp => "Logitech LIGHTSPEED / HID++",
+            BatterySource::XInput => "Xbox Wireless / XInput",
+            BatterySource::DualSenseHid => "PlayStation DualSense / DualShock",
+            BatterySource::RazerHid => "Razer HyperSpeed Wireless",
+            BatterySource::SteelSeriesHid => "SteelSeries Quantum Wireless",
+            BatterySource::CorsairHid => "Corsair SLIPSTREAM",
+            BatterySource::GenericHid => "Universal HID Battery",
+            BatterySource::NintendoHid => "Nintendo Switch",
+            BatterySource::AudioHeadsetHid => "Wireless Audio Headset",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DeviceBattery {
     pub id: String,
@@ -130,6 +148,34 @@ pub struct DeviceBattery {
     pub is_charging: bool,
     pub is_connected: bool,
     pub source: BatterySource,
+    #[serde(default)]
+    pub is_asleep: bool,
+    #[serde(default)]
+    pub estimated_minutes_left: Option<u32>,
+}
+
+impl DeviceBattery {
+    pub fn new(
+        id: impl Into<String>,
+        name: impl Into<String>,
+        device_type: DeviceType,
+        percentage: u8,
+        is_charging: bool,
+        is_connected: bool,
+        source: BatterySource,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            name: name.into(),
+            device_type,
+            percentage,
+            is_charging,
+            is_connected,
+            source,
+            is_asleep: false,
+            estimated_minutes_left: None,
+        }
+    }
 }
 
 pub trait BatteryCollector: Send + Sync {
@@ -141,6 +187,7 @@ pub mod bluetooth;
 pub mod dualsense;
 pub mod engine;
 pub mod generic_hid;
+pub mod intelligence;
 pub mod logitech_hidpp;
 pub mod nintendo;
 pub mod razer;

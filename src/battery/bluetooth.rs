@@ -266,14 +266,16 @@ fn collect_aep_selector_inner(
                         existing.is_charging |= is_charging;
                         existing.percentage = percentage;
                     })
-                    .or_insert_with(|| DeviceBattery {
-                        id: format!("bt_{}", id),
-                        name: name.clone(),
-                        device_type: DeviceType::guess_from_name(&name),
-                        percentage,
-                        is_charging,
-                        is_connected,
-                        source: BatterySource::BluetoothGatt,
+                    .or_insert_with(|| {
+                        DeviceBattery::new(
+                            format!("bt_{}", id),
+                            name.clone(),
+                            DeviceType::guess_from_name(&name),
+                            percentage,
+                            is_charging,
+                            is_connected,
+                            BatterySource::BluetoothGatt,
+                        )
                     });
             }
         } else if is_ble && connected_opt == Some(true) {
@@ -342,14 +344,16 @@ fn collect_bluetooth_pnp_nodes_inner(
                 .and_modify(|existing| {
                     existing.is_charging |= is_charging;
                 })
-                .or_insert_with(|| DeviceBattery {
-                    id: format!("bt_pnp_{}", id),
-                    name: name.clone(),
-                    device_type: DeviceType::guess_from_name(&name),
-                    percentage,
-                    is_charging,
-                    is_connected: true,
-                    source: BatterySource::WindowsPnp,
+                .or_insert_with(|| {
+                    DeviceBattery::new(
+                        format!("bt_pnp_{}", id),
+                        name.clone(),
+                        DeviceType::guess_from_name(&name),
+                        percentage,
+                        is_charging,
+                        true,
+                        BatterySource::WindowsPnp,
+                    )
                 });
         }
     }
@@ -430,15 +434,15 @@ fn collect_ble_gatt_fallback(
         if let Some(percentage) = query_ble_gatt_battery_level(&candidate.aep_id) {
             out.insert(
                 candidate.dedup_key,
-                DeviceBattery {
-                    id: format!("bt_gatt_{}", candidate.aep_id),
-                    name: candidate.name.clone(),
-                    device_type: DeviceType::guess_from_name(&candidate.name),
+                DeviceBattery::new(
+                    format!("bt_gatt_{}", candidate.aep_id),
+                    candidate.name.clone(),
+                    DeviceType::guess_from_name(&candidate.name),
                     percentage,
-                    is_charging: false,
-                    is_connected: true,
-                    source: BatterySource::BluetoothGatt,
-                },
+                    false,
+                    true,
+                    BatterySource::BluetoothGatt,
+                ),
             );
         }
     }

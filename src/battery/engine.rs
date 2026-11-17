@@ -2,6 +2,7 @@ use super::audio_headsets::AudioHeadsetCollector;
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::generic_hid::GenericHidCollector;
+use super::intelligence::BatteryIntelligence;
 use super::logitech_hidpp::LogitechHidppCollector;
 use super::nintendo::NintendoCollector;
 use super::razer::RazerCollector;
@@ -49,24 +50,30 @@ impl BatteryEngine {
                 Box::new(BluetoothBatteryCollector::new()),
             ];
             let mut notification_mgr = NotificationManager::new();
+            let mut intelligence = BatteryIntelligence::new();
             let mut last_cfg = AppConfig::try_load().unwrap_or_default();
             let mut current_interval = poll_interval;
 
             let poll_and_dispatch =
                 |notify_mgr: &mut NotificationManager,
+                 intel: &mut BatteryIntelligence,
                  cfg_cache: &mut AppConfig,
                  interval_out: &mut Duration| {
-                    let devices = Self::collect_all(&collectors);
+                    let mut devices = Self::collect_all(&collectors);
+
+                    if let Some(fresh_cfg) = AppConfig::try_load() {
+                        *interval_out =
+                            Duration::from_secs(fresh_cfg.poll_interval_secs.max(1));
+                        *cfg_cache = fresh_cfg;
+                    }
+
+                    intel.process(&mut devices, cfg_cache);
+
                     if let Ok(mut guard) = latest_clone.lock() {
                         *guard = devices.clone();
                     }
 
                     if enable_notifications {
-                        if let Some(fresh_cfg) = AppConfig::try_load() {
-                            *interval_out =
-                                Duration::from_secs(fresh_cfg.poll_interval_secs.max(1));
-                            *cfg_cache = fresh_cfg;
-                        }
                         notify_mgr.check_and_notify(&devices, cfg_cache);
                     }
 
@@ -76,17 +83,17 @@ impl BatteryEngine {
                 };
 
             // Initial poll immediately
-            poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
+            poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
 
             while running_clone.load(Ordering::Relaxed) {
                 let wait_dur = current_interval;
                 // Wait for either the timer or a manual refresh signal
                 crossbeam_channel::select! {
                     recv(refresh_receiver) -> _ => {
-                        poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
+                        poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
                     }
                     default(wait_dur) => {
-                        poll_and_dispatch(&mut notification_mgr, &mut last_cfg, &mut current_interval);
+                        poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
                     }
                 }
             }
@@ -122,7 +129,10 @@ impl BatteryEngine {
         sender: &Sender<Vec<DeviceBattery>>,
         latest_devices: &Mutex<Vec<DeviceBattery>>,
     ) {
-        let all_devices = Self::collect_all(collectors);
+        let mut all_devices = Self::collect_all(collectors);
+        let mut intel = BatteryIntelligence::new();
+        let cfg = AppConfig::default();
+        intel.process(&mut all_devices, &cfg);
         if let Ok(mut guard) = latest_devices.lock() {
             *guard = all_devices.clone();
         }

@@ -127,15 +127,15 @@ impl BatteryCollector for NintendoCollector {
                     {
                         let name = resolve_nintendo_name(pid, dev_info.product_string());
                         seen_ids.insert(id.clone());
-                        devices.push(DeviceBattery {
+                        devices.push(DeviceBattery::new(
                             id,
                             name,
-                            device_type: DeviceType::Gamepad,
+                            DeviceType::Gamepad,
                             percentage,
                             is_charging,
-                            is_connected: true,
-                            source: BatterySource::NintendoHid,
-                        });
+                            true,
+                            BatterySource::NintendoHid,
+                        ));
                     }
                 }
             }

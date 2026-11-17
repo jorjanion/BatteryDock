@@ -526,15 +526,15 @@ Origin: file://\r\n\r\n";
                 Duration::from_millis(400),
             ) {
                 if let Some((pct, charging)) = parse_ghub_battery_state(&bat_json, &bat_path) {
-                    results.push(DeviceBattery {
-                        id: format!("ghub_{}", target.id),
-                        name: target.name.clone(),
-                        device_type: DeviceType::guess_from_name(&target.name),
-                        percentage: pct,
-                        is_charging: charging,
-                        is_connected: true,
-                        source: BatterySource::LogitechHidpp,
-                    });
+                    results.push(DeviceBattery::new(
+                        format!("ghub_{}", target.id),
+                        target.name.clone(),
+                        DeviceType::guess_from_name(&target.name),
+                        pct,
+                        charging,
+                        true,
+                        BatterySource::LogitechHidpp,
+                    ));
                 }
             }
         }
@@ -597,15 +597,15 @@ Origin: file://\r\n\r\n";
 
                 if let Some((pct, charging)) = battery_opt {
                     seen_keys.insert(dedup_key);
-                    devices.push(DeviceBattery {
-                        id: format!("logi_hid_{:04x}_{}", dev_info.product_id(), dev_idx),
-                        name: base_name.clone(),
-                        device_type: DeviceType::guess_from_name(&base_name),
-                        percentage: pct,
-                        is_charging: charging,
-                        is_connected: true,
-                        source: BatterySource::LogitechHidpp,
-                    });
+                    devices.push(DeviceBattery::new(
+                        format!("logi_hid_{:04x}_{}", dev_info.product_id(), dev_idx),
+                        base_name.clone(),
+                        DeviceType::guess_from_name(&base_name),
+                        pct,
+                        charging,
+                        true,
+                        BatterySource::LogitechHidpp,
+                    ));
                     if dev_idx == 0xFF {
                         break; // Direct dongle device responded on 0xFF
                     }

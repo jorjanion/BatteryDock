@@ -245,15 +245,15 @@ impl BatteryCollector for GenericHidCollector {
                 };
 
                 seen_ids.insert(id.clone());
-                devices.push(DeviceBattery {
+                devices.push(DeviceBattery::new(
                     id,
                     name,
                     device_type,
                     percentage,
                     is_charging,
-                    is_connected: true,
+                    true,
                     source,
-                });
+                ));
             }
         }
 

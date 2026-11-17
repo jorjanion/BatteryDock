@@ -325,6 +325,130 @@ impl Language {
             },
         }
     }
+
+    pub fn status_charging(&self) -> &'static str {
+        match self {
+            Language::English => "Charging",
+            Language::Spanish => "Cargando",
+        }
+    }
+
+    pub fn status_asleep(&self) -> &'static str {
+        match self {
+            Language::English => "Sleep Mode",
+            Language::Spanish => "En reposo",
+        }
+    }
+
+    pub fn status_active(&self) -> &'static str {
+        match self {
+            Language::English => "Active",
+            Language::Spanish => "En uso",
+        }
+    }
+
+    pub fn label_protocol(&self) -> &'static str {
+        match self {
+            Language::English => "Protocol:",
+            Language::Spanish => "Protocolo:",
+        }
+    }
+
+    pub fn label_status(&self) -> &'static str {
+        match self {
+            Language::English => "Status:",
+            Language::Spanish => "Estado:",
+        }
+    }
+
+    pub fn label_estimated_time(&self, is_charging: bool) -> &'static str {
+        match self {
+            Language::English => {
+                if is_charging {
+                    "Full Charge in:"
+                } else {
+                    "Est. Autonomy:"
+                }
+            }
+            Language::Spanish => {
+                if is_charging {
+                    "Carga completa en:"
+                } else {
+                    "Autonomía est.:"
+                }
+            }
+        }
+    }
+
+    pub fn format_time_left(&self, minutes: u32, is_charging: bool) -> String {
+        match self {
+            Language::English => {
+                if is_charging {
+                    if minutes == 0 {
+                        "Fully charged".to_string()
+                    } else if minutes < 60 {
+                        format!("~{minutes}m to full")
+                    } else {
+                        format!("~{}h {}m to full", minutes / 60, minutes % 60)
+                    }
+                } else if minutes < 60 {
+                    format!("~{minutes}m remaining")
+                } else {
+                    format!("~{}h {}m remaining", minutes / 60, minutes % 60)
+                }
+            }
+            Language::Spanish => {
+                if is_charging {
+                    if minutes == 0 {
+                        "Completamente cargado".to_string()
+                    } else if minutes < 60 {
+                        format!("~{minutes}m para completar")
+                    } else {
+                        format!("~{}h {}m para completar", minutes / 60, minutes % 60)
+                    }
+                } else if minutes < 60 {
+                    format!("~{minutes}m restantes")
+                } else {
+                    format!("~{}h {}m restantes", minutes / 60, minutes % 60)
+                }
+            }
+        }
+    }
+
+    pub fn heading_per_device_settings(&self) -> &'static str {
+        match self {
+            Language::English => "🎛️ Per-Device Settings & Alerts",
+            Language::Spanish => "🎛️ Ajustes y alertas por dispositivo",
+        }
+    }
+
+    pub fn label_custom_low_alert(&self) -> &'static str {
+        match self {
+            Language::English => "Custom Low Alert:",
+            Language::Spanish => "Alerta baja personalizada:",
+        }
+    }
+
+    pub fn label_mute_alerts(&self) -> &'static str {
+        match self {
+            Language::English => "Mute alerts for this device",
+            Language::Spanish => "Silenciar avisos para este dispositivo",
+        }
+    }
+
+    pub fn label_hide_from_dock(&self) -> &'static str {
+        match self {
+            Language::English => "Hide from dock pill",
+            Language::Spanish => "Ocultar en la pastilla",
+        }
+    }
+
+    pub fn label_use_default_threshold(&self) -> &'static str {
+        match self {
+            Language::English => "Default",
+            Language::Spanish => "Predeterminado",
+        }
+    }
 }
 
 #[cfg(test)]

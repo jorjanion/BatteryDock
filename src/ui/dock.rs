@@ -41,12 +41,16 @@ impl DockOverlay {
     /// Computes the exact logical width of the dock pill matching `render()` pixel-for-pixel.
     pub fn required_width(devices: &[DeviceBattery], config: &AppConfig) -> f32 {
         let mut w = 8.0_f32; // left padding
+        let visible: Vec<&DeviceBattery> = devices
+            .iter()
+            .filter(|d| !config.is_device_hidden(&d.id))
+            .collect();
 
-        if devices.is_empty() {
+        if visible.is_empty() {
             let label_w = config.language.empty_dock_text_width();
             w += 16.0 + 6.0 + label_w + 4.0;
         } else {
-            for (idx, dev) in devices.iter().enumerate() {
+            for (idx, dev) in visible.iter().enumerate() {
                 if idx > 0 {
                     // divider: space(4) + 1px line + space(6)
                     w += 11.0;
@@ -139,7 +143,12 @@ impl DockOverlay {
                     ui.spacing_mut().item_spacing.x = 0.0;
                     ui.add_space(8.0);
 
-                    if devices.is_empty() {
+                    let visible_devices: Vec<&DeviceBattery> = devices
+                        .iter()
+                        .filter(|d| !config.is_device_hidden(&d.id))
+                        .collect();
+
+                    if visible_devices.is_empty() {
                         let (icon_rect, _) =
                             ui.allocate_exact_size(Vec2::new(16.0, 16.0), egui::Sense::hover());
                         DevicePainter::paint_device_icon(
@@ -162,7 +171,7 @@ impl DockOverlay {
                         );
                         ui.add_space(4.0);
                     } else {
-                        for (idx, dev) in devices.iter().enumerate() {
+                        for (idx, dev) in visible_devices.iter().enumerate() {
                             if idx > 0 {
                                 ui.add_space(4.0);
                                 let div_x = ui.cursor().min.x;
@@ -176,6 +185,8 @@ impl DockOverlay {
                                 ui.add_space(1.0 + 6.0);
                             }
 
+                            let seg_start_x = ui.cursor().min.x;
+
                             ui.horizontal(|ui| {
                                 ui.spacing_mut().item_spacing.x = 0.0;
 
@@ -184,7 +195,9 @@ impl DockOverlay {
                                     Vec2::new(16.0, 16.0),
                                     egui::Sense::hover(),
                                 );
-                                let icon_color = if dev.is_charging {
+                                let icon_color = if dev.is_asleep {
+                                    Color32::from_white_alpha(115)
+                                } else if dev.is_charging {
                                     Color32::from_rgb(125, 211, 252)
                                 } else if dev.percentage <= config.critical_battery_threshold {
                                     Color32::from_rgb(239, 68, 68)
@@ -212,7 +225,7 @@ impl DockOverlay {
                                     dev.is_charging,
                                     config.low_battery_threshold,
                                     config.critical_battery_threshold,
-                                    pulse_alpha,
+                                    if dev.is_asleep { 0.5 } else { pulse_alpha },
                                 );
 
                                 // Dedicated crisp charging badge when peripheral is charging
@@ -232,7 +245,9 @@ impl DockOverlay {
                                 // Percentage text
                                 if config.show_percentage_text {
                                     ui.add_space(3.0);
-                                    let text_color = if dev.is_charging {
+                                    let text_color = if dev.is_asleep {
+                                        Color32::from_white_alpha(120)
+                                    } else if dev.is_charging {
                                         Color32::from_rgb(56, 189, 248)
                                     } else if dev.percentage <= config.critical_battery_threshold {
                                         Color32::from_rgb(239, 68, 68)
@@ -255,6 +270,75 @@ impl DockOverlay {
                                         .selectable(false),
                                     );
                                 }
+                            });
+
+                            let seg_end_x = ui.cursor().min.x;
+                            let seg_rect = Rect::from_min_max(
+                                Pos2::new(seg_start_x, avail_rect.min.y),
+                                Pos2::new(seg_end_x, avail_rect.max.y),
+                            );
+
+                            let dev_hover_resp = ui.interact(
+                                seg_rect,
+                                ui.id().with(format!("dev_seg_{}", dev.id)),
+                                egui::Sense::hover(),
+                            );
+
+                            // Rich Telemetry Tooltip
+                            let display_name = config.get_device_display_name(&dev.id, &dev.name).to_string();
+                            let dev_copy = (*dev).clone();
+                            let lang = config.language;
+                            dev_hover_resp.on_hover_ui(|ui| {
+                                ui.set_max_width(260.0);
+                                ui.spacing_mut().item_spacing.y = 3.0;
+
+                                // Header: Icon + Device Name
+                                ui.horizontal(|ui| {
+                                    let (icon_rect, _) = ui.allocate_exact_size(
+                                        Vec2::new(14.0, 14.0),
+                                        egui::Sense::hover(),
+                                    );
+                                    DevicePainter::paint_device_icon(
+                                        ui.painter(),
+                                        icon_rect,
+                                        dev_copy.device_type,
+                                        Color32::WHITE,
+                                    );
+                                    ui.label(egui::RichText::new(display_name).strong().size(12.5));
+                                });
+
+                                ui.separator();
+
+                                // Protocol
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new(lang.label_protocol()).weak().size(11.0));
+                                    ui.label(egui::RichText::new(dev_copy.source.display_name()).size(11.0));
+                                });
+
+                                // Status
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new(lang.label_status()).weak().size(11.0));
+                                    let (status_text, status_color) = if dev_copy.is_charging {
+                                        (lang.status_charging(), Color32::from_rgb(56, 189, 248))
+                                    } else if dev_copy.is_asleep {
+                                        (lang.status_asleep(), Color32::from_rgb(192, 132, 252))
+                                    } else {
+                                        (lang.status_active(), Color32::from_rgb(74, 222, 128))
+                                    };
+                                    ui.label(egui::RichText::new(status_text).color(status_color).strong().size(11.0));
+                                });
+
+                                // Estimated Autonomy / Time to Full
+                                ui.horizontal(|ui| {
+                                    let time_label = lang.label_estimated_time(dev_copy.is_charging);
+                                    ui.label(egui::RichText::new(time_label).weak().size(11.0));
+                                    if let Some(mins) = dev_copy.estimated_minutes_left {
+                                        let time_str = lang.format_time_left(mins, dev_copy.is_charging);
+                                        ui.label(egui::RichText::new(time_str).strong().size(11.0));
+                                    } else {
+                                        ui.label(egui::RichText::new("—").weak().size(11.0));
+                                    }
+                                });
                             });
                         }
                     }
@@ -379,15 +463,15 @@ mod tests {
     use crate::i18n::Language;
 
     fn sample_dev(pct: u8, charging: bool) -> DeviceBattery {
-        DeviceBattery {
-            id: format!("dev_{pct}"),
-            name: "Sample Device".to_string(),
-            device_type: DeviceType::Headset,
-            percentage: pct,
-            is_charging: charging,
-            is_connected: true,
-            source: BatterySource::LogitechHidpp,
-        }
+        DeviceBattery::new(
+            format!("dev_{pct}"),
+            "Sample Device".to_string(),
+            DeviceType::Headset,
+            pct,
+            charging,
+            true,
+            BatterySource::LogitechHidpp,
+        )
     }
 
     #[test]

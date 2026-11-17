@@ -18,6 +18,20 @@ pub enum DockPositionMode {
     Custom,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct DeviceAlertConfig {
+    #[serde(default)]
+    pub low_threshold: Option<u8>,
+    #[serde(default)]
+    pub critical_threshold: Option<u8>,
+    #[serde(default)]
+    pub mute_alerts: bool,
+    #[serde(default)]
+    pub custom_name: Option<String>,
+    #[serde(default)]
+    pub hidden: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppConfig {
@@ -35,6 +49,8 @@ pub struct AppConfig {
     pub compact_mode: bool,
     pub auto_update: bool,
     pub language: Language,
+    #[serde(default)]
+    pub device_configs: std::collections::HashMap<String, DeviceAlertConfig>,
 }
 
 impl Default for AppConfig {
@@ -54,6 +70,7 @@ impl Default for AppConfig {
             compact_mode: false,
             auto_update: true,
             language: Language::default(),
+            device_configs: std::collections::HashMap::new(),
         }
     }
 }
@@ -113,6 +130,44 @@ impl AppConfig {
     pub fn save(&self) {
         let path = Self::config_path();
         self.save_to_path(&path);
+    }
+
+    pub fn get_device_thresholds(&self, device_id: &str) -> (u8, u8) {
+        if let Some(cfg) = self.device_configs.get(device_id) {
+            let low = cfg.low_threshold.unwrap_or(self.low_battery_threshold);
+            let crit = cfg
+                .critical_threshold
+                .unwrap_or(self.critical_battery_threshold)
+                .min(low);
+            (low, crit)
+        } else {
+            (self.low_battery_threshold, self.critical_battery_threshold)
+        }
+    }
+
+    pub fn is_device_muted(&self, device_id: &str) -> bool {
+        self.device_configs
+            .get(device_id)
+            .map(|c| c.mute_alerts)
+            .unwrap_or(false)
+    }
+
+    pub fn is_device_hidden(&self, device_id: &str) -> bool {
+        self.device_configs
+            .get(device_id)
+            .map(|c| c.hidden)
+            .unwrap_or(false)
+    }
+
+    pub fn get_device_display_name<'a>(&'a self, device_id: &str, fallback_name: &'a str) -> &'a str {
+        if let Some(cfg) = self.device_configs.get(device_id) {
+            if let Some(ref custom) = cfg.custom_name {
+                if !custom.trim().is_empty() {
+                    return custom.as_str();
+                }
+            }
+        }
+        fallback_name
     }
 }
 

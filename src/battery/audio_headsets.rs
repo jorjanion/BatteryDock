@@ -183,15 +183,15 @@ impl BatteryCollector for AudioHeadsetCollector {
                 };
 
                 seen_ids.insert(id.clone());
-                devices.push(DeviceBattery {
+                devices.push(DeviceBattery::new(
                     id,
                     name,
-                    device_type: DeviceType::Headset,
+                    DeviceType::Headset,
                     percentage,
                     is_charging,
-                    is_connected: true,
-                    source: BatterySource::AudioHeadsetHid,
-                });
+                    true,
+                    BatterySource::AudioHeadsetHid,
+                ));
             }
         }
 

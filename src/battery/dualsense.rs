@@ -97,15 +97,15 @@ impl BatteryCollector for DualSenseCollector {
                             };
 
                             seen_ids.insert(id.clone());
-                            devices.push(DeviceBattery {
+                            devices.push(DeviceBattery::new(
                                 id,
                                 name,
-                                device_type: DeviceType::Gamepad,
+                                DeviceType::Gamepad,
                                 percentage,
                                 is_charging,
-                                is_connected: true,
-                                source: BatterySource::DualSenseHid,
-                            });
+                                true,
+                                BatterySource::DualSenseHid,
+                            ));
                         }
                     }
                 }

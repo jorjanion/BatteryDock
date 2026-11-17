@@ -68,15 +68,15 @@ impl XInputCollector {
                 format!("Xbox Wireless Controller #{}", idx + 1)
             };
 
-            devices.push(DeviceBattery {
-                id: format!("xbox_winrt_{}", idx),
+            devices.push(DeviceBattery::new(
+                format!("xbox_winrt_{}", idx),
                 name,
-                device_type: DeviceType::Gamepad,
+                DeviceType::Gamepad,
                 percentage,
                 is_charging,
-                is_connected: true,
-                source: BatterySource::XInput,
-            });
+                true,
+                BatterySource::XInput,
+            ));
         }
 
         devices
@@ -121,15 +121,15 @@ impl XInputCollector {
                     format!("Xbox Wireless Controller #{}", user_index + 1)
                 };
 
-                devices.push(DeviceBattery {
-                    id: format!("xinput_pad_{}", user_index),
+                devices.push(DeviceBattery::new(
+                    format!("xinput_pad_{}", user_index),
                     name,
-                    device_type: DeviceType::Gamepad,
+                    DeviceType::Gamepad,
                     percentage,
                     is_charging,
-                    is_connected: true,
-                    source: BatterySource::XInput,
-                });
+                    true,
+                    BatterySource::XInput,
+                ));
             }
         }
 
