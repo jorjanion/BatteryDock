@@ -193,6 +193,7 @@ pub mod bluetooth;
 pub mod dualsense;
 pub mod engine;
 pub mod generic_hid;
+pub mod history;
 pub mod intelligence;
 pub mod logitech_hidpp;
 pub mod nintendo;

@@ -2,6 +2,7 @@ use super::audio_headsets::AudioHeadsetCollector;
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::generic_hid::GenericHidCollector;
+use super::history::BatteryHistoryStore;
 use super::intelligence::BatteryIntelligence;
 use super::logitech_hidpp::LogitechHidppCollector;
 use super::nintendo::NintendoCollector;
@@ -51,12 +52,18 @@ impl BatteryEngine {
             ];
             let mut notification_mgr = NotificationManager::new();
             let mut intelligence = BatteryIntelligence::new();
+            let mut history_store = if enable_notifications {
+                BatteryHistoryStore::load()
+            } else {
+                BatteryHistoryStore::default()
+            };
             let mut last_cfg = AppConfig::try_load().unwrap_or_default();
             let mut current_interval = poll_interval;
 
             let poll_and_dispatch =
                 |notify_mgr: &mut NotificationManager,
                  intel: &mut BatteryIntelligence,
+                 hist: &mut BatteryHistoryStore,
                  cfg_cache: &mut AppConfig,
                  interval_out: &mut Duration| {
                     let mut devices = Self::collect_all(&collectors);
@@ -68,6 +75,13 @@ impl BatteryEngine {
                     }
 
                     intel.process(&mut devices, cfg_cache);
+
+                    if enable_notifications {
+                        let now_secs = BatteryHistoryStore::now_unix_secs();
+                        if hist.record_snapshot(&devices, now_secs) {
+                            hist.save();
+                        }
+                    }
 
                     if let Ok(mut guard) = latest_clone.lock() {
                         *guard = devices.clone();
@@ -83,17 +97,35 @@ impl BatteryEngine {
                 };
 
             // Initial poll immediately
-            poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
+            poll_and_dispatch(
+                &mut notification_mgr,
+                &mut intelligence,
+                &mut history_store,
+                &mut last_cfg,
+                &mut current_interval,
+            );
 
             while running_clone.load(Ordering::Relaxed) {
                 let wait_dur = current_interval;
                 // Wait for either the timer or a manual refresh signal
                 crossbeam_channel::select! {
                     recv(refresh_receiver) -> _ => {
-                        poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
+                        poll_and_dispatch(
+                            &mut notification_mgr,
+                            &mut intelligence,
+                            &mut history_store,
+                            &mut last_cfg,
+                            &mut current_interval,
+                        );
                     }
                     default(wait_dur) => {
-                        poll_and_dispatch(&mut notification_mgr, &mut intelligence, &mut last_cfg, &mut current_interval);
+                        poll_and_dispatch(
+                            &mut notification_mgr,
+                            &mut intelligence,
+                            &mut history_store,
+                            &mut last_cfg,
+                            &mut current_interval,
+                        );
                     }
                 }
             }

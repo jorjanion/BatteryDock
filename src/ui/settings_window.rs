@@ -53,12 +53,156 @@ impl SettingsWindow {
         resp
     }
 
+    fn paint_battery_sparkline(
+        ui: &mut egui::Ui,
+        points: &[crate::battery::history::BatteryPoint],
+        current_pct: u8,
+        is_charging: bool,
+        low_thresh: u8,
+        crit_thresh: u8,
+        lang: crate::i18n::Language,
+    ) {
+        let accent = if is_charging {
+            egui::Color32::from_rgb(56, 189, 248)
+        } else if current_pct <= crit_thresh {
+            egui::Color32::from_rgb(239, 68, 68)
+        } else if current_pct <= low_thresh {
+            egui::Color32::from_rgb(245, 158, 11)
+        } else {
+            egui::Color32::from_rgb(34, 197, 94)
+        };
+        let fill_col = egui::Color32::from_rgba_unmultiplied(accent.r(), accent.g(), accent.b(), 30);
+
+        ui.horizontal(|ui| {
+            ui.label(
+                egui::RichText::new(lang.battery_history_label())
+                    .size(10.5)
+                    .weak(),
+            );
+            ui.with_layout(
+                egui::Layout::right_to_left(egui::Align::Center),
+                |ui| {
+                    if points.len() >= 2 {
+                        let min_p = points.iter().map(|p| p.percentage).min().unwrap_or(current_pct);
+                        let max_p = points.iter().map(|p| p.percentage).max().unwrap_or(current_pct);
+                        ui.label(
+                            egui::RichText::new(format!("Min {}% • Max {}%", min_p, max_p))
+                                .size(10.0)
+                                .weak(),
+                        );
+                    } else {
+                        ui.label(
+                            egui::RichText::new(lang.battery_history_collecting())
+                                .size(10.0)
+                                .weak(),
+                        );
+                    }
+                },
+            );
+        });
+
+        ui.add_space(2.0);
+        let chart_w = ui.available_width().max(120.0);
+        let chart_h = 36.0;
+        let (rect, _) =
+            ui.allocate_exact_size(egui::Vec2::new(chart_w, chart_h), egui::Sense::hover());
+
+        let painter = ui.painter();
+        painter.rect_filled(
+            rect,
+            egui::CornerRadius::same(6),
+            egui::Color32::from_rgb(18, 20, 25),
+        );
+        painter.rect_stroke(
+            rect,
+            egui::CornerRadius::same(6),
+            egui::Stroke::new(1.0_f32, egui::Color32::from_white_alpha(15)),
+            egui::StrokeKind::Inside,
+        );
+
+        let pad_x = 6.0;
+        let pad_y = 5.0;
+        let inner = rect.shrink2(egui::Vec2::new(pad_x, pad_y));
+        if inner.width() <= 2.0 || inner.height() <= 2.0 {
+            return;
+        }
+
+        // Subtle 50% dashed/faint midline
+        let mid_y = inner.center().y;
+        painter.line_segment(
+            [
+                egui::Pos2::new(inner.min.x, mid_y),
+                egui::Pos2::new(inner.max.x, mid_y),
+            ],
+            egui::Stroke::new(1.0_f32, egui::Color32::from_white_alpha(12)),
+        );
+
+        let pct_to_y = |pct: u8| -> f32 {
+            let frac = (pct.min(100) as f32) / 100.0;
+            inner.max.y - frac * inner.height()
+        };
+
+        let mut coords: Vec<egui::Pos2> = Vec::new();
+        if points.len() >= 2 {
+            let t0 = points.first().unwrap().timestamp_secs;
+            let t1 = points.last().unwrap().timestamp_secs;
+            let span = t1.saturating_sub(t0);
+            let last_idx = (points.len() - 1) as f32;
+            for (i, pt) in points.iter().enumerate() {
+                let x_frac = if span > 0 {
+                    (pt.timestamp_secs.saturating_sub(t0) as f32) / (span as f32)
+                } else {
+                    (i as f32) / last_idx
+                };
+                let x = inner.min.x + x_frac * inner.width();
+                let y = pct_to_y(pt.percentage);
+                coords.push(egui::Pos2::new(x, y));
+            }
+        } else {
+            let y = pct_to_y(current_pct);
+            coords.push(egui::Pos2::new(inner.min.x, y));
+            coords.push(egui::Pos2::new(inner.max.x, y));
+        }
+
+        // Soft area fill under curve using convex trapezoid slices
+        for win in coords.windows(2) {
+            let p0 = win[0];
+            let p1 = win[1];
+            if (p1.x - p0.x).abs() > 0.1 {
+                let poly = vec![
+                    egui::Pos2::new(p0.x, inner.max.y),
+                    p0,
+                    p1,
+                    egui::Pos2::new(p1.x, inner.max.y),
+                ];
+                painter.add(egui::Shape::convex_polygon(
+                    poly,
+                    fill_col,
+                    egui::Stroke::NONE,
+                ));
+            }
+        }
+
+        // Crisp trend line
+        painter.add(egui::Shape::line(
+            coords.clone(),
+            egui::Stroke::new(1.8_f32, accent),
+        ));
+
+        // Glowing endpoint dot
+        if let Some(&last) = coords.last() {
+            painter.circle_filled(last, 4.0, fill_col);
+            painter.circle_filled(last, 2.3, accent);
+        }
+    }
+
     pub fn render_contents(
         ui: &mut egui::Ui,
         active_tab: &mut SettingsTab,
         open: &mut bool,
         config: &mut AppConfig,
         devices: &[DeviceBattery],
+        history: &crate::battery::history::BatteryHistoryStore,
         on_refresh: impl FnOnce(),
     ) {
         let mut should_refresh = false;
@@ -327,7 +471,19 @@ impl SettingsWindow {
                                 }
                             });
 
-                            ui.add_space(4.0);
+                            ui.add_space(6.0);
+                            let (dev_low, dev_crit) = config.get_device_thresholds(&dev.id);
+                            Self::paint_battery_sparkline(
+                                ui,
+                                history.points_for(&dev.id),
+                                dev.percentage,
+                                dev.is_charging,
+                                dev_low,
+                                dev_crit,
+                                lang,
+                            );
+
+                            ui.add_space(6.0);
 
                             // Collapsible Per-Device Customization
                             let dev_cfg =
@@ -935,8 +1091,10 @@ pub struct SettingsApp {
     config: AppConfig,
     engine: crate::battery::engine::BatteryEngine,
     devices: Vec<DeviceBattery>,
+    history: crate::battery::history::BatteryHistoryStore,
     is_open: bool,
     last_config_reload: std::time::Instant,
+    last_history_reload: std::time::Instant,
     active_tab: SettingsTab,
 }
 
@@ -950,12 +1108,15 @@ impl SettingsApp {
             .receiver()
             .recv_timeout(std::time::Duration::from_millis(350))
             .unwrap_or_default();
+        let history = crate::battery::history::BatteryHistoryStore::load();
         Self {
             config,
             engine,
             devices,
+            history,
             is_open: true,
             last_config_reload: std::time::Instant::now(),
+            last_history_reload: std::time::Instant::now(),
             active_tab: SettingsTab::Devices,
         }
     }
@@ -963,6 +1124,10 @@ impl SettingsApp {
     fn reload_external_config_if_due(&mut self) {
         let path = AppConfig::config_path();
         sync_external_config_if_due(&mut self.config, &mut self.last_config_reload, &path);
+        if self.last_history_reload.elapsed() >= std::time::Duration::from_secs(5) {
+            self.last_history_reload = std::time::Instant::now();
+            self.history = crate::battery::history::BatteryHistoryStore::load();
+        }
     }
 }
 
@@ -1011,6 +1176,7 @@ impl eframe::App for SettingsApp {
                         &mut self.is_open,
                         &mut self.config,
                         &self.devices,
+                        &self.history,
                         move || engine_ref.trigger_refresh(),
                     );
                 });

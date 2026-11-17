@@ -659,6 +659,20 @@ impl Language {
             Language::Spanish => "Mover más a la derecha en la pastilla",
         }
     }
+
+    pub fn battery_history_label(&self) -> &'static str {
+        match self {
+            Language::English => "Battery Trend",
+            Language::Spanish => "Historial de batería",
+        }
+    }
+
+    pub fn battery_history_collecting(&self) -> &'static str {
+        match self {
+            Language::English => "Collecting history...",
+            Language::Spanish => "Recopilando historial...",
+        }
+    }
 }
 
 #[cfg(test)]
