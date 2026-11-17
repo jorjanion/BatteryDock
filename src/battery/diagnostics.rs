@@ -99,15 +99,21 @@ pub fn build_hardware_diagnostics_report(detected_devices: &[DeviceBattery]) -> 
 
 #[cfg(windows)]
 fn collect_bluetooth_diagnostic_lines() -> Vec<String> {
+    use crate::battery::bluetooth::{make_hstring_iterable, DEVPKEY_BLUETOOTH_BATTERY};
     use windows::core::{Interface, HSTRING};
     use windows::Devices::Enumeration::{DeviceInformation, DeviceInformationKind};
     use windows::Foundation::IPropertyValue;
 
     let mut lines = Vec::new();
-    let aqs = HSTRING::from("System.Devices.BatteryLife:>=0");
+    let aqs = HSTRING::from("System.Devices.Present:=System.StructuredQueryType.Boolean#True");
+    let props_req = make_hstring_iterable(&[
+        DEVPKEY_BLUETOOTH_BATTERY,
+        "System.Devices.BatteryLife",
+        "System.Devices.DeviceInstanceId",
+    ]);
     let Ok(op) = DeviceInformation::FindAllAsyncWithKindAqsFilterAndAdditionalProperties(
         &aqs,
-        None,
+        &props_req,
         DeviceInformationKind::Device,
     ) else {
         return lines;
@@ -122,19 +128,29 @@ fn collect_bluetooth_diagnostic_lines() -> Vec<String> {
         if !crate::battery::bluetooth::is_bluetooth_pnp_instance_id(&id) {
             continue;
         }
-        let batt = dev
-            .Properties()
-            .ok()
-            .and_then(|p| p.Lookup(&HSTRING::from("System.Devices.BatteryLife")).ok())
-            .and_then(|v| v.cast::<IPropertyValue>().ok())
-            .and_then(|pv| pv.GetUInt8().ok().or_else(|| pv.GetUInt32().ok().map(|x| x as u8)));
+        let Ok(props) = dev.Properties() else {
+            continue;
+        };
+        let read_batt = |key: &str| {
+            props
+                .Lookup(&HSTRING::from(key))
+                .ok()
+                .and_then(|v| v.cast::<IPropertyValue>().ok())
+                .and_then(|pv| {
+                    pv.GetUInt8()
+                        .ok()
+                        .or_else(|| pv.GetUInt32().ok().map(|x| x as u8))
+                })
+        };
+        let Some(pct) = read_batt(DEVPKEY_BLUETOOTH_BATTERY)
+            .or_else(|| read_batt("System.Devices.BatteryLife"))
+        else {
+            continue;
+        };
 
         // Redact trailing hardware instance/MAC segment after the second backslash for privacy
         let safe_id = redact_instance_id(&id);
-        match batt {
-            Some(pct) => lines.push(format!("{safe_id} | {name} | battery={pct}%")),
-            None => lines.push(format!("{safe_id} | {name} | battery=?")),
-        }
+        lines.push(format!("{safe_id} | {name} | battery={pct}%"));
     }
 
     lines

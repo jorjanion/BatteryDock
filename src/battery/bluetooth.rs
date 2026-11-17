@@ -12,6 +12,10 @@ use windows::Foundation::IPropertyValue;
 use windows::Storage::Streams::DataReader;
 use windows::Win32::Foundation::E_BOUNDS;
 
+/// `DEVPKEY_Bluetooth_Battery` — where Windows exposes Classic Bluetooth HFP (Hands-Free AG,
+/// UUID 0x111E) and BTHLE battery levels (e.g. Sony WH-CH720N, JBL Tune 770NC, AirPods).
+pub(crate) const DEVPKEY_BLUETOOTH_BATTERY: &str = "{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2";
+
 #[implement(IIterable<HSTRING>)]
 struct HstringIterable {
     values: Vec<HSTRING>,
@@ -69,7 +73,7 @@ impl IIterator_Impl<HSTRING> for HstringIterator_Impl {
     }
 }
 
-fn make_hstring_iterable(keys: &[&str]) -> IIterable<HSTRING> {
+pub(crate) fn make_hstring_iterable(keys: &[&str]) -> IIterable<HSTRING> {
     ComObject::new(HstringIterable {
         values: keys.iter().map(|&k| HSTRING::from(k)).collect(),
     })
@@ -176,6 +180,7 @@ fn build_aep_additional_props() -> IIterable<HSTRING> {
     make_hstring_iterable(&[
         "System.Devices.Aep.IsConnected",
         "System.Devices.BatteryLife",
+        DEVPKEY_BLUETOOTH_BATTERY,
         "System.Devices.BatteryPlusCharging",
         "System.Devices.Aep.ContainerId",
     ])
@@ -184,6 +189,7 @@ fn build_aep_additional_props() -> IIterable<HSTRING> {
 fn build_pnp_additional_props() -> IIterable<HSTRING> {
     make_hstring_iterable(&[
         "System.Devices.BatteryLife",
+        DEVPKEY_BLUETOOTH_BATTERY,
         "System.Devices.BatteryPlusCharging",
         "System.Devices.DeviceInstanceId",
         "System.Devices.ContainerId",
@@ -253,7 +259,10 @@ fn collect_aep_selector_inner(
         }
         let is_connected = connected_opt.unwrap_or(true);
 
-        if let Some(percentage) = read_u8_prop(&props, "System.Devices.BatteryLife") {
+        let battery_opt = read_u8_prop(&props, DEVPKEY_BLUETOOTH_BATTERY)
+            .or_else(|| read_u8_prop(&props, "System.Devices.BatteryLife"));
+
+        if let Some(percentage) = battery_opt {
             if is_connected && (percentage > 0 || connected_opt == Some(true)) {
                 let is_charging =
                     read_bool_prop(&props, "System.Devices.BatteryPlusCharging").unwrap_or(false);
@@ -287,11 +296,12 @@ fn collect_aep_selector_inner(
     Ok(ble_candidates)
 }
 
-fn collect_bluetooth_pnp_nodes_inner(
+fn collect_pnp_nodes_with_aqs(
+    aqs_filter: &str,
     out: &mut HashMap<String, DeviceBattery>,
     aep_meta: &HashMap<String, AepMeta>,
 ) -> windows::core::Result<()> {
-    let aqs = HSTRING::from("System.Devices.BatteryLife:>=0");
+    let aqs = HSTRING::from(aqs_filter);
     let props_req = build_pnp_additional_props();
     let op = DeviceInformation::FindAllAsyncWithKindAqsFilterAndAdditionalProperties(
         &aqs,
@@ -325,8 +335,16 @@ fn collect_bluetooth_pnp_nodes_inner(
         let dedup_key = read_guid_prop(&props, "System.Devices.ContainerId")
             .unwrap_or_else(|| raw_name.to_ascii_lowercase());
         let meta = aep_meta.get(&dedup_key);
+        // If we know from AEP that EVERY transport (Classic + BLE) for this container is disconnected,
+        // skip stale cached PnP battery entries for powered-off headsets.
+        if meta.and_then(|m| m.is_connected) == Some(false) {
+            continue;
+        }
 
-        if let Some(percentage) = read_u8_prop(&props, "System.Devices.BatteryLife") {
+        let battery_opt = read_u8_prop(&props, DEVPKEY_BLUETOOTH_BATTERY)
+            .or_else(|| read_u8_prop(&props, "System.Devices.BatteryLife"));
+
+        if let Some(percentage) = battery_opt {
             let is_charging =
                 read_bool_prop(&props, "System.Devices.BatteryPlusCharging").unwrap_or(false);
             let name = resolve_bluetooth_pnp_display_name(&raw_name, meta.map(|m| m.name.as_str()));
@@ -334,6 +352,7 @@ fn collect_bluetooth_pnp_nodes_inner(
             out.entry(dedup_key)
                 .and_modify(|existing| {
                     existing.is_charging |= is_charging;
+                    existing.percentage = percentage;
                 })
                 .or_insert_with(|| {
                     DeviceBattery::new(
@@ -350,6 +369,20 @@ fn collect_bluetooth_pnp_nodes_inner(
     }
 
     Ok(())
+}
+
+fn collect_bluetooth_pnp_nodes_inner(
+    out: &mut HashMap<String, DeviceBattery>,
+    aep_meta: &HashMap<String, AepMeta>,
+) -> windows::core::Result<()> {
+    // WinRT AQS does not support raw `{GUID} PID` keys inside the filter expression itself,
+    // so we query all currently present PnP DevNodes and request DEVPKEY_Bluetooth_Battery
+    // (`{104EA319-6EE2-4701-BD47-8DDBF425BBE5} 2`) + `System.Devices.BatteryLife` in additional_properties.
+    collect_pnp_nodes_with_aqs(
+        "System.Devices.Present:=System.StructuredQueryType.Boolean#True",
+        out,
+        aep_meta,
+    )
 }
 
 fn query_ble_gatt_battery_level(aep_id: &HSTRING) -> Option<u8> {
