@@ -1,5 +1,6 @@
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
+use super::generic_hid::GenericHidCollector;
 use super::logitech_hidpp::LogitechHidppCollector;
 use super::razer::RazerCollector;
 use super::xinput::XInputCollector;
@@ -38,6 +39,7 @@ impl BatteryEngine {
             let collectors: Vec<Box<dyn BatteryCollector>> = vec![
                 Box::new(LogitechHidppCollector::new()),
                 Box::new(RazerCollector::new()),
+                Box::new(GenericHidCollector::new()),
                 Box::new(XInputCollector::new()),
                 Box::new(DualSenseCollector::new()),
                 Box::new(BluetoothBatteryCollector::new()),

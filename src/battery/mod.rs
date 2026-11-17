@@ -114,6 +114,9 @@ pub enum BatterySource {
     XInput,
     DualSenseHid,
     RazerHid,
+    SteelSeriesHid,
+    CorsairHid,
+    GenericHid,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -134,6 +137,7 @@ pub trait BatteryCollector: Send + Sync {
 pub mod bluetooth;
 pub mod dualsense;
 pub mod engine;
+pub mod generic_hid;
 pub mod logitech_hidpp;
 pub mod razer;
 pub mod xinput;
