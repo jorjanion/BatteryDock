@@ -199,7 +199,6 @@ impl SettingsWindow {
     pub fn render_contents(
         ui: &mut egui::Ui,
         active_tab: &mut SettingsTab,
-        open: &mut bool,
         config: &mut AppConfig,
         devices: &[DeviceBattery],
         history: &crate::battery::history::BatteryHistoryStore,
@@ -305,6 +304,7 @@ impl SettingsWindow {
             SettingsTab::Devices => {
                 if devices.is_empty() {
                     card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                         ui.vertical_centered(|ui| {
                             ui.add_space(16.0);
                             let (icon_rect, _) = ui.allocate_exact_size(
@@ -343,6 +343,7 @@ impl SettingsWindow {
                     let mut cfg_changed = false;
                     for (idx, dev) in sorted_devices.iter().enumerate() {
                         card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                             ui.horizontal(|ui| {
                                 let (icon_rect, _) = ui.allocate_exact_size(
                                     egui::Vec2::new(18.0, 18.0),
@@ -568,6 +569,7 @@ impl SettingsWindow {
             }
             SettingsTab::Alerts => {
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_alert_thresholds())
                             .strong()
@@ -607,6 +609,7 @@ impl SettingsWindow {
                 ui.add_space(8.0);
 
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_notifications())
                             .strong()
@@ -656,6 +659,7 @@ impl SettingsWindow {
             SettingsTab::Customization => {
                 // Theme Selection
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_theme())
                             .strong()
@@ -694,6 +698,7 @@ impl SettingsWindow {
 
                 // Dock Appearance & Layout
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_dock_appearance())
                             .strong()
@@ -716,6 +721,7 @@ impl SettingsWindow {
 
                 // Dock Placement
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_dock_placement())
                             .strong()
@@ -762,6 +768,7 @@ impl SettingsWindow {
 
                 // Gaming & Fullscreen HUD Overlay
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_game_overlay())
                             .strong()
@@ -1022,6 +1029,7 @@ impl SettingsWindow {
 
                 // Language
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_language())
                             .strong()
@@ -1069,6 +1077,7 @@ impl SettingsWindow {
 
                 // System & Updates
                 card_frame.show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     ui.label(
                         egui::RichText::new(lang.heading_updates())
                             .strong()
@@ -1182,13 +1191,6 @@ impl SettingsWindow {
                 });
             }
         }
-
-        ui.add_space(12.0);
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.button(lang.close_settings_button()).clicked() {
-                *open = false;
-            }
-        });
 
         if should_refresh {
             on_refresh();
@@ -1380,6 +1382,25 @@ impl eframe::App for SettingsApp {
         visuals.window_fill = egui::Color32::from_rgb(18, 20, 24);
         ctx.set_visuals(visuals);
 
+        let lang = self.config.language;
+        egui::TopBottomPanel::bottom("settings_footer")
+            .frame(
+                egui::Frame::NONE
+                    .fill(egui::Color32::from_rgb(18, 20, 24))
+                    .inner_margin(egui::Margin::symmetric(16, 10))
+                    .stroke(egui::Stroke::new(
+                        1.0_f32,
+                        egui::Color32::from_white_alpha(18),
+                    )),
+            )
+            .show(ctx, |ui| {
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button(lang.close_settings_button()).clicked() {
+                        self.is_open = false;
+                    }
+                });
+            });
+
         let engine_ref = self.engine.clone();
         egui::CentralPanel::default()
             .frame(
@@ -1392,7 +1413,6 @@ impl eframe::App for SettingsApp {
                     SettingsWindow::render_contents(
                         ui,
                         &mut self.active_tab,
-                        &mut self.is_open,
                         &mut self.config,
                         &self.devices,
                         &self.history,
