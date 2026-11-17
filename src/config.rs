@@ -38,6 +38,78 @@ pub enum OverlayCorner {
     Custom,
 }
 
+fn default_true() -> bool {
+    true
+}
+
+fn default_hotkey_vk() -> u16 {
+    0x42 // 'B'
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OverlayHotkey {
+    #[serde(default)]
+    pub ctrl: bool,
+    #[serde(default = "default_true")]
+    pub alt: bool,
+    #[serde(default)]
+    pub shift: bool,
+    /// Win32 Virtual-Key code (default 0x42 = 'B')
+    #[serde(default = "default_hotkey_vk")]
+    pub vk_code: u16,
+}
+
+impl Default for OverlayHotkey {
+    fn default() -> Self {
+        Self {
+            ctrl: false,
+            alt: true,
+            shift: false,
+            vk_code: 0x42, // Alt + B
+        }
+    }
+}
+
+impl OverlayHotkey {
+    pub fn vk_name(vk: u16) -> Option<String> {
+        match vk {
+            0x41..=0x5A => Some(((vk as u8) as char).to_string()),
+            0x30..=0x39 => Some(((vk as u8) as char).to_string()),
+            0x70..=0x7B => Some(format!("F{}", vk - 0x6F)),
+            0x2D => Some("Insert".to_string()),
+            0x24 => Some("Home".to_string()),
+            0x23 => Some("End".to_string()),
+            0x21 => Some("PageUp".to_string()),
+            0x22 => Some("PageDown".to_string()),
+            0xC0 => Some("`".to_string()),
+            _ => None,
+        }
+    }
+
+    pub fn is_standalone_allowed_vk(vk: u16) -> bool {
+        matches!(vk, 0x70..=0x7B | 0x2D | 0x24 | 0x23 | 0x21 | 0x22)
+    }
+
+    pub fn display_string(&self) -> String {
+        let mut parts: Vec<String> = Vec::with_capacity(4);
+        if self.ctrl {
+            parts.push("Ctrl".to_string());
+        }
+        if self.alt {
+            parts.push("Alt".to_string());
+        }
+        if self.shift {
+            parts.push("Shift".to_string());
+        }
+        if let Some(k) = Self::vk_name(self.vk_code) {
+            parts.push(k);
+        } else {
+            parts.push(format!("0x{:02X}", self.vk_code));
+        }
+        parts.join(" + ")
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct DeviceAlertConfig {
     #[serde(default)]
@@ -86,6 +158,10 @@ pub struct AppConfig {
     #[serde(default)]
     pub game_overlay_always_on: bool,
     #[serde(default)]
+    pub game_overlay_hotkey_enabled: bool,
+    #[serde(default)]
+    pub game_overlay_hotkey: OverlayHotkey,
+    #[serde(default)]
     pub theme_mode: ThemeMode,
     #[serde(default)]
     pub device_order: Vec<String>,
@@ -118,6 +194,8 @@ impl Default for AppConfig {
             game_overlay_custom_y_pct: 4.0,
             game_overlay_click_through: true,
             game_overlay_always_on: false,
+            game_overlay_hotkey_enabled: false,
+            game_overlay_hotkey: OverlayHotkey::default(),
             theme_mode: ThemeMode::default(),
             device_order: Vec::new(),
             device_configs: std::collections::HashMap::new(),
@@ -434,5 +512,31 @@ mod tests {
         // Move "a" down -> ["c", "a", "b"]
         assert!(cfg.move_device_order(&current2, "a", 1));
         assert_eq!(cfg.device_order, vec!["c", "a", "b"]);
+    }
+
+    #[test]
+    fn test_overlay_hotkey_formatting_and_roundtrip() {
+        let def = OverlayHotkey::default();
+        assert_eq!(def.display_string(), "Alt + B");
+
+        let custom = OverlayHotkey {
+            ctrl: true,
+            alt: false,
+            shift: true,
+            vk_code: 0x78, // F9
+        };
+        assert_eq!(custom.display_string(), "Ctrl + Shift + F9");
+        assert!(OverlayHotkey::is_standalone_allowed_vk(0x78));
+        assert!(!OverlayHotkey::is_standalone_allowed_vk(0x42));
+
+        let cfg = AppConfig {
+            game_overlay_hotkey_enabled: true,
+            game_overlay_hotkey: custom,
+            ..Default::default()
+        };
+        let toml_str = toml::to_string(&cfg).expect("serialize");
+        let decoded: AppConfig = toml::from_str(&toml_str).expect("deserialize");
+        assert!(decoded.game_overlay_hotkey_enabled);
+        assert_eq!(decoded.game_overlay_hotkey, custom);
     }
 }

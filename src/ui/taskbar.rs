@@ -1,4 +1,4 @@
-use crate::config::{DockPositionMode, OverlayCorner};
+use crate::config::{DockPositionMode, OverlayCorner, OverlayHotkey};
 use crate::i18n::Language;
 use std::ffi::c_void;
 use windows::core::{w, PCWSTR, PWSTR};
@@ -14,7 +14,9 @@ use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_LBUTTON, VK_RBUTTON};
+use windows::Win32::UI::Input::KeyboardAndMouse::{
+    GetAsyncKeyState, VK_CONTROL, VK_LBUTTON, VK_MENU, VK_RBUTTON, VK_SHIFT,
+};
 use windows::Win32::UI::Shell::{
     SHAppBarMessage, SHQueryUserNotificationState, ABM_GETTASKBARPOS, APPBARDATA,
     QUNS_RUNNING_D3D_FULL_SCREEN,
@@ -23,7 +25,7 @@ use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreatePopupMenu, DestroyMenu, FindWindowExW, FindWindowW, GetClassNameW,
     GetCursorPos, GetDesktopWindow, GetForegroundWindow, GetLayeredWindowAttributes,
     GetShellWindow, GetSystemMetrics, GetTopWindow, GetWindow, GetWindowLongW, GetWindowRect,
-    GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, PostMessageW,
+    GetWindowTextW, GetWindowThreadProcessId, IsIconic, IsWindow, IsWindowVisible, PostMessageW,
     SetForegroundWindow, SetWindowLongW, SetWindowPos, ShowWindow, TrackPopupMenuEx, GWL_EXSTYLE,
     GW_HWNDNEXT, GW_HWNDPREV, GW_OWNER, HWND_TOPMOST, LWA_ALPHA, MF_SEPARATOR, MF_STRING,
     SM_CXSCREEN, SM_CYSCREEN, SM_SWAPBUTTON, SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE,
@@ -1078,6 +1080,39 @@ pub fn calculate_overlay_physical_rect(
         bottom: y + phys_h,
     };
     (rect, phys_w, phys_h)
+}
+
+/// Checks whether the configured global `OverlayHotkey` is currently pressed via Win32 `GetAsyncKeyState`,
+/// requiring exact Ctrl/Alt/Shift modifier match and ignoring keypresses while the BatteryDock Settings
+/// window has focus (so recording a new shortcut never misfires).
+pub fn is_hotkey_currently_pressed(hotkey: &OverlayHotkey) -> bool {
+    if hotkey.vk_code == 0 {
+        return false;
+    }
+    unsafe {
+        let fg = GetForegroundWindow();
+        if !fg.0.is_null() {
+            let mut title_buf = [0u16; 64];
+            let len = GetWindowTextW(fg, &mut title_buf);
+            if len > 0 {
+                let title = String::from_utf16_lossy(&title_buf[..len as usize]);
+                if title == "BatteryDock Settings" {
+                    return false;
+                }
+            }
+        }
+
+        let key_down = (GetAsyncKeyState(hotkey.vk_code as i32) as u16 & 0x8000) != 0;
+        if !key_down {
+            return false;
+        }
+
+        let ctrl_down = (GetAsyncKeyState(VK_CONTROL.0 as i32) as u16 & 0x8000) != 0;
+        let alt_down = (GetAsyncKeyState(VK_MENU.0 as i32) as u16 & 0x8000) != 0;
+        let shift_down = (GetAsyncKeyState(VK_SHIFT.0 as i32) as u16 & 0x8000) != 0;
+
+        ctrl_down == hotkey.ctrl && alt_down == hotkey.alt && shift_down == hotkey.shift
+    }
 }
 
 pub fn get_window_physical_rect(hwnd_val: isize) -> Option<RECT> {

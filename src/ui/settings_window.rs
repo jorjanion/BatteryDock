@@ -786,7 +786,123 @@ impl SettingsWindow {
                         config.save();
                     }
 
-                    if config.game_overlay_enabled {
+                    ui.add_space(4.0);
+
+                    let mut hk_on = config.game_overlay_hotkey_enabled;
+                    if ui
+                        .checkbox(&mut hk_on, lang.game_overlay_hotkey_checkbox())
+                        .changed()
+                    {
+                        config.game_overlay_hotkey_enabled = hk_on;
+                        config.save();
+                    }
+
+                    if config.game_overlay_hotkey_enabled {
+                        ui.add_space(4.0);
+                        let rec_id = ui.id().with("recording_overlay_hotkey");
+                        let mut is_recording =
+                            ui.data(|d| d.get_temp::<bool>(rec_id).unwrap_or(false));
+
+                        if is_recording {
+                            let mut captured: Option<crate::config::OverlayHotkey> = None;
+                            let mut cancelled = false;
+                            ui.input(|i| {
+                                for ev in &i.events {
+                                    if let egui::Event::Key {
+                                        key,
+                                        pressed: true,
+                                        modifiers,
+                                        ..
+                                    } = ev
+                                    {
+                                        if *key == egui::Key::Escape {
+                                            cancelled = true;
+                                            break;
+                                        }
+                                        if let Some(vk) = egui_key_to_vk(*key) {
+                                            let has_mod = modifiers.ctrl
+                                                || modifiers.alt
+                                                || modifiers.shift;
+                                            if has_mod
+                                                || crate::config::OverlayHotkey::is_standalone_allowed_vk(vk)
+                                            {
+                                                captured = Some(crate::config::OverlayHotkey {
+                                                    ctrl: modifiers.ctrl,
+                                                    alt: modifiers.alt,
+                                                    shift: modifiers.shift,
+                                                    vk_code: vk,
+                                                });
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                            if let Some(new_hk) = captured {
+                                config.game_overlay_hotkey = new_hk;
+                                config.save();
+                                is_recording = false;
+                                ui.data_mut(|d| d.insert_temp(rec_id, false));
+                            } else if cancelled {
+                                is_recording = false;
+                                ui.data_mut(|d| d.insert_temp(rec_id, false));
+                            }
+                        }
+
+                        ui.horizontal(|ui| {
+                            ui.add_space(18.0);
+                            ui.label(
+                                egui::RichText::new(lang.game_overlay_hotkey_label())
+                                    .size(12.0)
+                                    .strong(),
+                            );
+
+                            let btn_text = if is_recording {
+                                lang.game_overlay_hotkey_recording().to_string()
+                            } else {
+                                config.game_overlay_hotkey.display_string()
+                            };
+                            let btn_fill = if is_recording {
+                                egui::Color32::from_rgb(37, 99, 235)
+                            } else {
+                                egui::Color32::from_rgb(38, 42, 52)
+                            };
+                            let hk_btn = egui::Button::new(
+                                egui::RichText::new(btn_text)
+                                    .color(egui::Color32::WHITE)
+                                    .strong()
+                                    .size(11.5),
+                            )
+                            .fill(btn_fill)
+                            .corner_radius(6.0);
+
+                            if ui.add(hk_btn).clicked() {
+                                let next = !is_recording;
+                                ui.data_mut(|d| d.insert_temp(rec_id, next));
+                            }
+
+                            let def_hk = crate::config::OverlayHotkey::default();
+                            if config.game_overlay_hotkey != def_hk
+                                && !is_recording
+                                && ui.button(lang.game_overlay_hotkey_reset()).clicked()
+                            {
+                                config.game_overlay_hotkey = def_hk;
+                                config.save();
+                            }
+                        });
+
+                        ui.horizontal(|ui| {
+                            ui.add_space(18.0);
+                            ui.label(
+                                egui::RichText::new(lang.game_overlay_hotkey_hint())
+                                    .size(10.5)
+                                    .weak(),
+                            );
+                        });
+                    }
+
+                    if config.game_overlay_enabled || config.game_overlay_hotkey_enabled {
                         ui.add_space(6.0);
                         ui.separator();
                         ui.add_space(6.0);
@@ -1064,6 +1180,67 @@ impl SettingsWindow {
         if should_refresh {
             on_refresh();
         }
+    }
+}
+
+fn egui_key_to_vk(key: egui::Key) -> Option<u16> {
+    use egui::Key;
+    match key {
+        Key::A => Some(0x41),
+        Key::B => Some(0x42),
+        Key::C => Some(0x43),
+        Key::D => Some(0x44),
+        Key::E => Some(0x45),
+        Key::F => Some(0x46),
+        Key::G => Some(0x47),
+        Key::H => Some(0x48),
+        Key::I => Some(0x49),
+        Key::J => Some(0x4A),
+        Key::K => Some(0x4B),
+        Key::L => Some(0x4C),
+        Key::M => Some(0x4D),
+        Key::N => Some(0x4E),
+        Key::O => Some(0x4F),
+        Key::P => Some(0x50),
+        Key::Q => Some(0x51),
+        Key::R => Some(0x52),
+        Key::S => Some(0x53),
+        Key::T => Some(0x54),
+        Key::U => Some(0x55),
+        Key::V => Some(0x56),
+        Key::W => Some(0x57),
+        Key::X => Some(0x58),
+        Key::Y => Some(0x59),
+        Key::Z => Some(0x5A),
+        Key::Num0 => Some(0x30),
+        Key::Num1 => Some(0x31),
+        Key::Num2 => Some(0x32),
+        Key::Num3 => Some(0x33),
+        Key::Num4 => Some(0x34),
+        Key::Num5 => Some(0x35),
+        Key::Num6 => Some(0x36),
+        Key::Num7 => Some(0x37),
+        Key::Num8 => Some(0x38),
+        Key::Num9 => Some(0x39),
+        Key::F1 => Some(0x70),
+        Key::F2 => Some(0x71),
+        Key::F3 => Some(0x72),
+        Key::F4 => Some(0x73),
+        Key::F5 => Some(0x74),
+        Key::F6 => Some(0x75),
+        Key::F7 => Some(0x76),
+        Key::F8 => Some(0x77),
+        Key::F9 => Some(0x78),
+        Key::F10 => Some(0x79),
+        Key::F11 => Some(0x7A),
+        Key::F12 => Some(0x7B),
+        Key::Insert => Some(0x2D),
+        Key::Home => Some(0x24),
+        Key::End => Some(0x23),
+        Key::PageUp => Some(0x21),
+        Key::PageDown => Some(0x22),
+        Key::Backtick => Some(0xC0),
+        _ => None,
     }
 }
 

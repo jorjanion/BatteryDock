@@ -687,6 +687,41 @@ impl Language {
             Language::Spanish => "¡Copiado al portapapeles!",
         }
     }
+
+    pub fn game_overlay_hotkey_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Enable global keyboard shortcut to toggle overlay",
+            Language::Spanish => "Activar atajo de teclado global para mostrar/ocultar el overlay",
+        }
+    }
+
+    pub fn game_overlay_hotkey_label(&self) -> &'static str {
+        match self {
+            Language::English => "Shortcut:",
+            Language::Spanish => "Atajo:",
+        }
+    }
+
+    pub fn game_overlay_hotkey_recording(&self) -> &'static str {
+        match self {
+            Language::English => "Press key combo... (Esc to cancel)",
+            Language::Spanish => "Pulsa la combinación... (Esc cancelar)",
+        }
+    }
+
+    pub fn game_overlay_hotkey_hint(&self) -> &'static str {
+        match self {
+            Language::English => "Click the shortcut button to change it. Use Ctrl/Alt/Shift + key, or F1-F12 / Insert / Home / End.",
+            Language::Spanish => "Haz clic en el botón del atajo para cambiarlo. Usa Ctrl/Alt/Shift + tecla, o F1-F12 / Insert / Home / End.",
+        }
+    }
+
+    pub fn game_overlay_hotkey_reset(&self) -> &'static str {
+        match self {
+            Language::English => "Reset",
+            Language::Spanish => "Restablecer",
+        }
+    }
 }
 
 #[cfg(test)]

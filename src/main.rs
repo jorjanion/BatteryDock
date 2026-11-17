@@ -9,7 +9,7 @@ pub mod updater;
 
 use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
-use config::{AppConfig, DockPositionMode, OverlayCorner};
+use config::{AppConfig, DockPositionMode, OverlayCorner, OverlayHotkey};
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -17,8 +17,9 @@ use std::time::{Duration, Instant};
 use ui::dock::DockOverlay;
 use ui::taskbar::{
     apply_overlay_ex_style, calculate_overlay_physical_rect, ensure_window_above_monitor_taskbar,
-    ensure_window_topmost_standalone, get_active_foreground_monitor_info, is_window_visible_win32,
-    set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry,
+    ensure_window_topmost_standalone, get_active_foreground_monitor_info,
+    is_hotkey_currently_pressed, is_window_visible_win32, set_window_physical_rect,
+    set_window_visible_noactivate, TaskbarGeometry,
 };
 use ui::tray::SystemTray;
 use windows::core::w;
@@ -44,6 +45,8 @@ struct DockLayoutParams {
     game_overlay_custom_x_pct: f32,
     game_overlay_custom_y_pct: f32,
     game_overlay_always_on: bool,
+    game_overlay_hotkey_enabled: bool,
+    game_overlay_hotkey: OverlayHotkey,
 }
 
 struct DockSyncState {
@@ -51,6 +54,7 @@ struct DockSyncState {
     is_dragging: AtomicBool,
     is_dock_hidden: AtomicBool,
     is_game_overlay_active: AtomicBool,
+    hotkey_was_down: AtomicBool,
     just_unhid: AtomicBool,
     last_hidden_refresh: Mutex<Instant>,
     layout: Mutex<DockLayoutParams>,
@@ -199,6 +203,8 @@ fn refresh_layout_from_disk_and_engine(
         layout.game_overlay_custom_x_pct = cfg.game_overlay_custom_x_pct;
         layout.game_overlay_custom_y_pct = cfg.game_overlay_custom_y_pct;
         layout.game_overlay_always_on = cfg.game_overlay_always_on;
+        layout.game_overlay_hotkey_enabled = cfg.game_overlay_hotkey_enabled;
+        layout.game_overlay_hotkey = cfg.game_overlay_hotkey;
         return layout.clone();
     }
     sync.layout.lock().unwrap().clone()
@@ -238,6 +244,28 @@ fn sync_dock_window_once(
     } else {
         sync.layout.lock().unwrap().clone()
     };
+
+    // Global edge-triggered hotkey to toggle Gaming / Fullscreen HUD Overlay on the fly
+    if params.game_overlay_hotkey_enabled {
+        let pressed = is_hotkey_currently_pressed(&params.game_overlay_hotkey);
+        let was_pressed = sync.hotkey_was_down.swap(pressed, Ordering::AcqRel);
+        if pressed && !was_pressed {
+            let mut cfg = AppConfig::try_load().unwrap_or_default();
+            cfg.game_overlay_enabled = !cfg.game_overlay_enabled;
+            cfg.save();
+            {
+                let mut layout = sync.layout.lock().unwrap();
+                layout.game_overlay_enabled = cfg.game_overlay_enabled;
+            }
+            params.game_overlay_enabled = cfg.game_overlay_enabled;
+            sync.just_unhid.store(true, Ordering::Release);
+            if let Some(c) = ctx {
+                c.request_repaint();
+            }
+        }
+    } else {
+        sync.hotkey_was_down.store(false, Ordering::Release);
+    }
 
     apply_overlay_ex_style(hwnd);
 
@@ -350,6 +378,7 @@ impl BatteryDockApp {
             is_dragging: AtomicBool::new(false),
             is_dock_hidden: AtomicBool::new(false),
             is_game_overlay_active: AtomicBool::new(false),
+            hotkey_was_down: AtomicBool::new(false),
             just_unhid: AtomicBool::new(false),
             last_hidden_refresh: Mutex::new(Instant::now()),
             layout: Mutex::new(DockLayoutParams {
@@ -364,6 +393,8 @@ impl BatteryDockApp {
                 game_overlay_custom_x_pct: config.game_overlay_custom_x_pct,
                 game_overlay_custom_y_pct: config.game_overlay_custom_y_pct,
                 game_overlay_always_on: config.game_overlay_always_on,
+                game_overlay_hotkey_enabled: config.game_overlay_hotkey_enabled,
+                game_overlay_hotkey: config.game_overlay_hotkey,
             }),
         });
 
@@ -506,6 +537,8 @@ impl BatteryDockApp {
         layout.game_overlay_custom_x_pct = self.config.game_overlay_custom_x_pct;
         layout.game_overlay_custom_y_pct = self.config.game_overlay_custom_y_pct;
         layout.game_overlay_always_on = self.config.game_overlay_always_on;
+        layout.game_overlay_hotkey_enabled = self.config.game_overlay_hotkey_enabled;
+        layout.game_overlay_hotkey = self.config.game_overlay_hotkey;
     }
 }
 
