@@ -456,7 +456,7 @@ impl SettingsWindow {
 
                 ui.add_space(8.0);
 
-                // Dock Appearance & Compact Mode
+                // Dock Appearance & Layout
                 card_frame.show(ui, |ui| {
                     ui.label(
                         egui::RichText::new(lang.heading_dock_appearance())
@@ -465,21 +465,13 @@ impl SettingsWindow {
                     );
                     ui.add_space(6.0);
 
-                    let mut compact = config.compact_mode;
-                    if ui
-                        .checkbox(&mut compact, lang.compact_mode_checkbox())
-                        .changed()
-                    {
-                        config.compact_mode = compact;
-                        config.save();
-                    }
-
                     let mut show_pct = config.show_percentage_text;
                     if ui
                         .checkbox(&mut show_pct, lang.show_percentage_checkbox())
                         .changed()
                     {
                         config.show_percentage_text = show_pct;
+                        config.compact_mode = !show_pct;
                         config.save();
                     }
                 });

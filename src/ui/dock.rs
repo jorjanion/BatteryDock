@@ -61,7 +61,7 @@ impl DockOverlay {
                     // space(2) + crisp vector charging lightning bolt (10)
                     w += 2.0 + 10.0;
                 }
-                let show_pct = config.show_percentage_text && !config.compact_mode;
+                let show_pct = config.show_percentage_text;
                 if show_pct {
                     w += 3.0 + Self::percentage_label_width(dev.percentage);
                 }
@@ -281,7 +281,7 @@ impl DockOverlay {
                                 }
 
                                 // Percentage text (hidden in compact mode)
-                                let show_pct = config.show_percentage_text && !config.compact_mode;
+                                let show_pct = config.show_percentage_text;
                                 if show_pct {
                                     ui.add_space(3.0);
                                     let text_color = if is_light {
