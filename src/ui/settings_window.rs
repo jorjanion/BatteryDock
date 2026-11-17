@@ -1022,6 +1022,34 @@ impl SettingsWindow {
                             }
                         }
                     });
+
+                    ui.add_space(6.0);
+                    ui.separator();
+                    ui.add_space(6.0);
+
+                    let diag_copied_id = ui.id().with("diag_copied_until");
+                    let now_t = ui.input(|i| i.time);
+                    let copied_until: f64 =
+                        ui.data(|d| d.get_temp::<f64>(diag_copied_id).unwrap_or(0.0));
+
+                    ui.horizontal(|ui| {
+                        if ui.button(lang.copy_diagnostics_button()).clicked() {
+                            let report =
+                                crate::battery::diagnostics::build_hardware_diagnostics_report(
+                                    devices,
+                                );
+                            ui.ctx().copy_text(report);
+                            ui.data_mut(|d| d.insert_temp(diag_copied_id, now_t + 3.0));
+                        }
+                        if now_t < copied_until {
+                            ui.label(
+                                egui::RichText::new(lang.diagnostics_copied_label())
+                                    .color(egui::Color32::from_rgb(34, 197, 94))
+                                    .strong()
+                                    .size(11.5),
+                            );
+                        }
+                    });
                 });
             }
         }

@@ -673,6 +673,20 @@ impl Language {
             Language::Spanish => "Recopilando historial...",
         }
     }
+
+    pub fn copy_diagnostics_button(&self) -> &'static str {
+        match self {
+            Language::English => "Copy Hardware Diagnostics",
+            Language::Spanish => "Copiar diagnóstico de hardware",
+        }
+    }
+
+    pub fn diagnostics_copied_label(&self) -> &'static str {
+        match self {
+            Language::English => "Copied to clipboard!",
+            Language::Spanish => "¡Copiado al portapapeles!",
+        }
+    }
 }
 
 #[cfg(test)]

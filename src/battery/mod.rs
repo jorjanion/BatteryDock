@@ -190,6 +190,7 @@ pub trait BatteryCollector: Send + Sync {
 
 pub mod audio_headsets;
 pub mod bluetooth;
+pub mod diagnostics;
 pub mod dualsense;
 pub mod engine;
 pub mod generic_hid;
