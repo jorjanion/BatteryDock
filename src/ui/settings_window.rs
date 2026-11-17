@@ -2,11 +2,20 @@ use crate::battery::DeviceBattery;
 use crate::config::{AppConfig, DockPositionMode};
 use crate::notifications::audio;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SettingsTab {
+    #[default]
+    Devices,
+    Alerts,
+    Customization,
+}
+
 pub struct SettingsWindow;
 
 impl SettingsWindow {
     pub fn render_contents(
         ui: &mut egui::Ui,
+        active_tab: &mut SettingsTab,
         open: &mut bool,
         config: &mut AppConfig,
         devices: &[DeviceBattery],
@@ -15,415 +24,589 @@ impl SettingsWindow {
         let mut should_refresh = false;
         let lang = config.language;
 
-        ui.add_space(8.0);
-
-        // Header
+        // Sleek Windows 11 Fluent Header
+        ui.add_space(4.0);
         ui.horizontal(|ui| {
             ui.heading("🔋 BatteryDock");
-            ui.label(egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION"))).weak());
-        });
-        ui.label(egui::RichText::new(lang.header_subtitle()).italics().weak());
+            ui.add_space(4.0);
+            let ver_label = egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION")))
+                .size(11.0)
+                .color(egui::Color32::from_white_alpha(140));
+            ui.label(ver_label);
 
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Language Selector Section
-        ui.heading(lang.heading_language());
-        ui.add_space(4.0);
-        let mut cur_lang = config.language;
-        egui::ComboBox::from_id_salt("settings_language_combobox")
-            .selected_text(cur_lang.display_name())
-            .show_ui(ui, |ui| {
-                ui.selectable_value(
-                    &mut cur_lang,
-                    crate::i18n::Language::English,
-                    crate::i18n::Language::English.display_name(),
-                );
-                ui.selectable_value(
-                    &mut cur_lang,
-                    crate::i18n::Language::Spanish,
-                    crate::i18n::Language::Spanish.display_name(),
-                );
-            });
-        if cur_lang != config.language {
-            config.language = cur_lang;
-            config.save();
-        }
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Alert Thresholds Section
-        ui.heading(lang.heading_alert_thresholds());
-        ui.add_space(4.0);
-
-        ui.horizontal(|ui| {
-            ui.label(lang.low_battery_warning());
-            let mut low = config.low_battery_threshold;
-            if ui
-                .add(egui::Slider::new(&mut low, 5..=40).suffix("%"))
-                .changed()
-            {
-                config.low_battery_threshold = low;
-                if config.critical_battery_threshold > config.low_battery_threshold {
-                    config.critical_battery_threshold = config.low_battery_threshold;
-                }
-                config.save();
-            }
-        });
-
-        ui.horizontal(|ui| {
-            ui.label(lang.critical_battery_warning());
-            let mut crit = config.critical_battery_threshold;
-            if ui
-                .add(egui::Slider::new(&mut crit, 1..=15).suffix("%"))
-                .changed()
-            {
-                config.critical_battery_threshold = crit.min(config.low_battery_threshold);
-                config.save();
-            }
-        });
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Notification Toggles Section
-        ui.heading(lang.heading_notifications());
-        ui.add_space(4.0);
-
-        let mut audio_on = config.audio_alert_enabled;
-        if ui
-            .checkbox(&mut audio_on, lang.play_chime_checkbox())
-            .changed()
-        {
-            config.audio_alert_enabled = audio_on;
-            config.save();
-        }
-
-        ui.horizontal(|ui| {
-            ui.add_space(20.0);
-            if ui.button(lang.test_chime_button()).clicked() {
-                audio::play_gentle_chime();
-            }
-        });
-
-        let mut visual_on = config.visual_alert_enabled;
-        if ui
-            .checkbox(&mut visual_on, lang.desktop_notifications_checkbox())
-            .changed()
-        {
-            config.visual_alert_enabled = visual_on;
-            config.save();
-        }
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Placement Section
-        ui.heading(lang.heading_dock_placement());
-        ui.add_space(4.0);
-
-        let current_mode = config.position_mode;
-        ui.radio_value(
-            &mut config.position_mode,
-            DockPositionMode::TaskbarLeftOfTray,
-            lang.placement_tray_clock(),
-        );
-        ui.radio_value(
-            &mut config.position_mode,
-            DockPositionMode::TaskbarRight,
-            lang.placement_far_right(),
-        );
-        ui.radio_value(
-            &mut config.position_mode,
-            DockPositionMode::TaskbarLeft,
-            lang.placement_left_side(),
-        );
-        ui.radio_value(
-            &mut config.position_mode,
-            DockPositionMode::Custom,
-            lang.placement_custom(),
-        );
-
-        if config.position_mode != current_mode {
-            config.save();
-        }
-
-        if ui.button(lang.reset_position_button()).clicked() {
-            config.position_mode = DockPositionMode::TaskbarLeftOfTray;
-            config.custom_pos_x = 0.0;
-            config.custom_pos_y = 0.0;
-            config.save();
-        }
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Connected Devices Section
-        ui.horizontal(|ui| {
-            ui.heading(lang.heading_connected_devices(devices.len()));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button(lang.refresh_now_button()).clicked() {
+                if ui
+                    .button(
+                        egui::RichText::new(lang.refresh_now_button())
+                            .size(11.5)
+                            .color(egui::Color32::from_white_alpha(220)),
+                    )
+                    .clicked()
+                {
                     should_refresh = true;
                 }
             });
         });
-        ui.add_space(4.0);
 
-        if devices.is_empty() {
-            ui.label(
-                egui::RichText::new(lang.no_devices_detected_label())
-                    .italics()
-                    .weak(),
-            );
-        } else {
-            let mut cfg_changed = false;
-            for dev in devices {
-                egui::Frame::group(ui.style()).show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        let icon = match dev.device_type {
-                            crate::battery::DeviceType::Headset => "🎧",
-                            crate::battery::DeviceType::Mouse => "🖱️",
-                            crate::battery::DeviceType::Keyboard => "⌨️",
-                            crate::battery::DeviceType::Gamepad => "🎮",
-                            crate::battery::DeviceType::VRHeadset => "🥽",
-                            crate::battery::DeviceType::Wheel => "🏎️",
-                            crate::battery::DeviceType::Camera => "📷",
-                            crate::battery::DeviceType::Unknown => "🔋",
-                        };
-                        ui.label(icon)
-                            .on_hover_text(lang.device_type_name(&dev.device_type));
+        // Subtitle status badge
+        ui.label(
+            egui::RichText::new(lang.status_nominal(devices.len()))
+                .size(11.5)
+                .color(egui::Color32::from_rgb(34, 197, 94)),
+        );
 
-                        let display_name = config.get_device_display_name(&dev.id, &dev.name);
-                        ui.label(egui::RichText::new(display_name).strong());
+        ui.add_space(8.0);
 
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            let color = if dev.is_charging {
-                                egui::Color32::from_rgb(56, 189, 248)
-                            } else if dev.percentage <= config.critical_battery_threshold {
-                                egui::Color32::from_rgb(239, 68, 68)
-                            } else if dev.percentage <= config.low_battery_threshold {
-                                egui::Color32::from_rgb(245, 158, 11)
-                            } else {
-                                egui::Color32::from_rgb(34, 197, 94)
-                            };
-                            let label = if dev.is_charging {
-                                format!("{}%{}", dev.percentage, lang.charging_suffix())
-                            } else {
-                                format!("{}%", dev.percentage)
-                            };
-                            ui.label(egui::RichText::new(label).color(color).strong());
-                            if dev.is_charging {
-                                let (bolt_rect, _) = ui.allocate_exact_size(
-                                    egui::Vec2::new(11.0, 14.0),
-                                    egui::Sense::hover(),
-                                );
-                                crate::ui::icons::DevicePainter::paint_charging_icon(
-                                    ui.painter(),
-                                    bolt_rect,
-                                    1.0,
-                                );
-                            }
-                        });
-                    });
-
-                    // Telemetry sub-row: Protocol + Status + Autonomy
-                    ui.horizontal(|ui| {
-                        ui.label(
-                            egui::RichText::new(format!("{} • ", dev.source.display_name()))
-                                .weak()
-                                .size(11.0),
-                        );
-                        let (st_txt, st_col) = if dev.is_charging {
-                            (lang.status_charging(), egui::Color32::from_rgb(56, 189, 248))
-                        } else if dev.is_asleep {
-                            (lang.status_asleep(), egui::Color32::from_rgb(192, 132, 252))
-                        } else {
-                            (lang.status_active(), egui::Color32::from_rgb(74, 222, 128))
-                        };
-                        ui.label(egui::RichText::new(st_txt).color(st_col).size(11.0));
-
-                        if let Some(mins) = dev.estimated_minutes_left {
-                            let time_str = lang.format_time_left(mins, dev.is_charging);
-                            ui.label(
-                                egui::RichText::new(format!(" ({time_str})"))
-                                    .weak()
-                                    .size(11.0),
-                            );
-                        }
-                    });
-
-                    // Collapsible Per-Device Options
-                    let dev_cfg = config.device_configs.entry(dev.id.clone()).or_default();
-                    ui.collapsing(lang.heading_per_device_settings(), |ui| {
-                        // Custom Nickname
-                        ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new("Nickname:").size(11.0));
-                            let mut name_buf = dev_cfg.custom_name.clone().unwrap_or_default();
-                            if ui.text_edit_singleline(&mut name_buf).changed() {
-                                dev_cfg.custom_name = if name_buf.trim().is_empty() {
-                                    None
-                                } else {
-                                    Some(name_buf)
-                                };
-                                cfg_changed = true;
-                            }
-                        });
-
-                        // Custom Low Battery Alert Threshold
-                        ui.horizontal(|ui| {
-                            let mut use_custom = dev_cfg.low_threshold.is_some();
-                            if ui
-                                .checkbox(&mut use_custom, lang.label_custom_low_alert())
-                                .changed()
-                            {
-                                if use_custom {
-                                    dev_cfg.low_threshold = Some(config.low_battery_threshold);
-                                } else {
-                                    dev_cfg.low_threshold = None;
-                                }
-                                cfg_changed = true;
-                            }
-                            if let Some(ref mut low_thresh) = dev_cfg.low_threshold {
-                                if ui
-                                    .add(egui::Slider::new(low_thresh, 5..=50).suffix("%"))
-                                    .changed()
-                                {
-                                    cfg_changed = true;
-                                }
-                            }
-                        });
-
-                        // Mute & Hide Toggles
-                        ui.horizontal(|ui| {
-                            if ui
-                                .checkbox(&mut dev_cfg.mute_alerts, lang.label_mute_alerts())
-                                .changed()
-                            {
-                                cfg_changed = true;
-                            }
-                            if ui
-                                .checkbox(&mut dev_cfg.hidden, lang.label_hide_from_dock())
-                                .changed()
-                            {
-                                cfg_changed = true;
-                            }
-                        });
-                    });
-                });
-                ui.add_space(4.0);
-            }
-            if cfg_changed {
-                config.save();
-            }
-        }
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        let mut show_pct = config.show_percentage_text;
-        if ui
-            .checkbox(&mut show_pct, lang.show_percentage_checkbox())
-            .changed()
-        {
-            config.show_percentage_text = show_pct;
-            config.save();
-        }
-
-        // Windows Startup Option
-        let mut start_win = config.start_with_windows;
-        if ui
-            .checkbox(&mut start_win, lang.start_with_windows_checkbox())
-            .changed()
-        {
-            config.start_with_windows = start_win;
-            let _ = set_run_at_startup(start_win);
-            config.save();
-        }
-
-        ui.add_space(6.0);
-        ui.separator();
-        ui.add_space(6.0);
-
-        // Application Updates
-        ui.heading(lang.heading_updates());
-        ui.add_space(4.0);
-
-        let mut auto_up = config.auto_update;
-        if ui
-            .checkbox(&mut auto_up, lang.auto_update_checkbox())
-            .changed()
-        {
-            config.auto_update = auto_up;
-            config.save();
-        }
-
+        // Segmented Tab Selector
         ui.horizontal(|ui| {
-            if ui.button(lang.check_updates_now_button()).clicked() {
-                crate::updater::check_for_updates_async(false);
-            }
+            ui.spacing_mut().item_spacing.x = 6.0;
+            let tabs = [
+                (SettingsTab::Devices, lang.tab_devices()),
+                (SettingsTab::Alerts, lang.tab_alerts()),
+                (SettingsTab::Customization, lang.tab_customization()),
+            ];
 
-            match crate::updater::get_update_status() {
-                crate::updater::UpdateStatus::Idle => {}
-                crate::updater::UpdateStatus::Checking => {
-                    ui.label(egui::RichText::new(lang.checking_github_label()).weak());
-                }
-                crate::updater::UpdateStatus::UpToDate => {
-                    ui.label(
-                        egui::RichText::new(lang.up_to_date_label())
-                            .color(egui::Color32::from_rgb(34, 197, 94)),
-                    );
-                }
-                crate::updater::UpdateStatus::UpdateAvailable {
-                    version,
-                    download_url,
-                } => {
-                    ui.label(
-                        egui::RichText::new(lang.new_version_available_label(&version))
-                            .color(egui::Color32::from_rgb(56, 189, 248))
-                            .strong(),
-                    );
-                    if ui.button(lang.install_update_button()).clicked() {
-                        let v = version.clone();
-                        let u = download_url.clone();
-                        std::thread::spawn(move || {
-                            let _ = crate::updater::download_and_run_installer(&u, &v);
-                        });
-                    }
-                }
-                crate::updater::UpdateStatus::Downloading { version } => {
-                    ui.label(
-                        egui::RichText::new(lang.downloading_label(&version))
-                            .color(egui::Color32::from_rgb(56, 189, 248)),
-                    );
-                }
-                crate::updater::UpdateStatus::Installing { version } => {
-                    ui.label(
-                        egui::RichText::new(lang.installing_label(&version))
-                            .color(egui::Color32::from_rgb(34, 197, 94))
-                            .strong(),
-                    );
-                }
-                crate::updater::UpdateStatus::Failed(err) => {
-                    ui.label(
-                        egui::RichText::new(lang.update_failed_label(&err))
-                            .color(egui::Color32::from_rgb(239, 68, 68))
-                            .weak(),
-                    );
+            for (tab, label) in tabs {
+                let is_selected = *active_tab == tab;
+                let (bg_color, text_color) = if is_selected {
+                    (
+                        egui::Color32::from_rgb(37, 99, 235),
+                        egui::Color32::WHITE,
+                    )
+                } else {
+                    (
+                        egui::Color32::from_white_alpha(18),
+                        egui::Color32::from_white_alpha(175),
+                    )
+                };
+
+                let btn = egui::Button::new(
+                    egui::RichText::new(label)
+                        .size(12.0)
+                        .color(text_color)
+                        .strong(),
+                )
+                .fill(bg_color)
+                .corner_radius(8.0)
+                .min_size(egui::Vec2::new(0.0, 28.0));
+
+                if ui.add(btn).clicked() {
+                    *active_tab = tab;
                 }
             }
         });
 
         ui.add_space(10.0);
-        if ui.button(lang.close_settings_button()).clicked() {
-            *open = false;
+
+        let card_frame = egui::Frame::NONE
+            .fill(egui::Color32::from_rgb(26, 28, 34))
+            .corner_radius(10.0)
+            .stroke(egui::Stroke::new(
+                1.0_f32,
+                egui::Color32::from_white_alpha(22),
+            ))
+            .inner_margin(egui::Margin::same(12));
+
+        // Tab Content
+        match active_tab {
+            SettingsTab::Devices => {
+                if devices.is_empty() {
+                    card_frame.show(ui, |ui| {
+                        ui.vertical_centered(|ui| {
+                            ui.add_space(12.0);
+                            ui.label(
+                                egui::RichText::new("🔋")
+                                    .size(32.0)
+                                    .color(egui::Color32::from_white_alpha(120)),
+                            );
+                            ui.add_space(4.0);
+                            ui.label(
+                                egui::RichText::new(lang.no_devices_detected_label())
+                                    .size(13.0)
+                                    .strong(),
+                            );
+                            ui.add_space(4.0);
+                            ui.label(
+                                egui::RichText::new(
+                                    "Connect wireless peripherals via Bluetooth or 2.4GHz USB receiver.",
+                                )
+                                .size(11.5)
+                                .weak(),
+                            );
+                            ui.add_space(12.0);
+                        });
+                    });
+                } else {
+                    let mut cfg_changed = false;
+                    for dev in devices {
+                        card_frame.show(ui, |ui| {
+                            ui.horizontal(|ui| {
+                                let icon = match dev.device_type {
+                                    crate::battery::DeviceType::Headset => "🎧",
+                                    crate::battery::DeviceType::Mouse => "🖱️",
+                                    crate::battery::DeviceType::Keyboard => "⌨️",
+                                    crate::battery::DeviceType::Gamepad => "🎮",
+                                    crate::battery::DeviceType::VRHeadset => "🥽",
+                                    crate::battery::DeviceType::Wheel => "🏎️",
+                                    crate::battery::DeviceType::Camera => "📷",
+                                    crate::battery::DeviceType::Unknown => "🔋",
+                                };
+                                ui.label(egui::RichText::new(icon).size(18.0));
+                                ui.add_space(4.0);
+
+                                let display_name = config.get_device_display_name(&dev.id, &dev.name);
+                                ui.vertical(|ui| {
+                                    ui.label(
+                                        egui::RichText::new(display_name)
+                                            .size(13.5)
+                                            .strong(),
+                                    );
+                                    ui.label(
+                                        egui::RichText::new(dev.source.display_name())
+                                            .size(11.0)
+                                            .weak(),
+                                    );
+                                });
+
+                                ui.with_layout(
+                                    egui::Layout::right_to_left(egui::Align::Center),
+                                    |ui| {
+                                        let color = if dev.is_charging {
+                                            egui::Color32::from_rgb(56, 189, 248)
+                                        } else if dev.percentage <= config.critical_battery_threshold {
+                                            egui::Color32::from_rgb(239, 68, 68)
+                                        } else if dev.percentage <= config.low_battery_threshold {
+                                            egui::Color32::from_rgb(245, 158, 11)
+                                        } else {
+                                            egui::Color32::from_rgb(34, 197, 94)
+                                        };
+
+                                        let label = if dev.is_charging {
+                                            format!("{}%{}", dev.percentage, lang.charging_suffix())
+                                        } else {
+                                            format!("{}%", dev.percentage)
+                                        };
+                                        ui.label(
+                                            egui::RichText::new(label)
+                                                .color(color)
+                                                .strong()
+                                                .size(14.0),
+                                        );
+
+                                        if dev.is_charging {
+                                            let (bolt_rect, _) = ui.allocate_exact_size(
+                                                egui::Vec2::new(11.0, 14.0),
+                                                egui::Sense::hover(),
+                                            );
+                                            crate::ui::icons::DevicePainter::paint_charging_icon(
+                                                ui.painter(),
+                                                bolt_rect,
+                                                1.0,
+                                            );
+                                        }
+                                    },
+                                );
+                            });
+
+                            ui.add_space(6.0);
+                            ui.separator();
+                            ui.add_space(4.0);
+
+                            // Status and Autonomy Telemetry
+                            ui.horizontal(|ui| {
+                                let (st_txt, st_col) = if dev.is_charging {
+                                    (
+                                        lang.status_charging(),
+                                        egui::Color32::from_rgb(56, 189, 248),
+                                    )
+                                } else if dev.is_asleep {
+                                    (
+                                        lang.status_asleep(),
+                                        egui::Color32::from_rgb(192, 132, 252),
+                                    )
+                                } else {
+                                    (
+                                        lang.status_active(),
+                                        egui::Color32::from_rgb(74, 222, 128),
+                                    )
+                                };
+
+                                ui.label(
+                                    egui::RichText::new(st_txt)
+                                        .color(st_col)
+                                        .strong()
+                                        .size(11.5),
+                                );
+
+                                if let Some(mins) = dev.estimated_minutes_left {
+                                    let time_str = lang.format_time_left(mins, dev.is_charging);
+                                    ui.label(
+                                        egui::RichText::new(format!("• {time_str}"))
+                                            .size(11.5)
+                                            .weak(),
+                                    );
+                                }
+                            });
+
+                            ui.add_space(4.0);
+
+                            // Collapsible Per-Device Customization
+                            let dev_cfg =
+                                config.device_configs.entry(dev.id.clone()).or_default();
+                            ui.collapsing(lang.heading_per_device_settings(), |ui| {
+                                ui.add_space(2.0);
+                                // Nickname edit
+                                ui.horizontal(|ui| {
+                                    ui.label(egui::RichText::new("Nickname:").size(11.5));
+                                    let mut name_buf =
+                                        dev_cfg.custom_name.clone().unwrap_or_default();
+                                    if ui.text_edit_singleline(&mut name_buf).changed() {
+                                        dev_cfg.custom_name = if name_buf.trim().is_empty() {
+                                            None
+                                        } else {
+                                            Some(name_buf)
+                                        };
+                                        cfg_changed = true;
+                                    }
+                                });
+
+                                // Custom alert threshold slider
+                                ui.horizontal(|ui| {
+                                    let mut use_custom = dev_cfg.low_threshold.is_some();
+                                    if ui
+                                        .checkbox(&mut use_custom, lang.label_custom_low_alert())
+                                        .changed()
+                                    {
+                                        if use_custom {
+                                            dev_cfg.low_threshold =
+                                                Some(config.low_battery_threshold);
+                                        } else {
+                                            dev_cfg.low_threshold = None;
+                                        }
+                                        cfg_changed = true;
+                                    }
+                                    if let Some(ref mut low_thresh) = dev_cfg.low_threshold {
+                                        if ui
+                                            .add(
+                                                egui::Slider::new(low_thresh, 5..=50)
+                                                    .suffix("%"),
+                                            )
+                                            .changed()
+                                        {
+                                            cfg_changed = true;
+                                        }
+                                    }
+                                });
+
+                                // Mute & Hide toggles
+                                ui.horizontal(|ui| {
+                                    if ui
+                                        .checkbox(
+                                            &mut dev_cfg.mute_alerts,
+                                            lang.label_mute_alerts(),
+                                        )
+                                        .changed()
+                                    {
+                                        cfg_changed = true;
+                                    }
+                                    if ui
+                                        .checkbox(
+                                            &mut dev_cfg.hidden,
+                                            lang.label_hide_from_dock(),
+                                        )
+                                        .changed()
+                                    {
+                                        cfg_changed = true;
+                                    }
+                                });
+                            });
+                        });
+                        ui.add_space(4.0);
+                    }
+                    if cfg_changed {
+                        config.save();
+                    }
+                }
+            }
+            SettingsTab::Alerts => {
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_alert_thresholds())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    ui.horizontal(|ui| {
+                        ui.label(lang.low_battery_warning());
+                        let mut low = config.low_battery_threshold;
+                        if ui
+                            .add(egui::Slider::new(&mut low, 5..=40).suffix("%"))
+                            .changed()
+                        {
+                            config.low_battery_threshold = low;
+                            if config.critical_battery_threshold > config.low_battery_threshold {
+                                config.critical_battery_threshold = config.low_battery_threshold;
+                            }
+                            config.save();
+                        }
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label(lang.critical_battery_warning());
+                        let mut crit = config.critical_battery_threshold;
+                        if ui
+                            .add(egui::Slider::new(&mut crit, 1..=15).suffix("%"))
+                            .changed()
+                        {
+                            config.critical_battery_threshold =
+                                crit.min(config.low_battery_threshold);
+                            config.save();
+                        }
+                    });
+                });
+
+                ui.add_space(8.0);
+
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_notifications())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let mut audio_on = config.audio_alert_enabled;
+                    if ui
+                        .checkbox(&mut audio_on, lang.play_chime_checkbox())
+                        .changed()
+                    {
+                        config.audio_alert_enabled = audio_on;
+                        config.save();
+                    }
+
+                    ui.horizontal(|ui| {
+                        ui.add_space(20.0);
+                        if ui.button(lang.test_chime_button()).clicked() {
+                            audio::play_gentle_chime();
+                        }
+                    });
+
+                    ui.add_space(4.0);
+
+                    let mut visual_on = config.visual_alert_enabled;
+                    if ui
+                        .checkbox(&mut visual_on, lang.desktop_notifications_checkbox())
+                        .changed()
+                    {
+                        config.visual_alert_enabled = visual_on;
+                        config.save();
+                    }
+                });
+            }
+            SettingsTab::Customization => {
+                // Dock Appearance & Compact Mode
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new("🎨 Dock Appearance & Layout")
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let mut compact = config.compact_mode;
+                    if ui
+                        .checkbox(&mut compact, lang.compact_mode_checkbox())
+                        .changed()
+                    {
+                        config.compact_mode = compact;
+                        config.save();
+                    }
+
+                    let mut show_pct = config.show_percentage_text;
+                    if ui
+                        .checkbox(&mut show_pct, lang.show_percentage_checkbox())
+                        .changed()
+                    {
+                        config.show_percentage_text = show_pct;
+                        config.save();
+                    }
+                });
+
+                ui.add_space(8.0);
+
+                // Dock Placement
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_dock_placement())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let current_mode = config.position_mode;
+                    ui.radio_value(
+                        &mut config.position_mode,
+                        DockPositionMode::TaskbarLeftOfTray,
+                        lang.placement_tray_clock(),
+                    );
+                    ui.radio_value(
+                        &mut config.position_mode,
+                        DockPositionMode::TaskbarRight,
+                        lang.placement_far_right(),
+                    );
+                    ui.radio_value(
+                        &mut config.position_mode,
+                        DockPositionMode::TaskbarLeft,
+                        lang.placement_left_side(),
+                    );
+                    ui.radio_value(
+                        &mut config.position_mode,
+                        DockPositionMode::Custom,
+                        lang.placement_custom(),
+                    );
+
+                    if config.position_mode != current_mode {
+                        config.save();
+                    }
+
+                    ui.add_space(4.0);
+                    if ui.button(lang.reset_position_button()).clicked() {
+                        config.position_mode = DockPositionMode::TaskbarLeftOfTray;
+                        config.custom_pos_x = 0.0;
+                        config.custom_pos_y = 0.0;
+                        config.save();
+                    }
+                });
+
+                ui.add_space(8.0);
+
+                // Language
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_language())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let mut cur_lang = config.language;
+                    egui::ComboBox::from_id_salt("settings_language_combobox")
+                        .selected_text(cur_lang.display_name())
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut cur_lang,
+                                crate::i18n::Language::English,
+                                crate::i18n::Language::English.display_name(),
+                            );
+                            ui.selectable_value(
+                                &mut cur_lang,
+                                crate::i18n::Language::Spanish,
+                                crate::i18n::Language::Spanish.display_name(),
+                            );
+                        });
+                    if cur_lang != config.language {
+                        config.language = cur_lang;
+                        config.save();
+                    }
+                });
+
+                ui.add_space(8.0);
+
+                // System & Updates
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_updates())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(6.0);
+
+                    let mut start_win = config.start_with_windows;
+                    if ui
+                        .checkbox(&mut start_win, lang.start_with_windows_checkbox())
+                        .changed()
+                    {
+                        config.start_with_windows = start_win;
+                        let _ = set_run_at_startup(start_win);
+                        config.save();
+                    }
+
+                    let mut auto_up = config.auto_update;
+                    if ui
+                        .checkbox(&mut auto_up, lang.auto_update_checkbox())
+                        .changed()
+                    {
+                        config.auto_update = auto_up;
+                        config.save();
+                    }
+
+                    ui.add_space(4.0);
+                    ui.horizontal(|ui| {
+                        if ui.button(lang.check_updates_now_button()).clicked() {
+                            crate::updater::check_for_updates_async(false);
+                        }
+
+                        match crate::updater::get_update_status() {
+                            crate::updater::UpdateStatus::Idle => {}
+                            crate::updater::UpdateStatus::Checking => {
+                                ui.label(egui::RichText::new(lang.checking_github_label()).weak());
+                            }
+                            crate::updater::UpdateStatus::UpToDate => {
+                                ui.label(
+                                    egui::RichText::new(lang.up_to_date_label())
+                                        .color(egui::Color32::from_rgb(34, 197, 94)),
+                                );
+                            }
+                            crate::updater::UpdateStatus::UpdateAvailable {
+                                version,
+                                download_url,
+                            } => {
+                                ui.label(
+                                    egui::RichText::new(lang.new_version_available_label(&version))
+                                        .color(egui::Color32::from_rgb(56, 189, 248))
+                                        .strong(),
+                                );
+                                if ui.button(lang.install_update_button()).clicked() {
+                                    let v = version.clone();
+                                    let u = download_url.clone();
+                                    std::thread::spawn(move || {
+                                        let _ = crate::updater::download_and_run_installer(&u, &v);
+                                    });
+                                }
+                            }
+                            crate::updater::UpdateStatus::Downloading { version } => {
+                                ui.label(
+                                    egui::RichText::new(lang.downloading_label(&version))
+                                        .color(egui::Color32::from_rgb(56, 189, 248)),
+                                );
+                            }
+                            crate::updater::UpdateStatus::Installing { version } => {
+                                ui.label(
+                                    egui::RichText::new(lang.installing_label(&version))
+                                        .color(egui::Color32::from_rgb(34, 197, 94))
+                                        .strong(),
+                                );
+                            }
+                            crate::updater::UpdateStatus::Failed(err) => {
+                                ui.label(
+                                    egui::RichText::new(lang.update_failed_label(&err))
+                                        .color(egui::Color32::from_rgb(239, 68, 68))
+                                        .weak(),
+                                );
+                            }
+                        }
+                    });
+                });
+            }
         }
+
+        ui.add_space(12.0);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if ui.button(lang.close_settings_button()).clicked() {
+                *open = false;
+            }
+        });
 
         if should_refresh {
             on_refresh();
@@ -485,6 +668,7 @@ pub struct SettingsApp {
     devices: Vec<DeviceBattery>,
     is_open: bool,
     last_config_reload: std::time::Instant,
+    active_tab: SettingsTab,
 }
 
 impl SettingsApp {
@@ -503,6 +687,7 @@ impl SettingsApp {
             devices,
             is_open: true,
             last_config_reload: std::time::Instant::now(),
+            active_tab: SettingsTab::Devices,
         }
     }
 
@@ -538,21 +723,22 @@ impl eframe::App for SettingsApp {
         }
 
         let mut visuals = egui::Visuals::dark();
-        visuals.panel_fill = egui::Color32::from_rgb(22, 24, 29);
-        visuals.window_fill = egui::Color32::from_rgb(22, 24, 29);
+        visuals.panel_fill = egui::Color32::from_rgb(18, 20, 24);
+        visuals.window_fill = egui::Color32::from_rgb(18, 20, 24);
         ctx.set_visuals(visuals);
 
         let engine_ref = self.engine.clone();
         egui::CentralPanel::default()
             .frame(
                 egui::Frame::NONE
-                    .fill(egui::Color32::from_rgb(22, 24, 29))
+                    .fill(egui::Color32::from_rgb(18, 20, 24))
                     .inner_margin(egui::Margin::same(16)),
             )
             .show(ctx, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     SettingsWindow::render_contents(
                         ui,
+                        &mut self.active_tab,
                         &mut self.is_open,
                         &mut self.config,
                         &self.devices,
@@ -593,8 +779,8 @@ pub fn run_standalone_settings() -> eframe::Result<()> {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("BatteryDock Settings")
-            .with_inner_size([480.0, 600.0])
-            .with_min_inner_size([380.0, 420.0])
+            .with_inner_size([500.0, 580.0])
+            .with_min_inner_size([440.0, 480.0])
             .with_decorations(true)
             .with_resizable(true)
             .with_transparent(false),

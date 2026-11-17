@@ -449,6 +449,41 @@ impl Language {
             Language::Spanish => "Predeterminado",
         }
     }
+
+    pub fn tab_devices(&self) -> &'static str {
+        match self {
+            Language::English => "🎧 Peripherals",
+            Language::Spanish => "🎧 Periféricos",
+        }
+    }
+
+    pub fn tab_alerts(&self) -> &'static str {
+        match self {
+            Language::English => "⚡ Alerts & Audio",
+            Language::Spanish => "⚡ Alertas y Audio",
+        }
+    }
+
+    pub fn tab_customization(&self) -> &'static str {
+        match self {
+            Language::English => "🎨 Customization",
+            Language::Spanish => "🎨 Personalización",
+        }
+    }
+
+    pub fn compact_mode_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Compact pill mode (Icons & meters only, no percentage text)",
+            Language::Spanish => "Modo pastilla compacta (Solo iconos y barras, sin texto)",
+        }
+    }
+
+    pub fn status_nominal(&self, count: usize) -> String {
+        match self {
+            Language::English => format!("🟢 All systems nominal • {count} active peripheral(s)"),
+            Language::Spanish => format!("🟢 Estado óptimo • {count} periférico(s) activo(s)"),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -61,7 +61,8 @@ impl DockOverlay {
                     // space(2) + crisp vector charging lightning bolt (10)
                     w += 2.0 + 10.0;
                 }
-                if config.show_percentage_text {
+                let show_pct = config.show_percentage_text && !config.compact_mode;
+                if show_pct {
                     w += 3.0 + Self::percentage_label_width(dev.percentage);
                 }
             }
@@ -115,9 +116,9 @@ impl DockOverlay {
             .show(ctx, |ui| {
                 let avail_rect = ui.available_rect_before_wrap();
 
-                // Frosted dark pill background
-                let bg_color = Color32::from_rgba_premultiplied(18, 20, 24, 224);
-                let border_stroke = Stroke::new(1.0_f32, Color32::from_white_alpha(38));
+                // Frosted dark acrylic pill background with Windows 11 Fluent style
+                let bg_color = Color32::from_rgba_premultiplied(16, 18, 22, 226);
+                let border_stroke = Stroke::new(1.0_f32, Color32::from_white_alpha(32));
                 ui.painter()
                     .rect_filled(avail_rect, CornerRadius::same(14), bg_color);
                 ui.painter().rect_stroke(
@@ -126,6 +127,17 @@ impl DockOverlay {
                     border_stroke,
                     StrokeKind::Inside,
                 );
+
+                // Subtle top-edge 1px specular reflection
+                if avail_rect.width() > 30.0 {
+                    ui.painter().line_segment(
+                        [
+                            Pos2::new(avail_rect.min.x + 12.0, avail_rect.min.y + 0.5),
+                            Pos2::new(avail_rect.max.x - 12.0, avail_rect.min.y + 0.5),
+                        ],
+                        Stroke::new(1.0_f32, Color32::from_white_alpha(45)),
+                    );
+                }
 
                 // Base click/drag area across pill (children added after still receive hover/clicks)
                 let dock_response = ui.interact(
@@ -242,8 +254,9 @@ impl DockOverlay {
                                     );
                                 }
 
-                                // Percentage text
-                                if config.show_percentage_text {
+                                // Percentage text (hidden in compact mode)
+                                let show_pct = config.show_percentage_text && !config.compact_mode;
+                                if show_pct {
                                     ui.add_space(3.0);
                                     let text_color = if dev.is_asleep {
                                         Color32::from_white_alpha(120)
@@ -283,6 +296,16 @@ impl DockOverlay {
                                 ui.id().with(format!("dev_seg_{}", dev.id)),
                                 egui::Sense::hover(),
                             );
+
+                            // Subtle rounded hover glow over hovered peripheral
+                            if dev_hover_resp.hovered() && !self.is_actively_dragging {
+                                let highlight_rect = seg_rect.shrink2(Vec2::new(1.0, 3.0));
+                                ui.painter().rect_filled(
+                                    highlight_rect,
+                                    CornerRadius::same(7),
+                                    Color32::from_white_alpha(18),
+                                );
+                            }
 
                             // Rich Telemetry Tooltip
                             let display_name = config.get_device_display_name(&dev.id, &dev.name).to_string();
@@ -347,10 +370,17 @@ impl DockOverlay {
                     ui.add_space(4.0);
                     let (gear_rect, settings_btn) =
                         ui.allocate_exact_size(Vec2::new(14.0, 20.0), egui::Sense::click());
+                    if settings_btn.hovered() {
+                        ui.painter().circle_filled(
+                            gear_rect.center(),
+                            8.5,
+                            Color32::from_white_alpha(22),
+                        );
+                    }
                     let gear_color = if settings_btn.hovered() {
-                        Color32::from_white_alpha(235)
+                        Color32::from_white_alpha(245)
                     } else {
-                        Color32::from_white_alpha(125)
+                        Color32::from_white_alpha(130)
                     };
                     DevicePainter::paint_settings_gear(
                         ui.painter(),
