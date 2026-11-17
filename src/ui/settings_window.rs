@@ -13,6 +13,46 @@ pub enum SettingsTab {
 pub struct SettingsWindow;
 
 impl SettingsWindow {
+    fn paint_reorder_button(ui: &mut egui::Ui, up: bool, enabled: bool) -> egui::Response {
+        let sense = if enabled {
+            egui::Sense::click()
+        } else {
+            egui::Sense::hover()
+        };
+        let (rect, resp) = ui.allocate_exact_size(egui::Vec2::new(20.0, 20.0), sense);
+        let bg = if enabled && resp.hovered() {
+            egui::Color32::from_white_alpha(28)
+        } else {
+            egui::Color32::from_white_alpha(10)
+        };
+        let fg = if !enabled {
+            egui::Color32::from_white_alpha(45)
+        } else if resp.hovered() {
+            egui::Color32::WHITE
+        } else {
+            egui::Color32::from_white_alpha(180)
+        };
+        ui.painter()
+            .rect_filled(rect, egui::CornerRadius::same(5), bg);
+        let c = rect.center();
+        let pts = if up {
+            vec![
+                egui::Pos2::new(c.x - 4.0, c.y + 2.0),
+                egui::Pos2::new(c.x, c.y - 2.5),
+                egui::Pos2::new(c.x + 4.0, c.y + 2.0),
+            ]
+        } else {
+            vec![
+                egui::Pos2::new(c.x - 4.0, c.y - 2.0),
+                egui::Pos2::new(c.x, c.y + 2.5),
+                egui::Pos2::new(c.x + 4.0, c.y - 2.0),
+            ]
+        };
+        ui.painter()
+            .add(egui::Shape::line(pts, egui::Stroke::new(1.5_f32, fg)));
+        resp
+    }
+
     pub fn render_contents(
         ui: &mut egui::Ui,
         active_tab: &mut SettingsTab,
@@ -151,8 +191,15 @@ impl SettingsWindow {
                         });
                     });
                 } else {
+                    let mut sorted_devices: Vec<&DeviceBattery> = devices.iter().collect();
+                    sorted_devices.sort_by_key(|d| config.device_sort_key(&d.id));
+                    let current_ids: Vec<String> =
+                        sorted_devices.iter().map(|d| d.id.clone()).collect();
+                    let total_devs = sorted_devices.len();
+                    let mut pending_move: Option<(String, isize)> = None;
+
                     let mut cfg_changed = false;
-                    for dev in devices {
+                    for (idx, dev) in sorted_devices.iter().enumerate() {
                         card_frame.show(ui, |ui| {
                             ui.horizontal(|ui| {
                                 let (icon_rect, _) = ui.allocate_exact_size(
@@ -184,6 +231,25 @@ impl SettingsWindow {
                                 ui.with_layout(
                                     egui::Layout::right_to_left(egui::Align::Center),
                                     |ui| {
+                                        if total_devs > 1 {
+                                            let can_down = idx + 1 < total_devs;
+                                            let down_resp =
+                                                Self::paint_reorder_button(ui, false, can_down)
+                                                    .on_hover_text(lang.move_device_down_tooltip());
+                                            if can_down && down_resp.clicked() {
+                                                pending_move = Some((dev.id.clone(), 1));
+                                            }
+
+                                            let can_up = idx > 0;
+                                            let up_resp =
+                                                Self::paint_reorder_button(ui, true, can_up)
+                                                    .on_hover_text(lang.move_device_up_tooltip());
+                                            if can_up && up_resp.clicked() {
+                                                pending_move = Some((dev.id.clone(), -1));
+                                            }
+                                            ui.add_space(4.0);
+                                        }
+
                                         let color = if dev.is_charging {
                                             egui::Color32::from_rgb(56, 189, 248)
                                         } else if dev.percentage <= config.critical_battery_threshold {
@@ -335,6 +401,11 @@ impl SettingsWindow {
                             });
                         });
                         ui.add_space(4.0);
+                    }
+                    if let Some((dev_id, delta)) = pending_move {
+                        if config.move_device_order(&current_ids, &dev_id, delta) {
+                            cfg_changed = true;
+                        }
                     }
                     if cfg_changed {
                         config.save();

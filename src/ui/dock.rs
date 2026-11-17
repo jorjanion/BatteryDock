@@ -160,10 +160,11 @@ impl DockOverlay {
                     ui.spacing_mut().item_spacing.x = 0.0;
                     ui.add_space(8.0);
 
-                    let visible_devices: Vec<&DeviceBattery> = devices
+                    let mut visible_devices: Vec<&DeviceBattery> = devices
                         .iter()
                         .filter(|d| !config.is_device_hidden(&d.id))
                         .collect();
+                    visible_devices.sort_by_key(|d| config.device_sort_key(&d.id));
 
                     if visible_devices.is_empty() {
                         let (icon_rect, _) =

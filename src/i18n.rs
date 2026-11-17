@@ -645,6 +645,20 @@ impl Language {
             Language::Spanish => "Mantener siempre en posición de overlay (vista previa en vivo)",
         }
     }
+
+    pub fn move_device_up_tooltip(&self) -> &'static str {
+        match self {
+            Language::English => "Move earlier in dock pill",
+            Language::Spanish => "Mover más a la izquierda en la pastilla",
+        }
+    }
+
+    pub fn move_device_down_tooltip(&self) -> &'static str {
+        match self {
+            Language::English => "Move later in dock pill",
+            Language::Spanish => "Mover más a la derecha en la pastilla",
+        }
+    }
 }
 
 #[cfg(test)]

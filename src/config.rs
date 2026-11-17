@@ -88,6 +88,8 @@ pub struct AppConfig {
     #[serde(default)]
     pub theme_mode: ThemeMode,
     #[serde(default)]
+    pub device_order: Vec<String>,
+    #[serde(default)]
     pub device_configs: std::collections::HashMap<String, DeviceAlertConfig>,
 }
 
@@ -117,6 +119,7 @@ impl Default for AppConfig {
             game_overlay_click_through: true,
             game_overlay_always_on: false,
             theme_mode: ThemeMode::default(),
+            device_order: Vec::new(),
             device_configs: std::collections::HashMap::new(),
         }
     }
@@ -223,6 +226,44 @@ impl AppConfig {
             ThemeMode::Dark | ThemeMode::LiquidGlass => false,
             ThemeMode::System => detect_windows_system_is_light(),
         }
+    }
+
+    pub fn device_sort_key(&self, device_id: &str) -> usize {
+        self.device_order
+            .iter()
+            .position(|id| id == device_id)
+            .unwrap_or(usize::MAX)
+    }
+
+    /// Moves `device_id` up (`delta = -1`) or down (`delta = 1`) relative to the currently
+    /// visible ordered list `current_ids`, while preserving offline devices in `device_order`.
+    pub fn move_device_order(&mut self, current_ids: &[String], device_id: &str, delta: isize) -> bool {
+        let Some(pos) = current_ids.iter().position(|id| id == device_id) else {
+            return false;
+        };
+        let target_isize = pos as isize + delta;
+        if target_isize < 0 || (target_isize as usize) >= current_ids.len() {
+            return false;
+        }
+        let target_pos = target_isize as usize;
+
+        // Ensure all current IDs exist in device_order in their current relative order
+        for id in current_ids {
+            if !self.device_order.iter().any(|existing| existing == id) {
+                self.device_order.push(id.clone());
+            }
+        }
+
+        let id_a = &current_ids[pos];
+        let id_b = &current_ids[target_pos];
+        if let (Some(idx_a), Some(idx_b)) = (
+            self.device_order.iter().position(|x| x == id_a),
+            self.device_order.iter().position(|x| x == id_b),
+        ) {
+            self.device_order.swap(idx_a, idx_b);
+            return true;
+        }
+        false
     }
 }
 
@@ -373,5 +414,25 @@ mod tests {
         assert!(decoded.game_overlay_enabled);
         assert_eq!(decoded.game_overlay_corner, OverlayCorner::Custom);
         assert_eq!(decoded.game_overlay_custom_x_pct, 80.0);
+    }
+
+    #[test]
+    fn test_device_order_sorting_and_move() {
+        let mut cfg = AppConfig::default();
+        let current = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+
+        // Move "c" up -> ["a", "c", "b"]
+        assert!(cfg.move_device_order(&current, "c", -1));
+        assert_eq!(cfg.device_order, vec!["a", "c", "b"]);
+        assert!(cfg.device_sort_key("c") < cfg.device_sort_key("b"));
+
+        // Moving first item up returns false
+        let current2 = vec!["a".to_string(), "c".to_string(), "b".to_string()];
+        assert!(!cfg.move_device_order(&current2, "a", -1));
+        assert!(!cfg.move_device_order(&current2, "b", 1));
+
+        // Move "a" down -> ["c", "a", "b"]
+        assert!(cfg.move_device_order(&current2, "a", 1));
+        assert_eq!(cfg.device_order, vec!["c", "a", "b"]);
     }
 }
