@@ -415,6 +415,17 @@ impl SettingsWindow {
                         config.visual_alert_enabled = visual_on;
                         config.save();
                     }
+
+                    ui.add_space(4.0);
+
+                    let mut full_chg = config.full_charge_alert_enabled;
+                    if ui
+                        .checkbox(&mut full_chg, lang.full_charge_alert_checkbox())
+                        .changed()
+                    {
+                        config.full_charge_alert_enabled = full_chg;
+                        config.save();
+                    }
                 });
             }
             SettingsTab::Customization => {

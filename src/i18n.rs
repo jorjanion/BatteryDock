@@ -107,6 +107,27 @@ impl Language {
         }
     }
 
+    pub fn full_charge_alert_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Notify when a charging device reaches 100%",
+            Language::Spanish => "Avisar cuando un dispositivo se cargue al 100%",
+        }
+    }
+
+    pub fn toast_full_charge_title(&self, name: &str) -> String {
+        match self {
+            Language::English => format!("Fully Charged: {name}"),
+            Language::Spanish => format!("Carga completa: {name}"),
+        }
+    }
+
+    pub fn toast_full_charge_body(&self) -> &'static str {
+        match self {
+            Language::English => "Battery reached 100%. You can unplug the cable now.",
+            Language::Spanish => "La batería llegó al 100%. Ya puedes desconectar el cable.",
+        }
+    }
+
     pub fn heading_dock_placement(&self) -> &'static str {
         match self {
             Language::English => "Dock Placement",

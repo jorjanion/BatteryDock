@@ -3,17 +3,24 @@ pub mod toast;
 
 use crate::battery::DeviceBattery;
 use crate::config::AppConfig;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct NotificationManager {
     /// Tracks the last alerted percentage level per device id to prevent repeated alerts
     last_alerted_level: HashMap<String, u8>,
+    /// Tracks devices seen charging below 100% so we only fire the 100% full-charge alert
+    /// on an actual charge completion transition (never spuriously on boot).
+    was_charging_below_full: HashSet<String>,
+    /// Tracks devices that already received the 100% full-charge alert during the current charge cycle
+    alerted_full_charge: HashSet<String>,
 }
 
 impl NotificationManager {
     pub fn new() -> Self {
         Self {
             last_alerted_level: HashMap::new(),
+            was_charging_below_full: HashSet::new(),
+            alerted_full_charge: HashSet::new(),
         }
     }
 
@@ -22,11 +29,47 @@ impl NotificationManager {
             // If device is muted in config, do not alert
             if config.is_device_muted(&device.id) {
                 self.last_alerted_level.remove(&device.id);
+                self.was_charging_below_full.remove(&device.id);
+                self.alerted_full_charge.remove(&device.id);
                 continue;
             }
 
-            // If device is currently charging, disconnected, or asleep, reset alert state
-            if device.is_charging || !device.is_connected || device.is_asleep {
+            if !device.is_connected {
+                self.last_alerted_level.remove(&device.id);
+                self.was_charging_below_full.remove(&device.id);
+                self.alerted_full_charge.remove(&device.id);
+                continue;
+            }
+
+            // Full-charge (100%) notification logic while charging
+            if device.is_charging {
+                self.last_alerted_level.remove(&device.id);
+                if device.percentage < 100 {
+                    self.was_charging_below_full.insert(device.id.clone());
+                    self.alerted_full_charge.remove(&device.id);
+                } else if config.full_charge_alert_enabled
+                    && self.was_charging_below_full.contains(&device.id)
+                    && !self.alerted_full_charge.contains(&device.id)
+                {
+                    self.alerted_full_charge.insert(device.id.clone());
+                    let display_name = config.get_device_display_name(&device.id, &device.name);
+                    let title = config.language.toast_full_charge_title(display_name);
+                    let message = config.language.toast_full_charge_body();
+                    if config.visual_alert_enabled {
+                        toast::show_toast(&title, message);
+                    }
+                    if config.audio_alert_enabled {
+                        audio::play_gentle_chime();
+                    }
+                }
+                continue;
+            } else {
+                // Disconnected from charger -> reset full-charge cycle tracking
+                self.was_charging_below_full.remove(&device.id);
+                self.alerted_full_charge.remove(&device.id);
+            }
+
+            if device.is_asleep {
                 self.last_alerted_level.remove(&device.id);
                 continue;
             }
@@ -201,5 +244,47 @@ mod tests {
         assert_eq!(mgr.last_alerted_level.get("dev_custom"), Some(&28));
         // dev_muted at 5% was muted so no alert triggered
         assert!(!mgr.last_alerted_level.contains_key("dev_muted"));
+    }
+
+    #[test]
+    fn test_full_charge_100_alert_transition() {
+        let mut mgr = NotificationManager::new();
+        let config = AppConfig {
+            audio_alert_enabled: false,
+            visual_alert_enabled: false,
+            full_charge_alert_enabled: true,
+            ..Default::default()
+        };
+
+        // Already at 100% on startup while plugged in -> must NOT trigger spurious alert
+        let dev_100_boot = DeviceBattery::new(
+            "dev_chg",
+            "Gaming Mouse",
+            DeviceType::Mouse,
+            100,
+            true,
+            true,
+            BatterySource::LogitechHidpp,
+        );
+        mgr.check_and_notify(std::slice::from_ref(&dev_100_boot), &config);
+        assert!(!mgr.alerted_full_charge.contains("dev_chg"));
+
+        // Seen charging at 95% -> arms the full-charge transition detector
+        let mut dev_95 = dev_100_boot.clone();
+        dev_95.percentage = 95;
+        mgr.check_and_notify(&[dev_95], &config);
+        assert!(mgr.was_charging_below_full.contains("dev_chg"));
+        assert!(!mgr.alerted_full_charge.contains("dev_chg"));
+
+        // Reaches 100% -> triggers full-charge alert
+        mgr.check_and_notify(std::slice::from_ref(&dev_100_boot), &config);
+        assert!(mgr.alerted_full_charge.contains("dev_chg"));
+
+        // Unplugged -> resets cycle state
+        let mut dev_unplugged = dev_100_boot.clone();
+        dev_unplugged.is_charging = false;
+        mgr.check_and_notify(&[dev_unplugged], &config);
+        assert!(!mgr.was_charging_below_full.contains("dev_chg"));
+        assert!(!mgr.alerted_full_charge.contains("dev_chg"));
     }
 }

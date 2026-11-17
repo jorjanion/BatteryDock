@@ -59,6 +59,8 @@ pub struct AppConfig {
     pub critical_battery_threshold: u8,
     pub audio_alert_enabled: bool,
     pub visual_alert_enabled: bool,
+    #[serde(default)]
+    pub full_charge_alert_enabled: bool,
     pub position_mode: DockPositionMode,
     pub custom_pos_x: f32,
     pub custom_pos_y: f32,
@@ -96,6 +98,7 @@ impl Default for AppConfig {
             critical_battery_threshold: 10,
             audio_alert_enabled: true,
             visual_alert_enabled: true,
+            full_charge_alert_enabled: false,
             position_mode: DockPositionMode::TaskbarLeftOfTray,
             custom_pos_x: 0.0,
             custom_pos_y: 0.0,
