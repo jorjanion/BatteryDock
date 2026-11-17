@@ -118,6 +118,7 @@ pub enum BatterySource {
     CorsairHid,
     GenericHid,
     NintendoHid,
+    AudioHeadsetHid,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -135,6 +136,7 @@ pub trait BatteryCollector: Send + Sync {
     fn poll_devices(&self) -> Vec<DeviceBattery>;
 }
 
+pub mod audio_headsets;
 pub mod bluetooth;
 pub mod dualsense;
 pub mod engine;

@@ -1,3 +1,4 @@
+use super::audio_headsets::AudioHeadsetCollector;
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::generic_hid::GenericHidCollector;
@@ -41,6 +42,7 @@ impl BatteryEngine {
                 Box::new(LogitechHidppCollector::new()),
                 Box::new(RazerCollector::new()),
                 Box::new(GenericHidCollector::new()),
+                Box::new(AudioHeadsetCollector::new()),
                 Box::new(XInputCollector::new()),
                 Box::new(DualSenseCollector::new()),
                 Box::new(NintendoCollector::new()),
