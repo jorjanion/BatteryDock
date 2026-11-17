@@ -526,6 +526,104 @@ impl Language {
             Language::Spanish => "Clara (Acrílico claro)",
         }
     }
+
+    pub fn heading_game_overlay(&self) -> &'static str {
+        match self {
+            Language::English => "Gaming & Fullscreen Overlay (HUD)",
+            Language::Spanish => "Overlay en juegos y pantalla completa (HUD)",
+        }
+    }
+
+    pub fn game_overlay_enable_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Show battery overlay over fullscreen games / apps",
+            Language::Spanish => "Activar overlay de batería sobre juegos / pantalla completa",
+        }
+    }
+
+    pub fn game_overlay_hint(&self) -> &'static str {
+        match self {
+            Language::English => "Keeps the battery pill visible in a screen corner during borderless/fullscreen games so you never run out of battery mid-match.",
+            Language::Spanish => "Muestra la pastilla en una esquina durante juegos en pantalla completa (ventana sin bordes) para vigilar la batería sin salir del juego.",
+        }
+    }
+
+    pub fn game_overlay_position_label(&self) -> &'static str {
+        match self {
+            Language::English => "Overlay Screen Position",
+            Language::Spanish => "Posición del overlay en pantalla",
+        }
+    }
+
+    pub fn overlay_corner_top_left(&self) -> &'static str {
+        match self {
+            Language::English => "Top Left",
+            Language::Spanish => "Superior izquierda",
+        }
+    }
+
+    pub fn overlay_corner_top_right(&self) -> &'static str {
+        match self {
+            Language::English => "Top Right",
+            Language::Spanish => "Superior derecha",
+        }
+    }
+
+    pub fn overlay_corner_bottom_left(&self) -> &'static str {
+        match self {
+            Language::English => "Bottom Left",
+            Language::Spanish => "Inferior izquierda",
+        }
+    }
+
+    pub fn overlay_corner_bottom_right(&self) -> &'static str {
+        match self {
+            Language::English => "Bottom Right",
+            Language::Spanish => "Inferior derecha",
+        }
+    }
+
+    pub fn overlay_corner_custom(&self) -> &'static str {
+        match self {
+            Language::English => "Custom Position (Anywhere)",
+            Language::Spanish => "Posición libre (Cualquier parte)",
+        }
+    }
+
+    pub fn overlay_margin_label(&self) -> &'static str {
+        match self {
+            Language::English => "Edge margin:",
+            Language::Spanish => "Margen del borde:",
+        }
+    }
+
+    pub fn overlay_custom_x_label(&self) -> &'static str {
+        match self {
+            Language::English => "Horizontal (X):",
+            Language::Spanish => "Horizontal (X):",
+        }
+    }
+
+    pub fn overlay_custom_y_label(&self) -> &'static str {
+        match self {
+            Language::English => "Vertical (Y):",
+            Language::Spanish => "Vertical (Y):",
+        }
+    }
+
+    pub fn game_overlay_click_through_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Click-through in overlay mode (mouse passes into game)",
+            Language::Spanish => "Ignorar clics en modo overlay (no interfiere al jugar)",
+        }
+    }
+
+    pub fn game_overlay_always_on_checkbox(&self) -> &'static str {
+        match self {
+            Language::English => "Always keep in overlay position (also live preview)",
+            Language::Spanish => "Mantener siempre en posición de overlay (vista previa en vivo)",
+        }
+    }
 }
 
 #[cfg(test)]

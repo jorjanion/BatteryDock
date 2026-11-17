@@ -524,6 +524,150 @@ impl SettingsWindow {
 
                 ui.add_space(8.0);
 
+                // Gaming & Fullscreen HUD Overlay
+                card_frame.show(ui, |ui| {
+                    ui.label(
+                        egui::RichText::new(lang.heading_game_overlay())
+                            .strong()
+                            .size(13.0),
+                    );
+                    ui.add_space(3.0);
+                    ui.label(
+                        egui::RichText::new(lang.game_overlay_hint())
+                            .size(11.0)
+                            .weak(),
+                    );
+                    ui.add_space(6.0);
+
+                    let mut game_on = config.game_overlay_enabled;
+                    if ui
+                        .checkbox(&mut game_on, lang.game_overlay_enable_checkbox())
+                        .changed()
+                    {
+                        config.game_overlay_enabled = game_on;
+                        config.save();
+                    }
+
+                    if config.game_overlay_enabled {
+                        ui.add_space(6.0);
+                        ui.separator();
+                        ui.add_space(6.0);
+
+                        ui.label(
+                            egui::RichText::new(lang.game_overlay_position_label())
+                                .strong()
+                                .size(12.0),
+                        );
+                        ui.add_space(4.0);
+
+                        let mut corner = config.game_overlay_corner;
+                        egui::ComboBox::from_id_salt("game_overlay_corner_combo")
+                            .selected_text(match corner {
+                                crate::config::OverlayCorner::TopLeft => lang.overlay_corner_top_left(),
+                                crate::config::OverlayCorner::TopRight => lang.overlay_corner_top_right(),
+                                crate::config::OverlayCorner::BottomLeft => lang.overlay_corner_bottom_left(),
+                                crate::config::OverlayCorner::BottomRight => lang.overlay_corner_bottom_right(),
+                                crate::config::OverlayCorner::Custom => lang.overlay_corner_custom(),
+                            })
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(
+                                    &mut corner,
+                                    crate::config::OverlayCorner::TopRight,
+                                    lang.overlay_corner_top_right(),
+                                );
+                                ui.selectable_value(
+                                    &mut corner,
+                                    crate::config::OverlayCorner::TopLeft,
+                                    lang.overlay_corner_top_left(),
+                                );
+                                ui.selectable_value(
+                                    &mut corner,
+                                    crate::config::OverlayCorner::BottomRight,
+                                    lang.overlay_corner_bottom_right(),
+                                );
+                                ui.selectable_value(
+                                    &mut corner,
+                                    crate::config::OverlayCorner::BottomLeft,
+                                    lang.overlay_corner_bottom_left(),
+                                );
+                                ui.selectable_value(
+                                    &mut corner,
+                                    crate::config::OverlayCorner::Custom,
+                                    lang.overlay_corner_custom(),
+                                );
+                            });
+
+                        if corner != config.game_overlay_corner {
+                            config.game_overlay_corner = corner;
+                            config.save();
+                        }
+
+                        ui.add_space(4.0);
+
+                        if config.game_overlay_corner == crate::config::OverlayCorner::Custom {
+                            ui.horizontal(|ui| {
+                                ui.label(lang.overlay_custom_x_label());
+                                let mut x_pct = config.game_overlay_custom_x_pct;
+                                if ui
+                                    .add(egui::Slider::new(&mut x_pct, 0.0..=100.0).suffix("%"))
+                                    .changed()
+                                {
+                                    config.game_overlay_custom_x_pct = x_pct;
+                                    config.save();
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                ui.label(lang.overlay_custom_y_label());
+                                let mut y_pct = config.game_overlay_custom_y_pct;
+                                if ui
+                                    .add(egui::Slider::new(&mut y_pct, 0.0..=100.0).suffix("%"))
+                                    .changed()
+                                {
+                                    config.game_overlay_custom_y_pct = y_pct;
+                                    config.save();
+                                }
+                            });
+                        } else {
+                            ui.horizontal(|ui| {
+                                ui.label(lang.overlay_margin_label());
+                                let mut margin = config.game_overlay_margin;
+                                if ui
+                                    .add(egui::Slider::new(&mut margin, 0.0..=100.0).suffix("px"))
+                                    .changed()
+                                {
+                                    config.game_overlay_margin = margin;
+                                    config.save();
+                                }
+                            });
+                        }
+
+                        ui.add_space(4.0);
+
+                        let mut click_through = config.game_overlay_click_through;
+                        if ui
+                            .checkbox(
+                                &mut click_through,
+                                lang.game_overlay_click_through_checkbox(),
+                            )
+                            .changed()
+                        {
+                            config.game_overlay_click_through = click_through;
+                            config.save();
+                        }
+
+                        let mut always_on = config.game_overlay_always_on;
+                        if ui
+                            .checkbox(&mut always_on, lang.game_overlay_always_on_checkbox())
+                            .changed()
+                        {
+                            config.game_overlay_always_on = always_on;
+                            config.save();
+                        }
+                    }
+                });
+
+                ui.add_space(8.0);
+
                 // Language
                 card_frame.show(ui, |ui| {
                     ui.label(

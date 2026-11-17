@@ -9,14 +9,15 @@ pub mod updater;
 
 use battery::engine::BatteryEngine;
 use battery::DeviceBattery;
-use config::{AppConfig, DockPositionMode};
+use config::{AppConfig, DockPositionMode, OverlayCorner};
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use std::sync::atomic::{AtomicBool, AtomicIsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use ui::dock::DockOverlay;
 use ui::taskbar::{
-    apply_overlay_ex_style, ensure_window_above_monitor_taskbar, is_window_visible_win32,
+    apply_overlay_ex_style, calculate_overlay_physical_rect, ensure_window_above_monitor_taskbar,
+    ensure_window_topmost_standalone, get_active_foreground_monitor_info, is_window_visible_win32,
     set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry,
 };
 use ui::tray::SystemTray;
@@ -37,12 +38,19 @@ struct DockLayoutParams {
     custom_y: f32,
     logical_w: f32,
     logical_h: f32,
+    game_overlay_enabled: bool,
+    game_overlay_corner: OverlayCorner,
+    game_overlay_margin: f32,
+    game_overlay_custom_x_pct: f32,
+    game_overlay_custom_y_pct: f32,
+    game_overlay_always_on: bool,
 }
 
 struct DockSyncState {
     our_hwnd: AtomicIsize,
     is_dragging: AtomicBool,
     is_dock_hidden: AtomicBool,
+    is_game_overlay_active: AtomicBool,
     just_unhid: AtomicBool,
     last_hidden_refresh: Mutex<Instant>,
     layout: Mutex<DockLayoutParams>,
@@ -60,6 +68,7 @@ struct BatteryDockApp {
     sync: Arc<DockSyncState>,
     last_dock_width: f32,
     last_position_mode: DockPositionMode,
+    last_mouse_passthrough: bool,
     last_config_reload: Instant,
 }
 
@@ -184,6 +193,12 @@ fn refresh_layout_from_disk_and_engine(
         layout.custom_y = cfg.custom_pos_y;
         layout.logical_w = logical_w;
         layout.logical_h = 32.0;
+        layout.game_overlay_enabled = cfg.game_overlay_enabled;
+        layout.game_overlay_corner = cfg.game_overlay_corner;
+        layout.game_overlay_margin = cfg.game_overlay_margin;
+        layout.game_overlay_custom_x_pct = cfg.game_overlay_custom_x_pct;
+        layout.game_overlay_custom_y_pct = cfg.game_overlay_custom_y_pct;
+        layout.game_overlay_always_on = cfg.game_overlay_always_on;
         return layout.clone();
     }
     sync.layout.lock().unwrap().clone()
@@ -230,9 +245,36 @@ fn sync_dock_window_once(
         return;
     };
 
-    let (mut target_rect, mut phys_w, mut phys_h) = compute_target_physical_rect(&params, &tb);
-    let mut should_be_visible =
-        TaskbarGeometry::should_dock_be_visible(params.mode, target_rect, std::process::id());
+    let resolve_layout = |p: &DockLayoutParams| -> (RECT, i32, i32, bool, bool) {
+        let (target_rect, phys_w, phys_h) = compute_target_physical_rect(p, &tb);
+        let taskbar_visible =
+            TaskbarGeometry::should_dock_be_visible(p.mode, target_rect, std::process::id());
+
+        let is_game_hud = p.game_overlay_enabled && (!taskbar_visible || p.game_overlay_always_on);
+        if is_game_hud {
+            let (mon_rect, dpi) = if !taskbar_visible {
+                get_active_foreground_monitor_info(tb.monitor_rect, tb.dpi_scale)
+            } else {
+                (tb.monitor_rect, tb.dpi_scale)
+            };
+            let (hud_rect, hw, hh) = calculate_overlay_physical_rect(
+                mon_rect,
+                dpi,
+                p.logical_w,
+                p.logical_h,
+                p.game_overlay_corner,
+                p.game_overlay_margin,
+                p.game_overlay_custom_x_pct,
+                p.game_overlay_custom_y_pct,
+            );
+            (hud_rect, hw, hh, true, true)
+        } else {
+            (target_rect, phys_w, phys_h, false, taskbar_visible)
+        }
+    };
+
+    let (mut final_rect, mut final_w, mut final_h, mut is_game_hud, mut should_be_visible) =
+        resolve_layout(&params);
 
     if should_be_visible && !currently_visible {
         if let Some(eng) = engine {
@@ -240,12 +282,17 @@ fn sync_dock_window_once(
             if let Ok(mut last) = sync.last_hidden_refresh.lock() {
                 *last = Instant::now();
             }
-            (target_rect, phys_w, phys_h) = compute_target_physical_rect(&params, &tb);
-            should_be_visible = TaskbarGeometry::should_dock_be_visible(
-                params.mode,
-                target_rect,
-                std::process::id(),
-            );
+            (final_rect, final_w, final_h, is_game_hud, should_be_visible) =
+                resolve_layout(&params);
+        }
+    }
+
+    let was_game_hud = sync
+        .is_game_overlay_active
+        .swap(is_game_hud, Ordering::AcqRel);
+    if was_game_hud != is_game_hud {
+        if let Some(c) = ctx {
+            c.request_repaint();
         }
     }
 
@@ -254,11 +301,19 @@ fn sync_dock_window_once(
             sync.is_dock_hidden.store(true, Ordering::Release);
         }
     } else {
-        set_window_physical_rect(hwnd, target_rect.left, target_rect.top, phys_w, phys_h);
-        ensure_window_above_monitor_taskbar(hwnd, target_rect);
+        set_window_physical_rect(hwnd, final_rect.left, final_rect.top, final_w, final_h);
+        if is_game_hud {
+            ensure_window_topmost_standalone(hwnd);
+        } else {
+            ensure_window_above_monitor_taskbar(hwnd, final_rect);
+        }
         if !currently_visible {
             set_window_visible_noactivate(hwnd, true);
-            ensure_window_above_monitor_taskbar(hwnd, target_rect);
+            if is_game_hud {
+                ensure_window_topmost_standalone(hwnd);
+            } else {
+                ensure_window_above_monitor_taskbar(hwnd, final_rect);
+            }
             sync.is_dock_hidden.store(false, Ordering::Release);
             sync.just_unhid.store(true, Ordering::Release);
             if let Some(c) = ctx {
@@ -294,6 +349,7 @@ impl BatteryDockApp {
             our_hwnd: AtomicIsize::new(our_hwnd),
             is_dragging: AtomicBool::new(false),
             is_dock_hidden: AtomicBool::new(false),
+            is_game_overlay_active: AtomicBool::new(false),
             just_unhid: AtomicBool::new(false),
             last_hidden_refresh: Mutex::new(Instant::now()),
             layout: Mutex::new(DockLayoutParams {
@@ -302,6 +358,12 @@ impl BatteryDockApp {
                 custom_y: config.custom_pos_y,
                 logical_w: initial_w,
                 logical_h: 32.0,
+                game_overlay_enabled: config.game_overlay_enabled,
+                game_overlay_corner: config.game_overlay_corner,
+                game_overlay_margin: config.game_overlay_margin,
+                game_overlay_custom_x_pct: config.game_overlay_custom_x_pct,
+                game_overlay_custom_y_pct: config.game_overlay_custom_y_pct,
+                game_overlay_always_on: config.game_overlay_always_on,
             }),
         });
 
@@ -426,6 +488,7 @@ impl BatteryDockApp {
             sync,
             last_dock_width: initial_w,
             last_position_mode: initial_mode,
+            last_mouse_passthrough: false,
             last_config_reload: Instant::now(),
         }
     }
@@ -437,6 +500,12 @@ impl BatteryDockApp {
         layout.custom_y = self.config.custom_pos_y;
         layout.logical_w = width;
         layout.logical_h = 32.0;
+        layout.game_overlay_enabled = self.config.game_overlay_enabled;
+        layout.game_overlay_corner = self.config.game_overlay_corner;
+        layout.game_overlay_margin = self.config.game_overlay_margin;
+        layout.game_overlay_custom_x_pct = self.config.game_overlay_custom_x_pct;
+        layout.game_overlay_custom_y_pct = self.config.game_overlay_custom_y_pct;
+        layout.game_overlay_always_on = self.config.game_overlay_always_on;
     }
 }
 
@@ -497,6 +566,14 @@ impl eframe::App for BatteryDockApp {
 
         if self.config.position_mode != self.last_position_mode {
             self.last_position_mode = self.config.position_mode;
+        }
+
+        // Toggle native click-through when in Gaming / Fullscreen HUD Overlay mode
+        let in_game_hud = self.sync.is_game_overlay_active.load(Ordering::Acquire);
+        let want_passthrough = in_game_hud && self.config.game_overlay_click_through;
+        if want_passthrough != self.last_mouse_passthrough {
+            self.last_mouse_passthrough = want_passthrough;
+            ctx.send_viewport_cmd(egui::ViewportCommand::MousePassthrough(want_passthrough));
         }
 
         // 5. Render main dock overlay

@@ -27,6 +27,17 @@ pub enum ThemeMode {
     Light,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum OverlayCorner {
+    TopLeft,
+    #[default]
+    TopRight,
+    BottomLeft,
+    BottomRight,
+    /// Custom normalized screen coordinates (0.0..=100.0 % on X and Y)
+    Custom,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct DeviceAlertConfig {
     #[serde(default)]
@@ -59,6 +70,20 @@ pub struct AppConfig {
     pub auto_update: bool,
     pub language: Language,
     #[serde(default)]
+    pub game_overlay_enabled: bool,
+    #[serde(default)]
+    pub game_overlay_corner: OverlayCorner,
+    #[serde(default)]
+    pub game_overlay_margin: f32,
+    #[serde(default)]
+    pub game_overlay_custom_x_pct: f32,
+    #[serde(default)]
+    pub game_overlay_custom_y_pct: f32,
+    #[serde(default)]
+    pub game_overlay_click_through: bool,
+    #[serde(default)]
+    pub game_overlay_always_on: bool,
+    #[serde(default)]
     pub theme_mode: ThemeMode,
     #[serde(default)]
     pub device_configs: std::collections::HashMap<String, DeviceAlertConfig>,
@@ -81,6 +106,13 @@ impl Default for AppConfig {
             compact_mode: false,
             auto_update: true,
             language: Language::default(),
+            game_overlay_enabled: false,
+            game_overlay_corner: OverlayCorner::TopRight,
+            game_overlay_margin: 16.0,
+            game_overlay_custom_x_pct: 95.0,
+            game_overlay_custom_y_pct: 4.0,
+            game_overlay_click_through: true,
+            game_overlay_always_on: false,
             theme_mode: ThemeMode::default(),
             device_configs: std::collections::HashMap::new(),
         }
@@ -316,5 +348,27 @@ mod tests {
 
         let deserialized: AppConfig = toml::from_str(&toml_str).expect("deserialize");
         assert_eq!(deserialized.theme_mode, ThemeMode::Dark);
+    }
+
+    #[test]
+    fn test_game_overlay_config_defaults_and_roundtrip() {
+        let mut cfg = AppConfig::default();
+        assert!(!cfg.game_overlay_enabled);
+        assert_eq!(cfg.game_overlay_corner, OverlayCorner::TopRight);
+        assert!(cfg.game_overlay_click_through);
+
+        cfg.game_overlay_enabled = true;
+        cfg.game_overlay_corner = OverlayCorner::Custom;
+        cfg.game_overlay_custom_x_pct = 80.0;
+        cfg.game_overlay_custom_y_pct = 15.0;
+
+        let toml_str = toml::to_string(&cfg).expect("serialize");
+        assert!(toml_str.contains("game_overlay_enabled = true"));
+        assert!(toml_str.contains("game_overlay_corner = \"Custom\""));
+
+        let decoded: AppConfig = toml::from_str(&toml_str).expect("deserialize");
+        assert!(decoded.game_overlay_enabled);
+        assert_eq!(decoded.game_overlay_corner, OverlayCorner::Custom);
+        assert_eq!(decoded.game_overlay_custom_x_pct, 80.0);
     }
 }

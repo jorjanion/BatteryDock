@@ -1,4 +1,4 @@
-use crate::config::DockPositionMode;
+use crate::config::{DockPositionMode, OverlayCorner};
 use crate::i18n::Language;
 use std::ffi::c_void;
 use windows::core::{w, PCWSTR, PWSTR};
@@ -985,6 +985,101 @@ pub fn ensure_window_above_monitor_taskbar(our_hwnd_val: isize, target_rect: REC
     }
 }
 
+/// Promotes the window into standalone TOPMOST HUD mode, detaching any `Shell_TrayWnd` owner
+/// so the overlay floats cleanly above fullscreen/borderless games instead of staying tied
+/// to the hidden taskbar.
+pub fn ensure_window_topmost_standalone(our_hwnd_val: isize) {
+    if our_hwnd_val == 0 {
+        return;
+    }
+    unsafe {
+        let our_hwnd = HWND(our_hwnd_val as *mut c_void);
+        if !IsWindow(our_hwnd).as_bool() {
+            return;
+        }
+        if let Ok(owner) = GetWindow(our_hwnd, GW_OWNER) {
+            if !owner.0.is_null() {
+                let _ = SetWindowLongPtrW(our_hwnd, GWLP_HWNDPARENT, 0);
+            }
+        }
+        let _ = SetWindowPos(
+            our_hwnd,
+            HWND_TOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+        );
+    }
+}
+
+/// Returns the monitor rect and DPI scale of the currently active foreground window,
+/// falling back to the primary monitor if unavailable.
+pub fn get_active_foreground_monitor_info(fallback_rect: RECT, fallback_dpi: f32) -> (RECT, f32) {
+    unsafe {
+        let fg = GetForegroundWindow();
+        if !fg.0.is_null() && IsWindow(fg).as_bool() {
+            let hmon = MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST);
+            if !hmon.is_invalid() {
+                let (rect, scale) = get_monitor_rect_and_scale(hmon);
+                if rect.right > rect.left && rect.bottom > rect.top {
+                    return (rect, scale);
+                }
+            }
+        }
+    }
+    (fallback_rect, fallback_dpi)
+}
+
+/// Pure, DPI-aware physical rect calculator for the Gaming / Fullscreen HUD Overlay.
+#[allow(clippy::too_many_arguments)]
+pub fn calculate_overlay_physical_rect(
+    monitor_rect: RECT,
+    dpi_scale: f32,
+    logical_w: f32,
+    logical_h: f32,
+    corner: OverlayCorner,
+    margin_logical: f32,
+    custom_x_pct: f32,
+    custom_y_pct: f32,
+) -> (RECT, i32, i32) {
+    let scale = dpi_scale.clamp(0.75, 4.0);
+    let phys_w = (logical_w * scale).round().max(32.0) as i32;
+    let phys_h = (logical_h * scale).round().max(16.0) as i32;
+    let margin = (margin_logical.clamp(0.0, 200.0) * scale).round() as i32;
+
+    let min_x = monitor_rect.left;
+    let min_y = monitor_rect.top;
+    let max_x = (monitor_rect.right - phys_w).max(min_x);
+    let max_y = (monitor_rect.bottom - phys_h).max(min_y);
+
+    let (raw_x, raw_y) = match corner {
+        OverlayCorner::TopLeft => (min_x + margin, min_y + margin),
+        OverlayCorner::TopRight => (max_x - margin, min_y + margin),
+        OverlayCorner::BottomLeft => (min_x + margin, max_y - margin),
+        OverlayCorner::BottomRight => (max_x - margin, max_y - margin),
+        OverlayCorner::Custom => {
+            let avail_w = (max_x - min_x) as f32;
+            let avail_h = (max_y - min_y) as f32;
+            let x = min_x + (avail_w * (custom_x_pct.clamp(0.0, 100.0) / 100.0)).round() as i32;
+            let y = min_y + (avail_h * (custom_y_pct.clamp(0.0, 100.0) / 100.0)).round() as i32;
+            (x, y)
+        }
+    };
+
+    let x = raw_x.clamp(min_x, max_x);
+    let y = raw_y.clamp(min_y, max_y);
+
+    let rect = RECT {
+        left: x,
+        top: y,
+        right: x + phys_w,
+        bottom: y + phys_h,
+    };
+    (rect, phys_w, phys_h)
+}
+
 pub fn get_window_physical_rect(hwnd_val: isize) -> Option<RECT> {
     if hwnd_val == 0 {
         return None;
@@ -1453,5 +1548,90 @@ mod tests {
         assert!(tb.taskbar_rect.right > tb.taskbar_rect.left);
         assert!(tb.taskbar_rect.bottom > tb.taskbar_rect.top);
         let _ = TaskbarGeometry::is_fullscreen_app_active();
+    }
+
+    #[test]
+    fn test_calculate_overlay_physical_rect_all_corners_and_custom_dpi() {
+        let mon = RECT {
+            left: 0,
+            top: 0,
+            right: 2560,
+            bottom: 1440,
+        };
+
+        // TopRight at 100% DPI with 16px margin
+        let (tr, w, h) = calculate_overlay_physical_rect(
+            mon,
+            1.0,
+            100.0,
+            32.0,
+            OverlayCorner::TopRight,
+            16.0,
+            0.0,
+            0.0,
+        );
+        assert_eq!((w, h), (100, 32));
+        assert_eq!((tr.left, tr.top), (2560 - 100 - 16, 16));
+
+        // TopLeft at 150% DPI with 20px logical margin (30px physical)
+        let (tl, w150, h150) = calculate_overlay_physical_rect(
+            mon,
+            1.5,
+            100.0,
+            32.0,
+            OverlayCorner::TopLeft,
+            20.0,
+            0.0,
+            0.0,
+        );
+        assert_eq!((w150, h150), (150, 48));
+        assert_eq!((tl.left, tl.top), (30, 30));
+
+        // BottomLeft
+        let (bl, _, _) = calculate_overlay_physical_rect(
+            mon,
+            1.0,
+            100.0,
+            32.0,
+            OverlayCorner::BottomLeft,
+            16.0,
+            0.0,
+            0.0,
+        );
+        assert_eq!((bl.left, bl.top), (16, 1440 - 32 - 16));
+
+        // BottomRight
+        let (br, _, _) = calculate_overlay_physical_rect(
+            mon,
+            1.0,
+            100.0,
+            32.0,
+            OverlayCorner::BottomRight,
+            16.0,
+            0.0,
+            0.0,
+        );
+        assert_eq!((br.left, br.top), (2560 - 100 - 16, 1440 - 32 - 16));
+
+        // Custom centered (50%, 50%) on negative-coordinate secondary monitor
+        let mon_left = RECT {
+            left: -1920,
+            top: 0,
+            right: 0,
+            bottom: 1080,
+        };
+        let (cust, cw, ch) = calculate_overlay_physical_rect(
+            mon_left,
+            1.0,
+            120.0,
+            32.0,
+            OverlayCorner::Custom,
+            16.0,
+            50.0,
+            50.0,
+        );
+        assert_eq!((cw, ch), (120, 32));
+        assert_eq!(cust.left, -1920 + (1920 - 120) / 2);
+        assert_eq!(cust.top, (1080 - 32) / 2);
     }
 }
