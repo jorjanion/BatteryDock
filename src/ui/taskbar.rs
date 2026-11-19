@@ -565,11 +565,13 @@ impl TaskbarGeometry {
                             while let Some(ch) = child {
                                 if !ch.0.is_null() {
                                     let mut cr = RECT::default();
-                                    if GetWindowRect(ch, &mut cr).is_ok() && cr.right > cr.left {
-                                        if cr.right >= r.right - (25.0 * dpi_scale) as i32 && cr.left > r.left + (50.0 * dpi_scale) as i32 {
-                                            tray_r = Some(cr);
-                                            break;
-                                        }
+                                    if GetWindowRect(ch, &mut cr).is_ok()
+                                        && cr.right > cr.left
+                                        && cr.right >= r.right - (25.0 * dpi_scale) as i32
+                                        && cr.left > r.left + (50.0 * dpi_scale) as i32
+                                    {
+                                        tray_r = Some(cr);
+                                        break;
                                     }
                                 }
                                 child = FindWindowExW(secondary_tb, ch, None, None).ok();

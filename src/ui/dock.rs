@@ -94,13 +94,59 @@ impl DockOverlay {
         );
     }
 
+    pub fn render_secondary(
+        &mut self,
+        ctx: &egui::Context,
+        config: &mut AppConfig,
+        devices: &[DeviceBattery],
+        menu_hwnd: isize,
+        open_settings: &mut bool,
+        on_refresh: impl FnOnce(),
+    ) {
+        let lang = config.language;
+        self.render_with_context_menu_internal(
+            ctx,
+            config,
+            devices,
+            menu_hwnd,
+            None,
+            open_settings,
+            on_refresh,
+            move |hwnd| show_dock_context_menu(hwnd, lang),
+        );
+    }
+
     #[allow(clippy::too_many_arguments)]
-    fn render_with_context_menu(
+    pub fn render_with_context_menu(
         &mut self,
         ctx: &egui::Context,
         config: &mut AppConfig,
         devices: &[DeviceBattery],
         our_hwnd: isize,
+        open_settings: &mut bool,
+        on_refresh: impl FnOnce(),
+        context_menu_fn: impl FnOnce(isize) -> Option<DockContextMenuAction>,
+    ) {
+        self.render_with_context_menu_internal(
+            ctx,
+            config,
+            devices,
+            our_hwnd,
+            if our_hwnd != 0 { Some(our_hwnd) } else { None },
+            open_settings,
+            on_refresh,
+            context_menu_fn,
+        );
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn render_with_context_menu_internal(
+        &mut self,
+        ctx: &egui::Context,
+        config: &mut AppConfig,
+        devices: &[DeviceBattery],
+        menu_hwnd: isize,
+        drag_hwnd: Option<isize>,
         open_settings: &mut bool,
         on_refresh: impl FnOnce(),
         context_menu_fn: impl FnOnce(isize) -> Option<DockContextMenuAction>,
@@ -329,7 +375,7 @@ impl DockOverlay {
                 });
 
                 if dock_response.secondary_clicked() {
-                    if let Some(action) = context_menu_fn(our_hwnd) {
+                    if let Some(action) = context_menu_fn(menu_hwnd) {
                         match action {
                             DockContextMenuAction::Settings => *open_settings = true,
                             DockContextMenuAction::Refresh => refresh_requested = true,
@@ -346,7 +392,7 @@ impl DockOverlay {
                 }
 
                 // Custom Win32 drag with >5px threshold (uses Win32 GetAsyncKeyState so release outside 32px pill never sticks)
-                if our_hwnd != 0 {
+                if let Some(our_hwnd) = drag_hwnd {
                     let primary_pressed = ui.input(|i| i.pointer.primary_pressed());
                     let pointer_in_pill = ui.rect_contains_pointer(avail_rect);
 
@@ -771,5 +817,57 @@ mod tests {
                 dock.render(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
             });
         }
+    }
+
+    #[test]
+    fn test_render_secondary_does_not_drag_and_opens_settings_on_click() {
+        let mut cfg = AppConfig::default();
+        let devs = vec![sample_dev(80, false)];
+        let w = DockOverlay::required_width(&devs, &cfg);
+        let ctx = egui::Context::default();
+        let mut dock = DockOverlay::new();
+        let mut open_settings = false;
+
+        let frame0 = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            ..Default::default()
+        };
+        let _ = ctx.run(frame0, |ctx| {
+            dock.render_secondary(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
+        });
+
+        let frame1 = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            events: vec![
+                egui::Event::PointerMoved(Pos2::new(10.0, 16.0)),
+                egui::Event::PointerButton {
+                    pos: Pos2::new(10.0, 16.0),
+                    button: egui::PointerButton::Primary,
+                    pressed: true,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ],
+            ..Default::default()
+        };
+        let _ = ctx.run(frame1, |ctx| {
+            dock.render_secondary(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
+        });
+
+        let frame2 = egui::RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, Vec2::new(w, 32.0))),
+            events: vec![egui::Event::PointerButton {
+                pos: Pos2::new(10.0, 16.0),
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+            ..Default::default()
+        };
+        let _ = ctx.run(frame2, |ctx| {
+            dock.render_secondary(ctx, &mut cfg, &devs, 0, &mut open_settings, || {});
+        });
+
+        assert!(open_settings, "Clicking secondary dock must open settings");
+        assert!(!dock.is_dragging(), "Secondary dock must never be in dragging state");
     }
 }

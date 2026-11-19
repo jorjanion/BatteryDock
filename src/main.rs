@@ -22,8 +22,8 @@ use ui::taskbar::{
     set_window_visible_noactivate, TaskbarGeometry,
 };
 use ui::tray::SystemTray;
-use windows::core::w;
-use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS, RECT};
+use windows::core::{w, PCWSTR};
+use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS, HWND, RECT};
 use windows::Win32::System::Threading::CreateMutexW;
 use windows::Win32::UI::HiDpi::{
     SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
@@ -64,6 +64,7 @@ struct BatteryDockApp {
     config: AppConfig,
     engine: BatteryEngine,
     dock: DockOverlay,
+    secondary_dock: DockOverlay,
     devices: Vec<DeviceBattery>,
     open_settings: bool,
     reset_pos_flag: Arc<AtomicBool>,
@@ -514,6 +515,7 @@ impl BatteryDockApp {
             config,
             engine,
             dock: DockOverlay::new(),
+            secondary_dock: DockOverlay::new(),
             devices: initial_devices,
             open_settings: false,
             reset_pos_flag,
@@ -627,6 +629,109 @@ impl eframe::App for BatteryDockApp {
             &mut self.open_settings,
             move || engine_ref.trigger_refresh(),
         );
+
+        // 5b. Render secondary dock overlays on all other active monitors if enabled
+        if self.config.show_on_all_monitors {
+            let all_monitors = TaskbarGeometry::detect_all();
+            for mon in all_monitors.into_iter().filter(|m| !m.is_primary) {
+                let mon_id = mon.monitor_id;
+                let vp_id = egui::ViewportId::from_hash_of(("battery_dock_secondary", mon_id));
+                let win_title = format!("BatteryDock-Secondary-{}", mon_id);
+
+                let scale = mon.geometry.dpi_scale.max(0.75);
+                let phys_w = (required_w * scale).round() as i32;
+                let tb = &mon.geometry.taskbar_rect;
+                let tb_h = (tb.bottom - tb.top) as f32;
+                let phys_h = ((32.0 * scale).round() as i32).min((tb_h - 4.0).max(16.0) as i32);
+                let center_y = tb.top as f32 + (tb_h - phys_h as f32) / 2.0;
+
+                let target_x = if let Some(tray) = &mon.geometry.tray_rect {
+                    if tray.right > tray.left
+                        && tray.left > tb.left + (60.0 * scale) as i32
+                        && tray.left < tb.right
+                    {
+                        (tray.left as f32 - phys_w as f32 - (12.0 * scale))
+                            .max(tb.left as f32 + (8.0 * scale))
+                    } else {
+                        (tb.right as f32 - phys_w as f32 - (12.0 * scale))
+                            .max(tb.left as f32 + (8.0 * scale))
+                    }
+                } else if self.config.position_mode == DockPositionMode::TaskbarLeft {
+                    tb.left as f32 + (65.0 * scale)
+                } else {
+                    (tb.right as f32 - phys_w as f32 - (12.0 * scale))
+                        .max(tb.left as f32 + (8.0 * scale))
+                };
+
+                let target_rect = RECT {
+                    left: target_x.round() as i32,
+                    top: center_y.round() as i32,
+                    right: (target_x + phys_w as f32).round() as i32,
+                    bottom: (center_y + phys_h as f32).round() as i32,
+                };
+
+                let should_be_visible = TaskbarGeometry::should_dock_be_visible(
+                    DockPositionMode::TaskbarLeftOfTray,
+                    target_rect,
+                    std::process::id(),
+                );
+
+                let start_x_logical = target_x / scale;
+                let start_y_logical = center_y / scale;
+
+                let vp_builder = egui::ViewportBuilder::default()
+                    .with_title(win_title.clone())
+                    .with_decorations(false)
+                    .with_transparent(true)
+                    .with_always_on_top()
+                    .with_resizable(false)
+                    .with_inner_size([required_w, 32.0])
+                    .with_position([start_x_logical, start_y_logical])
+                    .with_taskbar(false)
+                    .with_active(false)
+                    .with_visible(should_be_visible);
+
+                let engine_ref = self.engine.clone();
+                let our_hwnd = self.our_hwnd;
+                let devices_ref = &self.devices;
+                let config_ref = &mut self.config;
+                let open_settings_ref = &mut self.open_settings;
+                let secondary_dock_ref = &mut self.secondary_dock;
+
+                ctx.show_viewport_immediate(vp_id, vp_builder, |ctx, _class| {
+                    unsafe {
+                        let wide_title: Vec<u16> =
+                            win_title.encode_utf16().chain(std::iter::once(0)).collect();
+                        let sec_hwnd = FindWindowW(None, PCWSTR(wide_title.as_ptr()))
+                            .unwrap_or(HWND(std::ptr::null_mut()));
+                        if !sec_hwnd.0.is_null() && IsWindow(sec_hwnd).as_bool() {
+                            let sec_hwnd_val = sec_hwnd.0 as isize;
+                            apply_overlay_ex_style(sec_hwnd_val);
+                            if should_be_visible {
+                                set_window_physical_rect(
+                                    sec_hwnd_val,
+                                    target_rect.left,
+                                    target_rect.top,
+                                    phys_w,
+                                    phys_h,
+                                );
+                                ensure_window_above_monitor_taskbar(sec_hwnd_val, target_rect);
+                            }
+                        }
+                    }
+
+                    let engine_cb = engine_ref.clone();
+                    secondary_dock_ref.render_secondary(
+                        ctx,
+                        config_ref,
+                        devices_ref,
+                        our_hwnd,
+                        open_settings_ref,
+                        move || engine_cb.trigger_refresh(),
+                    );
+                });
+            }
+        }
 
         // Sync layout BEFORE clearing is_dragging so sync_watcher never snaps back for 1 tick
         self.sync_layout_params(self.last_dock_width);
