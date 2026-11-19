@@ -4,11 +4,13 @@ use std::ffi::c_void;
 use windows::core::{w, PCWSTR, PWSTR};
 use windows::Win32::Foundation::{CloseHandle, BOOL, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
 use windows::Win32::Graphics::Dwm::{
-    DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
+    DwmEnableBlurBehindWindow, DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
+    DWM_BB_BLURREGION, DWM_BB_ENABLE, DWM_BLURBEHIND,
 };
 use windows::Win32::Graphics::Gdi::{
-    EnumDisplayMonitors, GetMonitorInfoW, MonitorFromRect, MonitorFromWindow, HDC, HMONITOR,
-    MONITORINFO, MONITOR_DEFAULTTONEAREST, MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
+    CreateRectRgn, DeleteObject, EnumDisplayMonitors, GetMonitorInfoW, MonitorFromRect,
+    MonitorFromWindow, HDC, HMONITOR, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+    MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
 };
 
 const MONITORINFOF_PRIMARY: u32 = 1;
@@ -1063,6 +1065,27 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED,
             );
         }
+    }
+}
+
+pub fn make_window_transparent(hwnd_val: isize) {
+    if hwnd_val == 0 {
+        return;
+    }
+    unsafe {
+        let hwnd = HWND(hwnd_val as *mut c_void);
+        if !IsWindow(hwnd).as_bool() {
+            return;
+        }
+        let hrgn = CreateRectRgn(0, 0, -1, -1);
+        let bb = DWM_BLURBEHIND {
+            dwFlags: DWM_BB_ENABLE | DWM_BB_BLURREGION,
+            fEnable: BOOL(1),
+            hRgnBlur: hrgn,
+            fTransitionOnMaximized: BOOL(0),
+        };
+        let _ = DwmEnableBlurBehindWindow(hwnd, &bb);
+        let _ = DeleteObject(hrgn);
     }
 }
 

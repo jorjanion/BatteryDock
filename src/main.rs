@@ -18,8 +18,8 @@ use ui::dock::DockOverlay;
 use ui::taskbar::{
     apply_overlay_ex_style, calculate_overlay_physical_rect, ensure_window_above_monitor_taskbar,
     ensure_window_topmost_standalone, get_active_foreground_monitor_info,
-    is_hotkey_currently_pressed, is_window_visible_win32, set_window_physical_rect,
-    set_window_visible_noactivate, TaskbarGeometry,
+    is_hotkey_currently_pressed, is_window_visible_win32, make_window_transparent,
+    set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry,
 };
 use ui::tray::SystemTray;
 use windows::core::{w, PCWSTR};
@@ -653,13 +653,13 @@ impl eframe::App for BatteryDockApp {
                         (tray.left as f32 - phys_w as f32 - (12.0 * scale))
                             .max(tb.left as f32 + (8.0 * scale))
                     } else {
-                        (tb.right as f32 - phys_w as f32 - (12.0 * scale))
+                        (tb.right as f32 - (155.0 * scale) - phys_w as f32)
                             .max(tb.left as f32 + (8.0 * scale))
                     }
                 } else if self.config.position_mode == DockPositionMode::TaskbarLeft {
                     tb.left as f32 + (65.0 * scale)
                 } else {
-                    (tb.right as f32 - phys_w as f32 - (12.0 * scale))
+                    (tb.right as f32 - (155.0 * scale) - phys_w as f32)
                         .max(tb.left as f32 + (8.0 * scale))
                 };
 
@@ -707,6 +707,7 @@ impl eframe::App for BatteryDockApp {
                         if !sec_hwnd.0.is_null() && IsWindow(sec_hwnd).as_bool() {
                             let sec_hwnd_val = sec_hwnd.0 as isize;
                             apply_overlay_ex_style(sec_hwnd_val);
+                            make_window_transparent(sec_hwnd_val);
                             if should_be_visible {
                                 set_window_physical_rect(
                                     sec_hwnd_val,
@@ -716,6 +717,7 @@ impl eframe::App for BatteryDockApp {
                                     phys_h,
                                 );
                                 ensure_window_above_monitor_taskbar(sec_hwnd_val, target_rect);
+                                make_window_transparent(sec_hwnd_val);
                             }
                         }
                     }
