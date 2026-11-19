@@ -7,9 +7,22 @@ use windows::Win32::Graphics::Dwm::{
     DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
 };
 use windows::Win32::Graphics::Gdi::{
-    GetMonitorInfoW, MonitorFromRect, MonitorFromWindow, HMONITOR, MONITORINFO,
-    MONITOR_DEFAULTTONEAREST, MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
+    EnumDisplayMonitors, GetMonitorInfoW, MonitorFromRect, MonitorFromWindow, HDC, HMONITOR,
+    MONITORINFO, MONITOR_DEFAULTTONEAREST, MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
 };
+
+const MONITORINFOF_PRIMARY: u32 = 1;
+
+unsafe extern "system" fn monitor_enum_proc(
+    hmonitor: HMONITOR,
+    _hdc: HDC,
+    _rect: *mut RECT,
+    lparam: LPARAM,
+) -> BOOL {
+    let monitors = &mut *(lparam.0 as *mut Vec<HMONITOR>);
+    monitors.push(hmonitor);
+    BOOL(1)
+}
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
@@ -43,6 +56,16 @@ pub struct TaskbarGeometry {
     #[allow(dead_code)]
     pub monitor_rect: RECT,
     pub dpi_scale: f32,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct MonitorTaskbarGeometry {
+    pub monitor_id: usize,
+    pub is_primary: bool,
+    pub monitor_rect: RECT,
+    pub work_rect: RECT,
+    pub geometry: TaskbarGeometry,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -472,6 +495,158 @@ impl TaskbarGeometry {
             }
 
             None
+        }
+    }
+
+    /// Detects taskbars on ALL active connected monitors (primary and all secondaries).
+    pub fn detect_all() -> Vec<MonitorTaskbarGeometry> {
+        let mut results = Vec::new();
+        unsafe {
+            let mut monitors: Vec<HMONITOR> = Vec::new();
+            let _ = EnumDisplayMonitors(
+                HDC(std::ptr::null_mut()),
+                None,
+                Some(monitor_enum_proc),
+                LPARAM(&mut monitors as *mut _ as isize),
+            );
+
+            if monitors.is_empty() {
+                if let Some(primary) = Self::detect() {
+                    results.push(MonitorTaskbarGeometry {
+                        monitor_id: 0,
+                        is_primary: true,
+                        monitor_rect: primary.monitor_rect,
+                        work_rect: primary.monitor_rect,
+                        geometry: primary,
+                    });
+                }
+                return results;
+            }
+
+            for (idx, &hmon) in monitors.iter().enumerate() {
+                let mut mi = MONITORINFO {
+                    cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+                    ..Default::default()
+                };
+                if !GetMonitorInfoW(hmon, &mut mi).as_bool() {
+                    continue;
+                }
+
+                let is_primary = (mi.dwFlags & MONITORINFOF_PRIMARY) != 0;
+                let dpi_scale = get_monitor_rect_and_scale(hmon).1;
+
+                if is_primary {
+                    let geom = Self::detect().unwrap_or_else(|| Self {
+                        taskbar_rect: RECT {
+                            left: mi.rcMonitor.left,
+                            top: mi.rcMonitor.bottom - (48.0 * dpi_scale) as i32,
+                            right: mi.rcMonitor.right,
+                            bottom: mi.rcMonitor.bottom,
+                        },
+                        tray_rect: None,
+                        taskbar_hwnd: 0,
+                        monitor_rect: mi.rcMonitor,
+                        dpi_scale,
+                    });
+                    results.push(MonitorTaskbarGeometry {
+                        monitor_id: idx,
+                        is_primary: true,
+                        monitor_rect: mi.rcMonitor,
+                        work_rect: mi.rcWork,
+                        geometry: geom,
+                    });
+                } else {
+                    let secondary_tb = find_secondary_taskbar_for_monitor(hmon);
+                    let (taskbar_rect, taskbar_hwnd, tray_rect) = if !secondary_tb.0.is_null() && IsWindow(secondary_tb).as_bool() {
+                        let mut r = RECT::default();
+                        if GetWindowRect(secondary_tb, &mut r).is_ok() && r.right > r.left {
+                            let mut tray_r = None;
+                            let mut child = FindWindowExW(secondary_tb, HWND(std::ptr::null_mut()), None, None).ok();
+                            while let Some(ch) = child {
+                                if !ch.0.is_null() {
+                                    let mut cr = RECT::default();
+                                    if GetWindowRect(ch, &mut cr).is_ok() && cr.right > cr.left {
+                                        if cr.right >= r.right - (25.0 * dpi_scale) as i32 && cr.left > r.left + (50.0 * dpi_scale) as i32 {
+                                            tray_r = Some(cr);
+                                            break;
+                                        }
+                                    }
+                                }
+                                child = FindWindowExW(secondary_tb, ch, None, None).ok();
+                            }
+                            (r, secondary_tb.0 as isize, tray_r)
+                        } else {
+                            (
+                                Self::fallback_taskbar_rect_for_monitor(mi.rcMonitor, mi.rcWork, dpi_scale),
+                                0,
+                                None,
+                            )
+                        }
+                    } else {
+                        (
+                            Self::fallback_taskbar_rect_for_monitor(mi.rcMonitor, mi.rcWork, dpi_scale),
+                            0,
+                            None,
+                        )
+                    };
+
+                    results.push(MonitorTaskbarGeometry {
+                        monitor_id: idx,
+                        is_primary: false,
+                        monitor_rect: mi.rcMonitor,
+                        work_rect: mi.rcWork,
+                        geometry: TaskbarGeometry {
+                            taskbar_rect,
+                            tray_rect,
+                            taskbar_hwnd,
+                            monitor_rect: mi.rcMonitor,
+                            dpi_scale,
+                        },
+                    });
+                }
+            }
+        }
+
+        results
+    }
+
+    pub fn fallback_taskbar_rect_for_monitor(rc_mon: RECT, rc_work: RECT, dpi_scale: f32) -> RECT {
+        if rc_work.bottom < rc_mon.bottom {
+            RECT {
+                left: rc_mon.left,
+                top: rc_work.bottom,
+                right: rc_mon.right,
+                bottom: rc_mon.bottom,
+            }
+        } else if rc_work.top > rc_mon.top {
+            RECT {
+                left: rc_mon.left,
+                top: rc_mon.top,
+                right: rc_mon.right,
+                bottom: rc_work.top,
+            }
+        } else if rc_work.left > rc_mon.left {
+            RECT {
+                left: rc_mon.left,
+                top: rc_mon.top,
+                right: rc_work.left,
+                bottom: rc_mon.bottom,
+            }
+        } else if rc_work.right < rc_mon.right {
+            RECT {
+                left: rc_work.right,
+                top: rc_mon.top,
+                right: rc_mon.right,
+                bottom: rc_mon.bottom,
+            }
+        } else {
+            let tb_h = (48.0 * dpi_scale).round() as i32;
+            RECT {
+                left: rc_mon.left,
+                top: rc_mon.bottom - tb_h,
+                right: rc_mon.right,
+                bottom: rc_mon.bottom,
+            }
         }
     }
 
@@ -1668,5 +1843,82 @@ mod tests {
         assert_eq!((cw, ch), (120, 32));
         assert_eq!(cust.left, -1920 + (1920 - 120) / 2);
         assert_eq!(cust.top, (1080 - 32) / 2);
+    }
+
+    #[test]
+    fn test_fallback_taskbar_rect_for_monitor() {
+        let rc_mon = RECT {
+            left: 0,
+            top: 0,
+            right: 1920,
+            bottom: 1080,
+        };
+
+        // Bottom taskbar
+        let rc_work_bottom = RECT {
+            left: 0,
+            top: 0,
+            right: 1920,
+            bottom: 1032,
+        };
+        let fb_b = TaskbarGeometry::fallback_taskbar_rect_for_monitor(rc_mon, rc_work_bottom, 1.0);
+        assert_eq!(fb_b.left, 0);
+        assert_eq!(fb_b.top, 1032);
+        assert_eq!(fb_b.right, 1920);
+        assert_eq!(fb_b.bottom, 1080);
+
+        // Top taskbar
+        let rc_work_top = RECT {
+            left: 0,
+            top: 48,
+            right: 1920,
+            bottom: 1080,
+        };
+        let fb_t = TaskbarGeometry::fallback_taskbar_rect_for_monitor(rc_mon, rc_work_top, 1.0);
+        assert_eq!(fb_t.left, 0);
+        assert_eq!(fb_t.top, 0);
+        assert_eq!(fb_t.right, 1920);
+        assert_eq!(fb_t.bottom, 48);
+
+        // Left taskbar
+        let rc_work_left = RECT {
+            left: 60,
+            top: 0,
+            right: 1920,
+            bottom: 1080,
+        };
+        let fb_l = TaskbarGeometry::fallback_taskbar_rect_for_monitor(rc_mon, rc_work_left, 1.0);
+        assert_eq!(fb_l.left, 0);
+        assert_eq!(fb_l.top, 0);
+        assert_eq!(fb_l.right, 60);
+        assert_eq!(fb_l.bottom, 1080);
+
+        // Right taskbar
+        let rc_work_right = RECT {
+            left: 0,
+            top: 0,
+            right: 1860,
+            bottom: 1080,
+        };
+        let fb_r = TaskbarGeometry::fallback_taskbar_rect_for_monitor(rc_mon, rc_work_right, 1.0);
+        assert_eq!(fb_r.left, 1860);
+        assert_eq!(fb_r.top, 0);
+        assert_eq!(fb_r.right, 1920);
+        assert_eq!(fb_r.bottom, 1080);
+
+        // Auto-hidden or identical work area
+        let fb_hidden = TaskbarGeometry::fallback_taskbar_rect_for_monitor(rc_mon, rc_mon, 1.5);
+        assert_eq!(fb_hidden.left, 0);
+        assert_eq!(fb_hidden.top, 1080 - 72);
+        assert_eq!(fb_hidden.right, 1920);
+        assert_eq!(fb_hidden.bottom, 1080);
+    }
+
+    #[test]
+    fn test_detect_all_monitors() {
+        let monitors = TaskbarGeometry::detect_all();
+        assert!(!monitors.is_empty(), "detect_all should return at least one monitor");
+        let primary_count = monitors.iter().filter(|m| m.is_primary).count();
+        assert_eq!(primary_count, 1, "Exactly one primary monitor must be detected");
     }
 }
