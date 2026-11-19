@@ -755,6 +755,17 @@ impl SettingsWindow {
                         config.save();
                     }
 
+                    ui.add_space(6.0);
+                    if ui
+                        .checkbox(
+                            &mut config.show_on_all_monitors,
+                            lang.placement_all_monitors_checkbox(),
+                        )
+                        .changed()
+                    {
+                        config.save();
+                    }
+
                     ui.add_space(4.0);
                     if ui.button(lang.reset_position_button()).clicked() {
                         config.position_mode = DockPositionMode::TaskbarLeftOfTray;

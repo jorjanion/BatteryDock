@@ -54,6 +54,7 @@ pub(crate) struct Strings {
     pub placement_far_right: &'static str,
     pub placement_left_side: &'static str,
     pub placement_custom: &'static str,
+    pub placement_all_monitors_checkbox: &'static str,
     pub reset_position_button: &'static str,
     pub connected_devices_prefix: &'static str,
     pub refresh_now_button: &'static str,
@@ -327,6 +328,10 @@ impl Language {
 
     pub fn placement_custom(&self) -> &'static str {
         self.strings().placement_custom
+    }
+
+    pub fn placement_all_monitors_checkbox(&self) -> &'static str {
+        self.strings().placement_all_monitors_checkbox
     }
 
     pub fn reset_position_button(&self) -> &'static str {

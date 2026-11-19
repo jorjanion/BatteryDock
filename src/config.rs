@@ -141,6 +141,8 @@ pub struct AppConfig {
     pub poll_interval_secs: u64,
     pub show_percentage_text: bool,
     pub compact_mode: bool,
+    #[serde(default)]
+    pub show_on_all_monitors: bool,
     pub auto_update: bool,
     pub language: Language,
     #[serde(default)]
@@ -185,6 +187,7 @@ impl Default for AppConfig {
             poll_interval_secs: 4,
             show_percentage_text: true,
             compact_mode: false,
+            show_on_all_monitors: false,
             auto_update: true,
             language: Language::default(),
             game_overlay_enabled: false,
@@ -538,5 +541,18 @@ mod tests {
         let decoded: AppConfig = toml::from_str(&toml_str).expect("deserialize");
         assert!(decoded.game_overlay_hotkey_enabled);
         assert_eq!(decoded.game_overlay_hotkey, custom);
+    }
+
+    #[test]
+    fn test_show_on_all_monitors_defaults_and_roundtrip() {
+        let mut cfg = AppConfig::default();
+        assert!(!cfg.show_on_all_monitors);
+
+        cfg.show_on_all_monitors = true;
+        let toml_str = toml::to_string(&cfg).expect("serialize");
+        assert!(toml_str.contains("show_on_all_monitors = true"));
+
+        let decoded: AppConfig = toml::from_str(&toml_str).expect("deserialize");
+        assert!(decoded.show_on_all_monitors);
     }
 }
