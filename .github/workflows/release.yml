@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-windows:
     name: Build Windows Release & Installer
     runs-on: windows-latest
 
@@ -70,32 +70,88 @@ jobs:
           Copy-Item "assets/*" -Destination "package/assets/"
           Compress-Archive -Path "package/*" -DestinationPath "output/BatteryDock-Windows-Portable.zip" -Force
 
-      - name: Upload Artifacts
+      - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: BatteryDock-Windows-Builds
           path: output/*
 
-      - name: Extract Release Notes from CHANGELOG
-        shell: pwsh
+  build-macos:
+    name: Build macOS Universal DMG
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin, x86_64-apple-darwin
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run Tests
+        run: cargo test --verbose
+
+      - name: Package macOS Universal App & DMG
         run: |
-          $tag = "${{ github.ref_name }}"
-          $version = $tag.TrimStart('v')
-          $changelog = Get-Content "CHANGELOG.md" -Raw
-          $regex = "(?s)## \[$version\][^\r\n]*\r?\n(.*?)(?=\r?\n## \[|\Z)"
-          if ($changelog -match $regex) {
-            $notes = $matches[1].Trim()
-            $notes | Out-File -FilePath "output/RELEASE_NOTES.md" -Encoding utf8
-          } else {
-            "See [CHANGELOG.md](https://github.com/jorjanion/BatteryDock/blob/main/CHANGELOG.md) for details." | Out-File -FilePath "output/RELEASE_NOTES.md" -Encoding utf8
-          }
+          chmod +x scripts/package_macos.sh
+          ./scripts/package_macos.sh
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BatteryDock-macOS-Builds
+          path: output/BatteryDock-macOS.dmg
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: BatteryDock-Windows-Builds
+          path: release-assets
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: BatteryDock-macOS-Builds
+          path: release-assets
+
+      - name: Extract Release Notes from CHANGELOG
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > RELEASE_NOTES.md
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "See [CHANGELOG.md](https://github.com/jorjanion/BatteryDock/blob/main/CHANGELOG.md) for details." > RELEASE_NOTES.md
+          fi
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          body_path: output/RELEASE_NOTES.md
-          files: |
-            output/BatteryDock-Setup-*.exe
-            output/BatteryDock-*.zip
+          body_path: RELEASE_NOTES.md
+          files: release-assets/*
           generate_release_notes: true
