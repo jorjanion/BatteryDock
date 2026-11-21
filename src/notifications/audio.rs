@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
 use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(windows)]
 use windows::core::w;
+#[cfg(windows)]
 use windows::Win32::Media::Audio::{PlaySoundW, SND_ALIAS, SND_MEMORY, SND_NODEFAULT, SND_SYNC};
 
 static CHIME_PLAYING: AtomicBool = AtomicBool::new(false);
@@ -89,6 +91,7 @@ fn wav_bytes_to_aligned_u16(bytes: &[u8]) -> Vec<u16> {
 
 /// Synchronously plays the gentle chime on the calling thread while keeping `wav_data` alive.
 /// Returns `true` if `PlaySoundW` succeeded (or skipped safely because another chime is playing).
+#[cfg(windows)]
 pub fn play_chime_sync() -> bool {
     if CHIME_PLAYING
         .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
@@ -117,6 +120,19 @@ pub fn play_chime_sync() -> bool {
         )
         .as_bool()
     }
+}
+
+#[cfg(not(windows))]
+pub fn play_chime_sync() -> bool {
+    if CHIME_PLAYING
+        .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+        .is_err()
+    {
+        return false;
+    }
+    let _guard = ChimeGuard;
+    crate::platform::play_sound_chime();
+    true
 }
 
 pub fn play_gentle_chime() {

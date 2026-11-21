@@ -1,24 +1,36 @@
+#[cfg(windows)]
 use std::ffi::OsStr;
+#[cfg(windows)]
 use std::os::windows::ffi::OsStrExt;
+#[cfg(windows)]
 use std::sync::atomic::{AtomicU32, Ordering};
+#[cfg(windows)]
 use std::sync::OnceLock;
 use std::time::{Duration, Instant};
+#[cfg(windows)]
 use windows::core::{w, PCWSTR};
+#[cfg(windows)]
 use windows::Win32::Foundation::{GetLastError, HWND, LPARAM, LRESULT, WPARAM};
+#[cfg(windows)]
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+#[cfg(windows)]
 use windows::Win32::UI::Shell::{
     Shell_NotifyIconW, NIF_ICON, NIF_INFO, NIF_TIP, NIIF_INFO, NIIF_NOSOUND, NIIF_WARNING, NIM_ADD,
     NIM_DELETE, NOTIFYICONDATAW,
 };
+#[cfg(windows)]
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, LoadIconW, PeekMessageW,
     RegisterClassExW, TranslateMessage, IDI_INFORMATION, IDI_WARNING, MSG, PM_REMOVE, WNDCLASSEXW,
     WS_EX_TOOLWINDOW, WS_OVERLAPPED,
 };
 
+#[cfg(windows)]
 static NEXT_TOAST_ID: AtomicU32 = AtomicU32::new(100);
+#[cfg(windows)]
 static TOAST_CLASS_ATOM: OnceLock<Result<u16, u32>> = OnceLock::new();
 
+#[cfg(windows)]
 unsafe extern "system" fn toast_wnd_proc(
     hwnd: HWND,
     msg: u32,
@@ -28,6 +40,7 @@ unsafe extern "system" fn toast_wnd_proc(
     DefWindowProcW(hwnd, msg, wparam, lparam)
 }
 
+#[cfg(windows)]
 fn ensure_toast_window_class() -> Result<u16, u32> {
     *TOAST_CLASS_ATOM.get_or_init(|| unsafe {
         let hinstance = GetModuleHandleW(None).map_err(|e| e.code().0 as u32)?;
@@ -162,6 +175,7 @@ pub fn show_toast_with_hold(
     }
 }
 
+#[cfg(windows)]
 pub fn show_toast(title: &str, message: &str) {
     let title = title.to_string();
     let message = message.to_string();
@@ -171,7 +185,12 @@ pub fn show_toast(title: &str, message: &str) {
     });
 }
 
-#[cfg(test)]
+#[cfg(not(windows))]
+pub fn show_toast(title: &str, message: &str) {
+    crate::platform::show_system_notification(title, message);
+}
+
+#[cfg(all(test, windows))]
 mod tests {
     use super::*;
     use windows::Win32::UI::WindowsAndMessaging::FindWindowW;

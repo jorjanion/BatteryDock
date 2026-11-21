@@ -1270,52 +1270,9 @@ fn egui_key_to_vk(key: egui::Key) -> Option<u16> {
     }
 }
 
-/// Sets or removes Windows Run registry key
+/// Sets or removes autostart at system startup
 fn set_run_at_startup(enable: bool) -> Result<(), ()> {
-    use std::os::windows::ffi::OsStrExt;
-    use windows::core::PCWSTR;
-    use windows::Win32::System::Registry::{
-        RegCloseKey, RegCreateKeyW, RegDeleteValueW, RegSetValueExW, HKEY_CURRENT_USER, REG_SZ,
-    };
-
-    let subkey: Vec<u16> =
-        std::ffi::OsStr::new("Software\\Microsoft\\Windows\\CurrentVersion\\Run")
-            .encode_wide()
-            .chain(Some(0))
-            .collect();
-    let app_name: Vec<u16> = std::ffi::OsStr::new("BatteryDock")
-        .encode_wide()
-        .chain(Some(0))
-        .collect();
-
-    unsafe {
-        let mut hkey = windows::Win32::System::Registry::HKEY::default();
-        if RegCreateKeyW(HKEY_CURRENT_USER, PCWSTR(subkey.as_ptr()), &mut hkey).is_ok() {
-            if enable {
-                if let Ok(exe_path) = std::env::current_exe() {
-                    let path_str = format!("\"{}\"", exe_path.to_string_lossy());
-                    let path_wide: Vec<u16> = std::ffi::OsStr::new(&path_str)
-                        .encode_wide()
-                        .chain(Some(0))
-                        .collect();
-                    let _ = RegSetValueExW(
-                        hkey,
-                        PCWSTR(app_name.as_ptr()),
-                        0,
-                        REG_SZ,
-                        Some(std::slice::from_raw_parts(
-                            path_wide.as_ptr() as *const u8,
-                            path_wide.len() * 2,
-                        )),
-                    );
-                }
-            } else {
-                let _ = RegDeleteValueW(hkey, PCWSTR(app_name.as_ptr()));
-            }
-            let _ = RegCloseKey(hkey);
-        }
-    }
-    Ok(())
+    crate::platform::set_autostart(enable)
 }
 
 pub struct SettingsApp {
@@ -1441,24 +1398,22 @@ impl eframe::App for SettingsApp {
 }
 
 pub fn run_standalone_settings() -> eframe::Result<()> {
-    use windows::core::w;
-    use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS};
-    use windows::Win32::System::Threading::CreateMutexW;
-    use windows::Win32::UI::WindowsAndMessaging::{
-        FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE,
-    };
-
-    unsafe {
-        let _mutex = CreateMutexW(None, true, w!("Global\\BatteryDockSettingsMutex"));
-        if GetLastError() == ERROR_ALREADY_EXISTS {
+    let (acquired, _guard) = crate::platform::acquire_single_instance("Global\\BatteryDockSettingsMutex");
+    if !acquired {
+        #[cfg(windows)]
+        unsafe {
+            use windows::core::w;
+            use windows::Win32::UI::WindowsAndMessaging::{
+                FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE,
+            };
             if let Ok(hwnd) = FindWindowW(None, w!("BatteryDock Settings")) {
                 if !hwnd.0.is_null() {
                     let _ = ShowWindow(hwnd, SW_RESTORE);
                     let _ = SetForegroundWindow(hwnd);
                 }
             }
-            return Ok(());
         }
+        return Ok(());
     }
 
     let native_options = eframe::NativeOptions {
