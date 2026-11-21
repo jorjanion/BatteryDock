@@ -1,12 +1,16 @@
 use super::audio_headsets::AudioHeadsetCollector;
+#[cfg(windows)]
 use super::bluetooth::BluetoothBatteryCollector;
 use super::dualsense::DualSenseCollector;
 use super::generic_hid::GenericHidCollector;
 use super::history::BatteryHistoryStore;
 use super::intelligence::BatteryIntelligence;
 use super::logitech_hidpp::LogitechHidppCollector;
+#[cfg(target_os = "macos")]
+use super::macos_iokit::AppleIokitCollector;
 use super::nintendo::NintendoCollector;
 use super::razer::RazerCollector;
+#[cfg(windows)]
 use super::xinput::XInputCollector;
 use super::{BatteryCollector, DeviceBattery};
 use crate::config::AppConfig;
@@ -40,15 +44,20 @@ impl BatteryEngine {
         let receiver_drain = update_receiver.clone();
 
         thread::spawn(move || {
-            let collectors: Vec<Box<dyn BatteryCollector>> = vec![
+            #[allow(unused_mut)]
+            let mut collectors: Vec<Box<dyn BatteryCollector>> = vec![
                 Box::new(LogitechHidppCollector::new()),
                 Box::new(RazerCollector::new()),
                 Box::new(GenericHidCollector::new()),
                 Box::new(AudioHeadsetCollector::new()),
+                #[cfg(windows)]
                 Box::new(XInputCollector::new()),
                 Box::new(DualSenseCollector::new()),
                 Box::new(NintendoCollector::new()),
+                #[cfg(windows)]
                 Box::new(BluetoothBatteryCollector::new()),
+                #[cfg(target_os = "macos")]
+                Box::new(AppleIokitCollector::new()),
             ];
             let mut notification_mgr = NotificationManager::new();
             let mut intelligence = BatteryIntelligence::new();

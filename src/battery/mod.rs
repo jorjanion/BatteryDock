@@ -125,6 +125,7 @@ pub enum BatterySource {
     GenericHid,
     NintendoHid,
     AudioHeadsetHid,
+    AppleIokit,
 }
 
 impl BatterySource {
@@ -141,6 +142,7 @@ impl BatterySource {
             BatterySource::GenericHid => "Universal HID Battery",
             BatterySource::NintendoHid => "Nintendo Switch",
             BatterySource::AudioHeadsetHid => "Wireless Audio Headset",
+            BatterySource::AppleIokit => "Apple IOKit / Bluetooth",
         }
     }
 }
@@ -189,6 +191,7 @@ pub trait BatteryCollector: Send + Sync {
 }
 
 pub mod audio_headsets;
+#[cfg(windows)]
 pub mod bluetooth;
 pub mod diagnostics;
 pub mod dualsense;
@@ -197,8 +200,10 @@ pub mod generic_hid;
 pub mod history;
 pub mod intelligence;
 pub mod logitech_hidpp;
+pub mod macos_iokit;
 pub mod nintendo;
 pub mod razer;
+#[cfg(windows)]
 pub mod xinput;
 
 #[cfg(test)]
