@@ -1,20 +1,30 @@
 use crate::config::{DockPositionMode, OverlayCorner, OverlayHotkey};
 use crate::i18n::Language;
+#[allow(unused_imports)]
 use std::ffi::c_void;
+
+#[cfg(windows)]
 use windows::core::{w, PCWSTR, PWSTR};
-use windows::Win32::Foundation::{CloseHandle, BOOL, COLORREF, HWND, LPARAM, POINT, RECT, WPARAM};
+#[cfg(windows)]
+use windows::Win32::Foundation::{CloseHandle, BOOL, COLORREF, HWND, LPARAM, POINT, WPARAM};
+#[cfg(windows)]
+pub use windows::Win32::Foundation::RECT;
+#[cfg(windows)]
 use windows::Win32::Graphics::Dwm::{
     DwmEnableBlurBehindWindow, DwmGetWindowAttribute, DWMWA_CLOAKED, DWMWA_EXTENDED_FRAME_BOUNDS,
     DWM_BB_BLURREGION, DWM_BB_ENABLE, DWM_BLURBEHIND,
 };
+#[cfg(windows)]
 use windows::Win32::Graphics::Gdi::{
     CreateRectRgn, DeleteObject, EnumDisplayMonitors, GetMonitorInfoW, MonitorFromRect,
     MonitorFromWindow, HDC, HMONITOR, MONITORINFO, MONITOR_DEFAULTTONEAREST,
     MONITOR_DEFAULTTONULL, MONITOR_DEFAULTTOPRIMARY,
 };
 
+#[cfg(windows)]
 const MONITORINFOF_PRIMARY: u32 = 1;
 
+#[cfg(windows)]
 unsafe extern "system" fn monitor_enum_proc(
     hmonitor: HMONITOR,
     _hdc: HDC,
@@ -25,17 +35,22 @@ unsafe extern "system" fn monitor_enum_proc(
     monitors.push(hmonitor);
     BOOL(1)
 }
+#[cfg(windows)]
 use windows::Win32::System::Threading::{
     OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
 };
+#[cfg(windows)]
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
+#[cfg(windows)]
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     GetAsyncKeyState, VK_CONTROL, VK_LBUTTON, VK_MENU, VK_RBUTTON, VK_SHIFT,
 };
+#[cfg(windows)]
 use windows::Win32::UI::Shell::{
     SHAppBarMessage, SHQueryUserNotificationState, ABM_GETTASKBARPOS, APPBARDATA,
     QUNS_RUNNING_D3D_FULL_SCREEN,
 };
+#[cfg(windows)]
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CreatePopupMenu, DestroyMenu, FindWindowExW, FindWindowW, GetClassNameW,
     GetCursorPos, GetDesktopWindow, GetForegroundWindow, GetLayeredWindowAttributes,
@@ -48,6 +63,15 @@ use windows::Win32::UI::WindowsAndMessaging::{
     TPM_RIGHTBUTTON, WM_NULL, WS_EX_APPWINDOW, WS_EX_LAYERED, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
     WS_EX_TRANSPARENT, GWLP_HWNDPARENT, SetWindowLongPtrW,
 };
+
+#[cfg(not(windows))]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RECT {
+    pub left: i32,
+    pub top: i32,
+    pub right: i32,
+    pub bottom: i32,
+}
 
 #[derive(Debug, Clone)]
 pub struct TaskbarGeometry {
@@ -202,6 +226,7 @@ pub fn evaluate_dock_should_be_visible(input: &MonitorVisibilityInput) -> bool {
     }
 }
 
+#[cfg(windows)]
 unsafe fn get_monitor_rect_and_scale(hmon: HMONITOR) -> (RECT, f32) {
     let mut mi = MONITORINFO {
         cbSize: std::mem::size_of::<MONITORINFO>() as u32,
@@ -232,6 +257,7 @@ unsafe fn get_monitor_rect_and_scale(hmon: HMONITOR) -> (RECT, f32) {
     (rect, scale)
 }
 
+#[cfg(windows)]
 unsafe fn get_window_class_lower(hwnd: HWND) -> String {
     let mut buf = [0u16; 96];
     let len = GetClassNameW(hwnd, &mut buf);
@@ -242,6 +268,7 @@ unsafe fn get_window_class_lower(hwnd: HWND) -> String {
     }
 }
 
+#[cfg(windows)]
 unsafe fn get_process_exe_lower(pid: u32) -> Option<String> {
     let Ok(handle) = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid) else {
         return None;
@@ -366,11 +393,13 @@ pub fn is_shell_flyout_exe_and_class(exe_lower: Option<&str>, class_lower: &str)
     false
 }
 
+#[cfg(windows)]
 unsafe fn is_shell_flyout_window(pid: u32, class_lower: &str) -> bool {
     let exe = get_process_exe_lower(pid);
     is_shell_flyout_exe_and_class(exe.as_deref(), class_lower)
 }
 
+#[cfg(windows)]
 unsafe fn is_window_zero_alpha(hwnd: HWND, ex_style: u32) -> bool {
     if (ex_style & WS_EX_LAYERED.0) == 0 {
         return false;
@@ -383,11 +412,13 @@ unsafe fn is_window_zero_alpha(hwnd: HWND, ex_style: u32) -> bool {
         && alpha == 0
 }
 
+#[cfg(windows)]
 struct SecondaryTaskbarSearch {
     target_monitor: HMONITOR,
     found_hwnd: HWND,
 }
 
+#[cfg(windows)]
 unsafe extern "system" fn enum_secondary_taskbar_proc(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let state = &mut *(lparam.0 as *mut SecondaryTaskbarSearch);
     let class = get_window_class_lower(hwnd);
@@ -401,6 +432,7 @@ unsafe extern "system" fn enum_secondary_taskbar_proc(hwnd: HWND, lparam: LPARAM
     BOOL(1)
 }
 
+#[cfg(windows)]
 unsafe fn find_secondary_taskbar_for_monitor(target_monitor: HMONITOR) -> HWND {
     use windows::Win32::UI::WindowsAndMessaging::EnumWindows;
 
@@ -416,6 +448,7 @@ unsafe fn find_secondary_taskbar_for_monitor(target_monitor: HMONITOR) -> HWND {
 }
 
 impl TaskbarGeometry {
+    #[cfg(windows)]
     pub fn detect() -> Option<Self> {
         unsafe {
             // 1. Prefer live Shell_TrayWnd window geometry in physical pixels (accurate under PerMonitorV2)
@@ -500,7 +533,34 @@ impl TaskbarGeometry {
         }
     }
 
+    #[cfg(not(windows))]
+    pub fn detect() -> Option<Self> {
+        Some(Self {
+            taskbar_rect: RECT {
+                left: 0,
+                top: 0,
+                right: 1920,
+                bottom: 28,
+            },
+            tray_rect: Some(RECT {
+                left: 1720,
+                top: 0,
+                right: 1920,
+                bottom: 28,
+            }),
+            taskbar_hwnd: 0,
+            monitor_rect: RECT {
+                left: 0,
+                top: 0,
+                right: 1920,
+                bottom: 1080,
+            },
+            dpi_scale: 1.0,
+        })
+    }
+
     /// Detects taskbars on ALL active connected monitors (primary and all secondaries).
+    #[cfg(windows)]
     pub fn detect_all() -> Vec<MonitorTaskbarGeometry> {
         let mut results = Vec::new();
         unsafe {
@@ -614,6 +674,26 @@ impl TaskbarGeometry {
         results
     }
 
+    #[cfg(not(windows))]
+    pub fn detect_all() -> Vec<MonitorTaskbarGeometry> {
+        if let Some(geom) = Self::detect() {
+            vec![MonitorTaskbarGeometry {
+                monitor_id: 0,
+                is_primary: true,
+                monitor_rect: geom.monitor_rect,
+                work_rect: RECT {
+                    left: 0,
+                    top: 28,
+                    right: 1920,
+                    bottom: 1080,
+                },
+                geometry: geom,
+            }]
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn fallback_taskbar_rect_for_monitor(rc_mon: RECT, rc_work: RECT, dpi_scale: f32) -> RECT {
         if rc_work.bottom < rc_mon.bottom {
             RECT {
@@ -654,6 +734,7 @@ impl TaskbarGeometry {
         }
     }
 
+    #[cfg(windows)]
     pub fn is_custom_rect_on_any_monitor(x: f32, y: f32, w: f32, h: f32) -> bool {
         if !x.is_finite() || !y.is_finite() || !w.is_finite() || !h.is_finite() {
             return false;
@@ -670,11 +751,22 @@ impl TaskbarGeometry {
         unsafe { !MonitorFromRect(&rc, MONITOR_DEFAULTTONULL).is_invalid() }
     }
 
+    #[cfg(not(windows))]
+    pub fn is_custom_rect_on_any_monitor(x: f32, y: f32, _w: f32, _h: f32) -> bool {
+        x >= 0.0 && y >= 0.0
+    }
+
+    #[cfg(windows)]
     pub fn dpi_scale_for_rect(rect: RECT) -> f32 {
         unsafe {
             let hmon = MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
             get_monitor_rect_and_scale(hmon).1
         }
+    }
+
+    #[cfg(not(windows))]
+    pub fn dpi_scale_for_rect(_rect: RECT) -> f32 {
+        1.0
     }
 
     /// Computes physical pixel `(x, y)` for the dock given logical width/height.
@@ -761,6 +853,7 @@ impl TaskbarGeometry {
     }
 
     /// Checks whether the taskbar on the dock's target monitor is actually visible and unobstructed.
+    #[cfg(windows)]
     pub fn should_dock_be_visible(
         mode: DockPositionMode,
         dock_phys_rect: RECT,
@@ -1022,6 +1115,15 @@ impl TaskbarGeometry {
         }
     }
 
+    #[cfg(not(windows))]
+    pub fn should_dock_be_visible(
+        _mode: DockPositionMode,
+        _dock_phys_rect: RECT,
+        _our_pid: u32,
+    ) -> bool {
+        true
+    }
+
     /// Legacy convenience wrapper kept accurate via the new occlusion engine.
     #[allow(dead_code)]
     pub fn is_fullscreen_app_active() -> bool {
@@ -1041,6 +1143,7 @@ impl TaskbarGeometry {
 }
 
 /// Ensures the overlay window has `WS_EX_TOOLWINDOW | WS_EX_TOPMOST` and NOT `WS_EX_APPWINDOW`.
+#[cfg(windows)]
 pub fn apply_overlay_ex_style(hwnd_val: isize) {
     if hwnd_val == 0 {
         return;
@@ -1068,6 +1171,7 @@ pub fn apply_overlay_ex_style(hwnd_val: isize) {
     }
 }
 
+#[cfg(windows)]
 pub fn make_window_transparent(hwnd_val: isize) {
     if hwnd_val == 0 {
         return;
@@ -1089,6 +1193,7 @@ pub fn make_window_transparent(hwnd_val: isize) {
     }
 }
 
+#[cfg(windows)]
 unsafe fn is_dock_above_taskbar(our_hwnd: HWND, tb_hwnd: HWND) -> bool {
     let mut cur = GetWindow(tb_hwnd, GW_HWNDPREV).unwrap_or(HWND(std::ptr::null_mut()));
     let mut steps = 0usize;
@@ -1103,6 +1208,7 @@ unsafe fn is_dock_above_taskbar(our_hwnd: HWND, tb_hwnd: HWND) -> bool {
 }
 
 /// Ensures `our_hwnd` maintains `HWND_TOPMOST` and sits physically ABOVE `tb_hwnd` in Z-order.
+#[cfg(windows)]
 pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
     if our_hwnd_val == 0 {
         return;
@@ -1147,6 +1253,7 @@ pub fn ensure_window_above_taskbar(our_hwnd_val: isize, tb_hwnd_val: isize) {
     }
 }
 
+#[cfg(windows)]
 pub fn ensure_window_above_monitor_taskbar(our_hwnd_val: isize, target_rect: RECT) {
     if our_hwnd_val == 0 {
         return;
@@ -1190,6 +1297,7 @@ pub fn ensure_window_above_monitor_taskbar(our_hwnd_val: isize, target_rect: REC
 /// Promotes the window into standalone TOPMOST HUD mode, detaching any `Shell_TrayWnd` owner
 /// so the overlay floats cleanly above fullscreen/borderless games instead of staying tied
 /// to the hidden taskbar.
+#[cfg(windows)]
 pub fn ensure_window_topmost_standalone(our_hwnd_val: isize) {
     if our_hwnd_val == 0 {
         return;
@@ -1218,6 +1326,7 @@ pub fn ensure_window_topmost_standalone(our_hwnd_val: isize) {
 
 /// Returns the monitor rect and DPI scale of the currently active foreground window,
 /// falling back to the primary monitor if unavailable.
+#[cfg(windows)]
 pub fn get_active_foreground_monitor_info(fallback_rect: RECT, fallback_dpi: f32) -> (RECT, f32) {
     unsafe {
         let fg = GetForegroundWindow();
@@ -1285,6 +1394,7 @@ pub fn calculate_overlay_physical_rect(
 /// Checks whether the configured global `OverlayHotkey` is currently pressed via Win32 `GetAsyncKeyState`,
 /// requiring exact Ctrl/Alt/Shift modifier match and ignoring keypresses while the BatteryDock Settings
 /// window has focus (so recording a new shortcut never misfires).
+#[cfg(windows)]
 pub fn is_hotkey_currently_pressed(hotkey: &OverlayHotkey) -> bool {
     if hotkey.vk_code == 0 {
         return false;
@@ -1315,6 +1425,7 @@ pub fn is_hotkey_currently_pressed(hotkey: &OverlayHotkey) -> bool {
     }
 }
 
+#[cfg(windows)]
 pub fn get_window_physical_rect(hwnd_val: isize) -> Option<RECT> {
     if hwnd_val == 0 {
         return None;
@@ -1333,6 +1444,7 @@ pub fn get_window_physical_rect(hwnd_val: isize) -> Option<RECT> {
     }
 }
 
+#[cfg(windows)]
 pub fn set_window_physical_rect(hwnd_val: isize, x: i32, y: i32, w: i32, h: i32) {
     if hwnd_val == 0 {
         return;
@@ -1366,6 +1478,7 @@ pub fn set_window_physical_rect(hwnd_val: isize, x: i32, y: i32, w: i32, h: i32)
     }
 }
 
+#[cfg(windows)]
 pub fn get_cursor_physical_pos() -> Option<(i32, i32)> {
     unsafe {
         let mut pt = POINT::default();
@@ -1377,6 +1490,7 @@ pub fn get_cursor_physical_pos() -> Option<(i32, i32)> {
     }
 }
 
+#[cfg(windows)]
 pub fn set_window_physical_pos(hwnd_val: isize, x: i32, y: i32) {
     if hwnd_val == 0 {
         return;
@@ -1398,6 +1512,7 @@ pub fn set_window_physical_pos(hwnd_val: isize, x: i32, y: i32) {
     }
 }
 
+#[cfg(windows)]
 pub fn is_window_visible_win32(hwnd_val: isize) -> bool {
     if hwnd_val == 0 {
         return false;
@@ -1410,6 +1525,7 @@ pub fn is_window_visible_win32(hwnd_val: isize) -> bool {
 
 /// Shows or hides the window purely via Win32 (`SW_HIDE` / `SW_SHOWNOACTIVATE`),
 /// avoiding `winit` style rewrites. Returns `true` if visibility actually changed.
+#[cfg(windows)]
 pub fn set_window_visible_noactivate(hwnd_val: isize, visible: bool) -> bool {
     if hwnd_val == 0 {
         return false;
@@ -1429,6 +1545,7 @@ pub fn set_window_visible_noactivate(hwnd_val: isize, visible: bool) -> bool {
 }
 
 /// Checks live Win32 mouse button state (immune to uncaptured cursor exits outside the 32px pill).
+#[cfg(windows)]
 pub fn is_primary_mouse_button_down() -> bool {
     unsafe {
         let swapped = GetSystemMetrics(SM_SWAPBUTTON) != 0;
@@ -1451,6 +1568,7 @@ pub enum DockContextMenuAction {
 }
 
 /// Shows a crisp native Win32 popup menu above/beside the dock pill (never clipped by the 32px viewport).
+#[cfg(windows)]
 pub fn show_dock_context_menu(hwnd_val: isize, lang: Language) -> Option<DockContextMenuAction> {
     if hwnd_val == 0 {
         return None;
@@ -1505,6 +1623,67 @@ pub fn show_dock_context_menu(hwnd_val: isize, lang: Language) -> Option<DockCon
             _ => None,
         }
     }
+}
+
+#[cfg(not(windows))]
+pub fn apply_overlay_ex_style(_hwnd_val: isize) {}
+
+#[cfg(not(windows))]
+pub fn make_window_transparent(_hwnd_val: isize) {}
+
+#[cfg(not(windows))]
+pub fn ensure_window_above_taskbar(_our_hwnd_val: isize, _tb_hwnd_val: isize) {}
+
+#[cfg(not(windows))]
+pub fn ensure_window_above_monitor_taskbar(_our_hwnd_val: isize, _target_rect: RECT) {}
+
+#[cfg(not(windows))]
+pub fn ensure_window_topmost_standalone(_our_hwnd_val: isize) {}
+
+#[cfg(not(windows))]
+pub fn get_active_foreground_monitor_info(fallback_rect: RECT, fallback_dpi: f32) -> (RECT, f32) {
+    (fallback_rect, fallback_dpi)
+}
+
+#[cfg(not(windows))]
+pub fn is_hotkey_currently_pressed(_hotkey: &OverlayHotkey) -> bool {
+    false
+}
+
+#[cfg(not(windows))]
+pub fn get_window_physical_rect(_hwnd_val: isize) -> Option<RECT> {
+    None
+}
+
+#[cfg(not(windows))]
+pub fn set_window_physical_rect(_hwnd_val: isize, _x: i32, _y: i32, _w: i32, _h: i32) {}
+
+#[cfg(not(windows))]
+pub fn get_cursor_physical_pos() -> Option<(i32, i32)> {
+    None
+}
+
+#[cfg(not(windows))]
+pub fn set_window_physical_pos(_hwnd_val: isize, _x: i32, _y: i32) {}
+
+#[cfg(not(windows))]
+pub fn is_window_visible_win32(_hwnd_val: isize) -> bool {
+    true
+}
+
+#[cfg(not(windows))]
+pub fn set_window_visible_noactivate(_hwnd_val: isize, _visible: bool) -> bool {
+    true
+}
+
+#[cfg(not(windows))]
+pub fn is_primary_mouse_button_down() -> bool {
+    false
+}
+
+#[cfg(not(windows))]
+pub fn show_dock_context_menu(_hwnd_val: isize, _lang: Language) -> Option<DockContextMenuAction> {
+    None
 }
 
 #[cfg(test)]

@@ -88,4 +88,13 @@ impl SystemTray {
             quit_item_id: quit_id,
         })
     }
+
+    #[allow(dead_code)]
+    #[allow(unused_variables)]
+    pub fn set_title(&self, title: Option<&str>) {
+        #[cfg(target_os = "macos")]
+        {
+            let _ = self._tray_icon.set_title(title);
+        }
+    }
 }

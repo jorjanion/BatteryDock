@@ -1,9 +1,10 @@
-#![windows_subsystem = "windows"]
+#![cfg_attr(windows, windows_subsystem = "windows")]
 
 mod battery;
 pub mod config;
 pub mod i18n;
 mod notifications;
+pub mod platform;
 mod ui;
 pub mod updater;
 
@@ -19,18 +20,20 @@ use ui::taskbar::{
     apply_overlay_ex_style, calculate_overlay_physical_rect, ensure_window_above_monitor_taskbar,
     ensure_window_topmost_standalone, get_active_foreground_monitor_info,
     is_hotkey_currently_pressed, is_window_visible_win32, make_window_transparent,
-    set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry,
+    set_window_physical_rect, set_window_visible_noactivate, TaskbarGeometry, RECT,
 };
 use ui::tray::SystemTray;
-use windows::core::{w, PCWSTR};
-use windows::Win32::Foundation::{GetLastError, ERROR_ALREADY_EXISTS, HWND, RECT};
-use windows::Win32::System::Threading::CreateMutexW;
+
+#[cfg(windows)]
+use windows::core::PCWSTR;
+#[cfg(windows)]
+use windows::Win32::Foundation::HWND;
+#[cfg(windows)]
 use windows::Win32::UI::HiDpi::{
     SetProcessDpiAwarenessContext, DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
 };
-use windows::Win32::UI::WindowsAndMessaging::{
-    FindWindowW, IsWindow, SetForegroundWindow, ShowWindow, SW_RESTORE,
-};
+#[cfg(windows)]
+use windows::Win32::UI::WindowsAndMessaging::{FindWindowW, IsWindow};
 
 #[derive(Clone, PartialEq)]
 struct DockLayoutParams {
@@ -78,60 +81,12 @@ struct BatteryDockApp {
     last_config_reload: Instant,
 }
 
-static MUTEX_HANDLE: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
-    std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
-
 pub fn restart_app() {
-    unsafe {
-        let h = MUTEX_HANDLE.swap(std::ptr::null_mut(), Ordering::SeqCst);
-        if !h.is_null() {
-            let _ = windows::Win32::Foundation::CloseHandle(windows::Win32::Foundation::HANDLE(h));
-        }
-
-        if let Ok(exe) = std::env::current_exe() {
-            let exe_str = exe.to_string_lossy().to_string();
-            let exe_hstring = windows::core::HSTRING::from(exe_str);
-            let open_hstring = windows::core::HSTRING::from("open");
-            windows::Win32::UI::Shell::ShellExecuteW(
-                windows::Win32::Foundation::HWND(std::ptr::null_mut()),
-                windows::core::PCWSTR(open_hstring.as_ptr()),
-                windows::core::PCWSTR(exe_hstring.as_ptr()),
-                windows::core::PCWSTR(std::ptr::null()),
-                windows::core::PCWSTR(std::ptr::null()),
-                windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
-            );
-        }
-        std::process::exit(0);
-    }
+    crate::platform::restart_app();
 }
 
 pub fn open_settings_window() {
-    unsafe {
-        if let Ok(existing) = FindWindowW(None, w!("BatteryDock Settings")) {
-            if !existing.0.is_null() && IsWindow(existing).as_bool() {
-                let _ = ShowWindow(existing, SW_RESTORE);
-                let _ = SetForegroundWindow(existing);
-                return;
-            }
-        }
-
-        if let Ok(exe) = std::env::current_exe() {
-            if std::process::Command::new(&exe).arg("--settings").spawn().is_err() {
-                let exe_str = exe.to_string_lossy().to_string();
-                let exe_hstring = windows::core::HSTRING::from(exe_str);
-                let open_hstring = windows::core::HSTRING::from("open");
-                let param_hstring = windows::core::HSTRING::from("--settings");
-                windows::Win32::UI::Shell::ShellExecuteW(
-                    windows::Win32::Foundation::HWND(std::ptr::null_mut()),
-                    windows::core::PCWSTR(open_hstring.as_ptr()),
-                    windows::core::PCWSTR(exe_hstring.as_ptr()),
-                    windows::core::PCWSTR(param_hstring.as_ptr()),
-                    windows::core::PCWSTR(std::ptr::null()),
-                    windows::Win32::UI::WindowsAndMessaging::SW_SHOW,
-                );
-            }
-        }
-    }
+    crate::platform::open_settings_window();
 }
 
 fn compute_target_physical_rect(
@@ -365,7 +320,10 @@ impl BatteryDockApp {
             .window_handle()
             .ok()
             .and_then(|h| match h.as_raw() {
+                #[cfg(windows)]
                 RawWindowHandle::Win32(win32) => Some(win32.hwnd.get()),
+                #[cfg(target_os = "macos")]
+                RawWindowHandle::AppKit(appkit) => Some(appkit.ns_window.as_ptr() as isize),
                 _ => None,
             })
             .unwrap_or(0);
@@ -699,6 +657,7 @@ impl eframe::App for BatteryDockApp {
                 let secondary_dock_ref = &mut self.secondary_dock;
 
                 ctx.show_viewport_immediate(vp_id, vp_builder, |ctx, _class| {
+                    #[cfg(windows)]
                     unsafe {
                         let wide_title: Vec<u16> =
                             win_title.encode_utf16().chain(std::iter::once(0)).collect();
@@ -753,7 +712,7 @@ impl eframe::App for BatteryDockApp {
 }
 
 fn main() -> eframe::Result<()> {
-    // Enable Per-Monitor V2 DPI awareness before querying monitor/taskbar geometry
+    #[cfg(windows)]
     unsafe {
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
     }
@@ -763,15 +722,11 @@ fn main() -> eframe::Result<()> {
         return ui::settings_window::run_standalone_settings();
     }
 
-    unsafe {
-        let mutex = CreateMutexW(None, true, w!("Global\\BatteryDockSingleInstanceMutex"));
-        if GetLastError() == ERROR_ALREADY_EXISTS {
-            eprintln!("BatteryDock is already running.");
-            return Ok(());
-        }
-        if let Ok(h) = mutex {
-            MUTEX_HANDLE.store(h.0, Ordering::SeqCst);
-        }
+    let (acquired, _instance_guard) =
+        crate::platform::acquire_single_instance("Global\\BatteryDockSingleInstanceMutex");
+    if !acquired {
+        eprintln!("BatteryDock is already running.");
+        return Ok(());
     }
 
     let initial_config = AppConfig::load();

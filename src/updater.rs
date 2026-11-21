@@ -1,11 +1,15 @@
+#[cfg(windows)]
 use std::ffi::c_void;
 use std::fs::File;
 use std::io::Write;
+#[cfg(windows)]
 use std::os::windows::ffi::OsStrExt;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+#[cfg(windows)]
 use windows::core::PCWSTR;
+#[cfg(windows)]
 use windows::Win32::Networking::WinHttp::{
     WinHttpCloseHandle, WinHttpConnect, WinHttpOpen, WinHttpOpenRequest, WinHttpQueryDataAvailable,
     WinHttpReadData, WinHttpReceiveResponse, WinHttpSendRequest, WinHttpSetOption,
@@ -100,7 +104,14 @@ pub fn parse_github_release_json(json: &str) -> Option<ReleaseInfo> {
                 let start = col_pos + q1 + 1;
                 if let Some(q2) = json[start..].find('"') {
                     let url = &json[start..start + q2];
-                    if url.contains("BatteryDock-Setup") && url.ends_with(".exe") {
+                    #[cfg(windows)]
+                    let is_match = url.contains("BatteryDock-Setup") && url.ends_with(".exe");
+                    #[cfg(target_os = "macos")]
+                    let is_match = url.contains("BatteryDock") && url.ends_with(".dmg");
+                    #[cfg(not(any(windows, target_os = "macos")))]
+                    let is_match = url.ends_with(".tar.gz") || url.ends_with(".zip");
+
+                    if is_match {
                         installer_url = Some(url.to_string());
                         break;
                     }
@@ -116,6 +127,7 @@ pub fn parse_github_release_json(json: &str) -> Option<ReleaseInfo> {
     })
 }
 
+#[cfg(windows)]
 fn to_wide_null(s: &str) -> Vec<u16> {
     std::ffi::OsStr::new(s)
         .encode_wide()
@@ -124,6 +136,7 @@ fn to_wide_null(s: &str) -> Vec<u16> {
 }
 
 /// Performs a native HTTPS GET request using Windows WinHTTP
+#[cfg(windows)]
 pub fn winhttp_get(url: &str) -> Result<Vec<u8>, String> {
     let clean_url = url.trim();
     let without_scheme = clean_url
@@ -232,10 +245,36 @@ pub fn winhttp_get(url: &str) -> Result<Vec<u8>, String> {
     }
 }
 
+#[cfg(windows)]
+pub fn http_get(url: &str) -> Result<Vec<u8>, String> {
+    winhttp_get(url)
+}
+
+#[cfg(not(windows))]
+pub fn http_get(url: &str) -> Result<Vec<u8>, String> {
+    let output = std::process::Command::new("curl")
+        .args([
+            "-sL",
+            "-H",
+            "User-Agent: BatteryDock",
+            "-H",
+            "Accept: application/vnd.github.v3+json, application/octet-stream",
+            url,
+        ])
+        .output()
+        .map_err(|e| format!("curl execution failed: {e}"))?;
+
+    if output.status.success() {
+        Ok(output.stdout)
+    } else {
+        Err(format!("curl error code: {:?}", output.status.code()))
+    }
+}
+
 /// Queries GitHub releases API for latest release info
 pub fn fetch_latest_release() -> Result<ReleaseInfo, String> {
     let api_url = "https://api.github.com/repos/jorjanion/BatteryDock/releases/latest";
-    let bytes = winhttp_get(api_url)?;
+    let bytes = http_get(api_url)?;
     let text = String::from_utf8(bytes).map_err(|e| format!("Invalid UTF-8 in response: {e}"))?;
     parse_github_release_json(&text)
         .ok_or_else(|| "Could not parse release info from GitHub".to_string())
@@ -247,13 +286,16 @@ pub fn download_and_run_installer(installer_url: &str, version: &str) -> Result<
         version: version.to_string(),
     });
 
-    let bytes = winhttp_get(installer_url)?;
+    let bytes = http_get(installer_url)?;
     if bytes.len() < 100_000 {
         return Err("Downloaded installer is too small or corrupt".to_string());
     }
 
     let temp_dir = std::env::temp_dir();
+    #[cfg(windows)]
     let installer_path: PathBuf = temp_dir.join(format!("BatteryDock-Setup-{version}.exe"));
+    #[cfg(not(windows))]
+    let installer_path: PathBuf = temp_dir.join(format!("BatteryDock-{version}.dmg"));
 
     let mut file = File::create(&installer_path)
         .map_err(|e| format!("Failed to create temporary installer file: {e}"))?;
@@ -265,13 +307,21 @@ pub fn download_and_run_installer(installer_url: &str, version: &str) -> Result<
         version: version.to_string(),
     });
 
-    // Launch Inno Setup installer with flags:
-    // /SILENT: runs without asking questions
-    // /CLOSEAPPLICATIONS: requests running BatteryDock to close
-    // /RESTARTAPPLICATIONS: restarts BatteryDock once updated
+    #[cfg(windows)]
     let res = std::process::Command::new(&installer_path)
         .args(["/SILENT", "/CLOSEAPPLICATIONS", "/RESTARTAPPLICATIONS"])
         .spawn();
+
+    #[cfg(target_os = "macos")]
+    let res = std::process::Command::new("open")
+        .arg(&installer_path)
+        .spawn();
+
+    #[cfg(not(any(windows, target_os = "macos")))]
+    let res: Result<std::process::Child, std::io::Error> = Err(std::io::Error::new(
+        std::io::ErrorKind::Other,
+        "Auto-install not supported on this platform",
+    ));
 
     match res {
         Ok(_) => {
@@ -311,9 +361,14 @@ pub fn check_for_updates_async(auto_install: bool) {
                             });
                         }
                     } else {
-                        set_status(UpdateStatus::Failed(
-                            "No Windows installer found in latest release assets".to_string(),
-                        ));
+                        #[cfg(windows)]
+                        let no_asset_msg = "No Windows installer (.exe) found in latest release assets";
+                        #[cfg(target_os = "macos")]
+                        let no_asset_msg = "No macOS disk image (.dmg) found in latest release assets";
+                        #[cfg(not(any(windows, target_os = "macos")))]
+                        let no_asset_msg = "No installer package found in latest release assets";
+
+                        set_status(UpdateStatus::Failed(no_asset_msg.to_string()));
                     }
                 } else {
                     set_status(UpdateStatus::UpToDate);
